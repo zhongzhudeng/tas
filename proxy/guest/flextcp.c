@@ -249,8 +249,8 @@ int vflextcp_core_evfds_init(struct guest_proxy *pxy) {
       goto error_close;
     }
 
-    if (epoll_ctl(pxy->block_epfd, EPOLL_CTL_ADD,
-        pxy->core_evfds[i], &ev) != 0) 
+    if (pxy->no_ints == 0 && 
+        epoll_ctl(pxy->block_epfd, EPOLL_CTL_ADD, pxy->core_evfds[i], &ev) != 0) 
     {
       perror("vflextcp_core_evfds_init: "
           "epoll_ctl listen for block_epfd failed.");

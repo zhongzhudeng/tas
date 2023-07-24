@@ -68,6 +68,7 @@ struct guest_proxy {
     struct proxy_application *apps;
     struct proxy_context_req *context_reqs[MAX_CONTEXT_REQ];
 
+    int no_ints;
     struct flexnic_info *flexnic_info;
 };
 

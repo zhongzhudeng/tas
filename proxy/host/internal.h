@@ -32,6 +32,9 @@ struct host_proxy {
   /* Used to sleep proxy */
   uint64_t block_elapsed;
   uint64_t poll_cycles_proxy;
+
+  /* Flags */
+  int no_ints;
 };
 
 #endif /* ndef HOST_INTERNAL_H_ */

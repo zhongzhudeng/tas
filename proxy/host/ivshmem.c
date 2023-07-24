@@ -626,7 +626,8 @@ static int channel_handle_ctx_req(struct host_proxy *pxy,
     return -1;
   }
 
-  if (epoll_ctl(pxy->block_epfd, EPOLL_CTL_ADD, vctx->ctx->evfd, &ev) != 0) 
+  if (pxy->no_ints == 0 &&
+      epoll_ctl(pxy->block_epfd, EPOLL_CTL_ADD, vctx->ctx->evfd, &ev) != 0) 
   {
     fprintf(stderr, "ivshmem_handle_ctxreq: epoll_ctl block_epfd failed."); 
     return -1;
