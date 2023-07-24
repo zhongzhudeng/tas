@@ -118,18 +118,23 @@ int ivshmem_channel_poll(struct guest_proxy *pxy)
   {
     case MSG_TYPE_HELLO:
       channel_handle_hello(pxy);
+      ivshmem_drain_evfd(pxy->irq_fd);
       break;
     case MSG_TYPE_TASINFO_RES:
       channel_handle_tasinfo_res(pxy, (struct tasinfo_res_msg *) msg);
+      ivshmem_drain_evfd(pxy->irq_fd);
       break;
     case MSG_TYPE_NEWAPP_RES:
       channel_handle_newapp_res(pxy, (struct newapp_res_msg *) msg);
+      ivshmem_drain_evfd(pxy->irq_fd);
       break;
     case MSG_TYPE_CONTEXT_RES:
       channel_handle_ctx_res(pxy, (struct context_res_msg *) msg);
+      ivshmem_drain_evfd(pxy->irq_fd);
       break;
     case MSG_TYPE_POKE_APP_CTX:
       channel_handle_vpoke(pxy, (struct poke_app_ctx_msg *) msg);
+      ivshmem_drain_evfd(pxy->irq_fd);
       break;
     default:
       fprintf(stderr, "ivshmem_channel_poll: unknown message.\n");

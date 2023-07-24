@@ -157,7 +157,7 @@ int notify_guest(int fd)
   ret = write(fd, &buf, sizeof(uint64_t));
   if (ret < sizeof(uint64_t))
   {
-    fprintf(stderr, "ivshmem_notify_guest: failed to notify host.\n");
+    fprintf(stderr, "ivshmem_notify_guest: failed to notify guest.\n");
     return -1;
   }
   
@@ -500,18 +500,23 @@ static int channel_poll_vm(struct host_proxy *pxy,
     {
         case MSG_TYPE_TASINFO_REQ:
             channel_handle_tasinforeq_msg(vm);
+            ivshmem_drain_evfd(vm->nfd);
             break;
         case MSG_TYPE_CONTEXT_REQ:
             channel_handle_ctx_req(pxy, vm, msg);
+            ivshmem_drain_evfd(vm->nfd);
             break;
         case MSG_TYPE_NEWAPP_REQ:
             channel_handle_newapp(pxy, vm, msg);
+            ivshmem_drain_evfd(vm->nfd);
             break;
         case MSG_TYPE_POKE_TAS_CORE:
             channel_handle_poke_tas_core(vm, msg);
+            ivshmem_drain_evfd(vm->nfd);
             break;
         case MSG_TYPE_POKE_TAS_KERNEL:
             channel_handle_poke_tas_kernel(vm, msg);
+            ivshmem_drain_evfd(vm->nfd);
             break;
         default:
             fprintf(stderr, "ivshmem_uxsocket_handle_msg: unknown message.\n");
