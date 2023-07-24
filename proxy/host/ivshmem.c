@@ -136,12 +136,15 @@ int ivshmem_poll(struct host_proxy *pxy)
     }
     n += ret;
 
-    if ((ret = app_ctxs_poll(pxy)) < 0) 
+    if (pxy->no_ints == 0)
     {
-        fprintf(stderr, "ivshmem_poll: failed to poll ctxs fds.\n");
-        return -1;
+        if ((ret = app_ctxs_poll(pxy)) < 0) 
+        {
+            fprintf(stderr, "ivshmem_poll: failed to poll ctxs fds.\n");
+            return -1;
+        }
+        n += ret;
     }
-    n += ret;
 
     return n;
 }
@@ -712,17 +715,20 @@ static int app_ctxs_poll(struct host_proxy *pxy)
             vctx = evs[i].data.ptr;
             ivshmem_drain_evfd(vctx->ctx->evfd);
 
-            msg.msg_type = MSG_TYPE_POKE_APP_CTX;
-            msg.ctxreq_id = vctx->ctxreq_id;
-            ret = channel_write(vctx->vm->chan, &msg, sizeof(struct poke_app_ctx_msg));
-
-            if (ret != sizeof(struct poke_app_ctx_msg))
+            if (pxy->no_ints == 0) 
             {
-                fprintf(stderr, "ivshmem_ctxs_poll: failed to write poke msg.\n");
-                return -1;
-            }       
-            notify_guest(vctx->vm->ifd);
-            n_pokes++;
+                msg.msg_type = MSG_TYPE_POKE_APP_CTX;
+                msg.ctxreq_id = vctx->ctxreq_id;
+                ret = channel_write(vctx->vm->chan, &msg, sizeof(struct poke_app_ctx_msg));
+
+                if (ret != sizeof(struct poke_app_ctx_msg))
+                {
+                    fprintf(stderr, "ivshmem_ctxs_poll: failed to write poke msg.\n");
+                    return -1;
+                }       
+                notify_guest(vctx->vm->ifd);
+                n_pokes++;
+            }
         }
     }
 

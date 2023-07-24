@@ -183,7 +183,8 @@ int vflextcp_kernel_notifyfd_init(struct guest_proxy *pxy)
     return -1;
   }
 
-  if (epoll_ctl(pxy->block_epfd, EPOLL_CTL_ADD,
+  if (pxy->no_ints == 0 && 
+      epoll_ctl(pxy->block_epfd, EPOLL_CTL_ADD,
       pxy->kernel_notifyfd, &ev) != 0) 
   {
     perror("vflextcp_kernel_notifyfd_init: "
@@ -303,12 +304,16 @@ int vflextcp_poll(struct guest_proxy *pxy)
   }
   n += ret;
 
-  if ((ret = vflextcp_tas_poke_poll(pxy)) < 0) 
+  if (pxy->no_ints == 0)
   {
-    fprintf(stderr, "flextcp_poll: vflextcp_virtfd_poll failed.\n");
-    return -1;
+    if ((ret = vflextcp_tas_poke_poll(pxy)) < 0) 
+    {
+      fprintf(stderr, "flextcp_poll: vflextcp_virtfd_poll failed.\n");
+      return -1;
+    }
+    n += ret;
   }
-  n += ret;
+
 
   return n;
 }
