@@ -24,8 +24,6 @@ struct host_proxy *host_init_proxy()
     pxy->block_elapsed = 0;
     pxy->poll_cycles_proxy = 10000;
 
-    pxy->no_ints = 0;
-
     return pxy;
 }
 
@@ -35,19 +33,6 @@ int main(int argc, char *argv[])
     uint64_t start, end;
     struct epoll_event evs[1];
     struct host_proxy *pxy = host_init_proxy();
-
-    if (argc > 2)
-    {
-        fprintf(stderr, "usage: ./host [--no-ints]\n");
-    }
-
-    for (int i = 0; i < argc; i++)
-    {
-        if (strcmp(argv[i], "--no-ints") == 0)
-        {
-            pxy->no_ints = 1;
-        }
-    }
 
     /* Connect to tas and get shmfd, kernel_evfd and core_evfds */
     if (flextcp_proxy_init(pxy) != 0)
@@ -69,7 +54,9 @@ int main(int argc, char *argv[])
     {
         if (pxy->block_elapsed > pxy->poll_cycles_proxy)
         {
+            fprintf(stderr, "blocking\n");
             epoll_wait(pxy->block_epfd, evs, 1, -1);
+            fprintf(stderr, "unblocking\n");
         }
         
         start = util_rdtsc();

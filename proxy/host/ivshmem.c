@@ -136,15 +136,12 @@ int ivshmem_poll(struct host_proxy *pxy)
     }
     n += ret;
 
-    if (pxy->no_ints == 0)
+    if ((ret = app_ctxs_poll(pxy)) < 0) 
     {
-        if ((ret = app_ctxs_poll(pxy)) < 0) 
-        {
-            fprintf(stderr, "ivshmem_poll: failed to poll ctxs fds.\n");
-            return -1;
-        }
-        n += ret;
+        fprintf(stderr, "ivshmem_poll: failed to poll ctxs fds.\n");
+        return -1;
     }
+    n += ret;
 
     return n;
 }
@@ -634,8 +631,7 @@ static int channel_handle_ctx_req(struct host_proxy *pxy,
     return -1;
   }
 
-  if (pxy->no_ints == 0 &&
-      epoll_ctl(pxy->block_epfd, EPOLL_CTL_ADD, vctx->ctx->evfd, &ev) != 0) 
+  if (epoll_ctl(pxy->block_epfd, EPOLL_CTL_ADD, vctx->ctx->evfd, &ev) != 0) 
   {
     fprintf(stderr, "ivshmem_handle_ctxreq: epoll_ctl block_epfd failed."); 
     return -1;
@@ -720,20 +716,17 @@ static int app_ctxs_poll(struct host_proxy *pxy)
             vctx = evs[i].data.ptr;
             ivshmem_drain_evfd(vctx->ctx->evfd);
 
-            if (pxy->no_ints == 0) 
-            {
-                msg.msg_type = MSG_TYPE_POKE_APP_CTX;
-                msg.ctxreq_id = vctx->ctxreq_id;
-                ret = channel_write(vctx->vm->chan, &msg, sizeof(struct poke_app_ctx_msg));
+            msg.msg_type = MSG_TYPE_POKE_APP_CTX;
+            msg.ctxreq_id = vctx->ctxreq_id;
+            ret = channel_write(vctx->vm->chan, &msg, sizeof(struct poke_app_ctx_msg));
 
-                if (ret != sizeof(struct poke_app_ctx_msg))
-                {
-                    fprintf(stderr, "ivshmem_ctxs_poll: failed to write poke msg.\n");
-                    return -1;
-                }       
-                notify_guest(vctx->vm->ifd);
-                n_pokes++;
-            }
+            if (ret != sizeof(struct poke_app_ctx_msg))
+            {
+                fprintf(stderr, "ivshmem_ctxs_poll: failed to write poke msg.\n");
+                return -1;
+            }       
+            notify_guest(vctx->vm->ifd);
+            n_pokes++;
         }
     }
 

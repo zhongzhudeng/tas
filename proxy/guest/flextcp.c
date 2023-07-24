@@ -183,8 +183,7 @@ int vflextcp_kernel_notifyfd_init(struct guest_proxy *pxy)
     return -1;
   }
 
-  if (pxy->no_ints == 0 && 
-      epoll_ctl(pxy->block_epfd, EPOLL_CTL_ADD,
+  if (epoll_ctl(pxy->block_epfd, EPOLL_CTL_ADD,
       pxy->kernel_notifyfd, &ev) != 0) 
   {
     perror("vflextcp_kernel_notifyfd_init: "
@@ -250,8 +249,7 @@ int vflextcp_core_evfds_init(struct guest_proxy *pxy) {
       goto error_close;
     }
 
-    if (pxy->no_ints == 0 && 
-        epoll_ctl(pxy->block_epfd, EPOLL_CTL_ADD, pxy->core_evfds[i], &ev) != 0) 
+    if (epoll_ctl(pxy->block_epfd, EPOLL_CTL_ADD, pxy->core_evfds[i], &ev) != 0) 
     {
       perror("vflextcp_core_evfds_init: "
           "epoll_ctl listen for block_epfd failed.");
@@ -304,16 +302,12 @@ int vflextcp_poll(struct guest_proxy *pxy)
   }
   n += ret;
 
-  if (pxy->no_ints == 0)
+  if ((ret = vflextcp_tas_poke_poll(pxy)) < 0) 
   {
-    if ((ret = vflextcp_tas_poke_poll(pxy)) < 0) 
-    {
-      fprintf(stderr, "flextcp_poll: vflextcp_virtfd_poll failed.\n");
-      return -1;
-    }
-    n += ret;
+    fprintf(stderr, "flextcp_poll: vflextcp_virtfd_poll failed.\n");
+    return -1;
   }
-
+  n += ret;
 
   return n;
 }

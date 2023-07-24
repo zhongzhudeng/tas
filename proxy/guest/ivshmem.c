@@ -134,7 +134,7 @@ int ivshmem_channel_poll(struct guest_proxy *pxy)
       break;
     case MSG_TYPE_POKE_APP_CTX:
       channel_handle_vpoke(pxy, (struct poke_app_ctx_msg *) msg);
-      ivshmem_drain_evfd(pxy->irq_fd);
+      
       break;
     default:
       fprintf(stderr, "ivshmem_channel_poll: unknown message.\n");

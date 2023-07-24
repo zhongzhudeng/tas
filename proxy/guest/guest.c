@@ -48,7 +48,6 @@ struct guest_proxy *guest_init_proxy()
   pxy->next_app_id = 0;
   pxy->apps = NULL;
   
-  pxy->no_ints = 0;
   pxy->flexnic_info = NULL;
   
   return pxy;
@@ -61,19 +60,6 @@ int main(int argc, char *argv[])
   uint64_t start, end;
   struct epoll_event evs[1];
   struct guest_proxy *pxy = guest_init_proxy();
-
-  if (argc > 2)
-  {
-      fprintf(stderr, "usage: ./host [--no-ints]\n");
-  }
-
-  for (int i = 0; i < argc; i++)
-  {
-    if (strcmp(argv[i], "--no-ints") == 0)
-    {
-      pxy->no_ints = 1;
-    }
-  }
 
   if (ivshmem_init(pxy) < 0)
   {
@@ -94,7 +80,9 @@ int main(int argc, char *argv[])
 
     if (pxy->block_elapsed > pxy->poll_cycles_proxy)
     {
+      fprintf(stderr, "blocking\n");
       epoll_wait(pxy->block_epfd, evs, 1, -1);
+      fprintf(stderr, "unblocking\n");
     }
 
     start = util_rdtsc();
