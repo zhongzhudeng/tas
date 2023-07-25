@@ -20,6 +20,7 @@ class OvsLinux(Node):
     super().setup()
     self.ovs_make_install(self.defaults.original_ovs_path)
     self.start_ovsdpdk(self.vm_configs[0].manager_dir)
+    # self.start_ovs(self.vm_configs[0].manager_dir)
     self.ovsbr_add("br0", 
                    self.machine_config.ip + "/24", 
                    self.machine_config.interface,
@@ -37,6 +38,7 @@ class OvsLinux(Node):
                         "gre" + str(greid),
                         remote_ip,
                         greid,
+                        vm_config.n_queues,
                         vm_config.manager_dir)
 
   def cleanup(self):

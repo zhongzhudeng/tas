@@ -40,6 +40,7 @@ class OvsTas(Node):
                         "gre" + str(greid),
                         remote_ip,
                         greid,
+                        vm_config.n_queues,
                         vm_config.manager_dir)
 
   def cleanup(self):

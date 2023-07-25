@@ -131,13 +131,14 @@ class Node:
       time.sleep(2)
   
   def ovsvhost_add(self, br_name, vhost_name, 
-                   gre_name, remote_ip, gre_key, 
-                   script_dir):
+                   gre_name, remote_ip, gre_key,
+                   n_queues, script_dir):
       cmd = "cd {}".format(script_dir)
       self.setup_pane.send_keys(cmd)
       time.sleep(1)
-      cmd = "sudo bash ovsvhost-add.sh {} {} {} {} {}".format(
-          br_name, vhost_name, gre_name, remote_ip, gre_key)
+      cmd = "sudo bash ovsvhost-add.sh {} {} {} {} {} {}".format(
+          br_name, vhost_name, gre_name, 
+          remote_ip, gre_key, n_queues)
       self.setup_pane.send_keys(cmd)
       time.sleep(4)
 
