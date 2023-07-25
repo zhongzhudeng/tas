@@ -80,9 +80,7 @@ int main(int argc, char *argv[])
 
     if (pxy->block_elapsed > pxy->poll_cycles_proxy)
     {
-      fprintf(stderr, "blocking\n");
       epoll_wait(pxy->block_epfd, evs, 1, -1);
-      fprintf(stderr, "unblocking\n");
     }
 
     start = util_rdtsc();
