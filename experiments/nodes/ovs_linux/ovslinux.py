@@ -40,6 +40,11 @@ class OvsLinux(Node):
                         greid,
                         vm_config.n_queues,
                         vm_config.manager_dir)
+      
+      self.setup_pane.send_keys("sudo ip addr add {} dev {}".format(
+            self.machine_config.ip + "/24",
+            "br0"
+      ))
 
   def cleanup(self):
     super().cleanup()
@@ -60,6 +65,8 @@ class OvsLinux(Node):
     
   def start_vm(self, vm, vm_config):
     vm.start()
+    vm.enable_hugepages()
+    vm.enable_noiommu("1af4 1110")
     vm.init_interface(vm_config.vm_ip, self.defaults.vm_interface)
   
   def start_vms(self):

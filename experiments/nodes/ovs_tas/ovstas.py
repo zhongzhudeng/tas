@@ -78,6 +78,7 @@ class OvsTas(Node):
     vm.start()
     vm.enable_hugepages()
     vm.enable_noiommu("1af4 1110")
+    vm.disable_offloads(self.defaults.tas_interface)
     vm.init_interface(vm_config.vm_ip, self.defaults.tas_interface)
     vm.dpdk_bind(vm_config.vm_ip, self.defaults.tas_interface,
         self.defaults.pci_id)
