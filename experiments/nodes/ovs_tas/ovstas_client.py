@@ -8,7 +8,9 @@ class OvsTasClient(OvsTas):
   def __init__(self, config, wmanager):
 
     OvsTas.__init__(self, config.defaults, config.c_machine_config,
-        config.c_tas_configs, config.c_vm_configs, 
+        config.c_tas_configs, config.c_vm_configs,
+        config.defaults.client_interface,
+        config.defaults.client_interface_pci, 
         wmanager, config.defaults.c_setup_pane, 
         config.defaults.c_cleanup_pane)
 

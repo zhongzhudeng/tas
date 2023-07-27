@@ -130,15 +130,20 @@ class Node:
       self.cleanup_pane.send_keys(cmd)
       time.sleep(2)
   
+  def set_dpdk_interface(self, interface, pci_id):
+      cmd = "ovs-vsctl set Interface {} " + \
+        "type=dpdk options:dpdk-devargs={}".format(interface, pci_id)
+      self.setup_pane.send_keys(cmd)
+     
   def ovsvhost_add(self, br_name, vhost_name, 
                    gre_name, remote_ip, gre_key,
-                   n_queues, script_dir):
+                   n_queues, interface, pci_id, script_dir):
       cmd = "cd {}".format(script_dir)
       self.setup_pane.send_keys(cmd)
       time.sleep(1)
-      cmd = "sudo bash ovsvhost-add.sh {} {} {} {} {} {}".format(
+      cmd = "sudo bash ovsvhost-add.sh {} {} {} {} {} {} {} {}".format(
           br_name, vhost_name, gre_name, 
-          remote_ip, gre_key, n_queues)
+          remote_ip, gre_key, n_queues, interface, pci_id)
       self.setup_pane.send_keys(cmd)
       time.sleep(4)
 

@@ -8,8 +8,6 @@ ovs-ctl --no-ovs-vswitchd start
 
 echo "Setting dpdk-init to true"
 ovs-vsctl --no-wait set Open_vSwitch . other_config:dpdk-init=true
-echo "Setting dpdk mask"
-ovs-vsctl --no-wait set Open_vSwitch . other_config:dpdk-lcore-mask=0x2a
 echo "Setting hugepages dir"
 ovs-vsctl --no-wait set Open_vSwitch . other_config:dpdk-hugepages-dir=/dev/hugepages
 echo "Setting cpu mask"

@@ -8,7 +8,10 @@ class OvsLinuxServer(OvsLinux):
   def __init__(self, config, wmanager):
 
     OvsLinux.__init__(self, config.defaults, config.s_machine_config,
-        config.s_vm_configs, wmanager, 
+        config.s_vm_configs,
+        config.defaults.server_interface,
+        config.defaults.server_interface_pci,
+        wmanager, 
         config.defaults.s_setup_pane, 
         config.defaults.s_cleanup_pane)
 

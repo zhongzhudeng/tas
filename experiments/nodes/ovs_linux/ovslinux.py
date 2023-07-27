@@ -7,12 +7,14 @@ from nodes.node import Node
 class OvsLinux(Node):
   
   def __init__(self, defaults, machine_config,
-      vm_configs, wmanager, 
+      vm_configs, interface, pci_id, wmanager, 
       setup_pane_name, cleanup_pane_name):
 
     Node.__init__(self, defaults, machine_config, wmanager, 
         setup_pane_name, cleanup_pane_name)
         
+    self.interface = interface
+    self.pci_id = pci_id
     self.vm_configs = vm_configs
     self.vms = []
 
@@ -20,11 +22,11 @@ class OvsLinux(Node):
     super().setup()
     self.ovs_make_install(self.defaults.original_ovs_path)
     self.start_ovsdpdk(self.vm_configs[0].manager_dir)
-    # self.start_ovs(self.vm_configs[0].manager_dir)
     self.ovsbr_add("br0", 
                    self.machine_config.ip + "/24", 
                    self.machine_config.interface,
                    self.vm_configs[0].manager_dir)
+    self.set_dpdk_interface(self.interface, self.pci_id)
     
     for vm_config in self.vm_configs:
       if is_client:

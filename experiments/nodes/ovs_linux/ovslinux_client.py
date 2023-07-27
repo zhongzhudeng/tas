@@ -8,7 +8,10 @@ class OvsLinuxClient(OvsLinux):
   def __init__(self, config, wmanager):
 
     OvsLinux.__init__(self, config.defaults, config.c_machine_config,
-        config.c_vm_configs, wmanager, 
+        config.c_vm_configs,
+        config.defaults.client_interface,
+        config.defaults.client_interface_pci,
+        wmanager, 
         config.defaults.c_setup_pane, 
         config.defaults.c_cleanup_pane)
 

@@ -32,7 +32,9 @@ class Defaults:
 
         # Mellanox interfaces on client and server machine
         self.client_interface = 'enp59s0f0np0'
+        self.client_interface_pci = "0000:3b:00.0"
         self.server_interface = 'enp59s0f0np0'
+        self.server_interface_pci = "0000:3b:00.0"
 
         ### INTERNAL VM CONFIGS ###
         # Network interface used to set ip for a VM
