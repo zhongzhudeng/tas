@@ -48,7 +48,7 @@ if [[ "$stack" == 'virt-tas' ]]; then
     -netdev user,id=net0,hostfwd=tcp::222${vm_id}-:22 \
     -chardev socket,path="/run/tasproxy",id="tas" \
     -device ivshmem-doorbell,vectors=1,chardev="tas" \
-    -drive if=virtio,format=qcow2,file="base.snapshot.qcow2" \
+    -drive if=virtio,format=raw,file="base.img" \
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 elif [[ "$stack" == 'virt-linux' ]]; then
@@ -64,7 +64,7 @@ elif [[ "$stack" == 'virt-linux' ]]; then
       -device virtio-net-pci,netdev=net0 \
       -netdev tap,ifname=$tap,script=no,downscript=no,vhost=on,id=net1 \
       -device virtio-net-pci,mac=$mac,netdev=net1 \
-      -drive if=virtio,format=qcow2,file="base.snapshot.qcow2" \
+      -drive if=virtio,format=raw,file="base.img" \
       -drive if=virtio,format=raw,file="seed.img" \
       ;
 elif [[ "$stack" == 'ovs-linux' ]]; then
@@ -102,7 +102,7 @@ elif [[ "$stack" == 'ovs-tas' ]]; then
     -device virtio-net-pci,netdev=net1,mac=$alt_mac,mq=on,vectors=$vectors,rss=on,hash=on \
     -object memory-backend-file,id=mem,size=10G,mem-path=/dev/hugepages,share=on \
     -numa node,memdev=mem -mem-prealloc \
-    -drive if=virtio,format=qcow2,file="base.snapshot.qcow2" \
+    -drive if=virtio,format=raw,file="base.img" \
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 elif [[ "$stack" == 'tap-tas' ]]; then
@@ -120,7 +120,7 @@ elif [[ "$stack" == 'tap-tas' ]]; then
     -device virtio-net-pci,mac=$mac,netdev=net1 \
     -netdev tap,ifname=$tastap,script=no,downscript=no,vhost=on,queues=$n_queues,id=net2 \
     -device virtio-net-pci,mac=$alt_mac,vectors=$vectors,mq=on,netdev=net2 \
-    -drive if=virtio,format=qcow2,file="base.snapshot.qcow2" \
+    -drive if=virtio,format=raw,file="base.img" \
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 elif [[ "$stack" == 'gre' ]]; then
@@ -136,7 +136,7 @@ elif [[ "$stack" == 'gre' ]]; then
     -device virtio-net-pci,netdev=net0 \
     -netdev bridge,br=br2,id=net1 \
     -device virtio-net-pci,id=nic1,netdev=net1 \
-    -drive if=virtio,format=qcow2,file="base.snapshot.qcow2" \
+    -drive if=virtio,format=raw,file="base.img" \
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 fi
