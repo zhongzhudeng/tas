@@ -28,6 +28,16 @@ class VM:
         time.sleep(25)
         self.login_vm()
 
+    def enable_offloads(self, interface):
+        cmd = "sudo ethtool --ofload {} gso on tso on sg on gro on".format(
+                    interface)
+        self.pane.send_keys(cmd)
+
+    def disable_offloads(self, interface):
+        cmd = "sudo ethtool --ofload {} gso off tso off sg off gro off".format(
+                    interface)
+        self.pane.send_keys(cmd)
+
     def enable_hugepages(self):
         cmd = "sudo mount -t hugetlbfs nodev /dev/hugepages"
         self.pane.send_keys(cmd)
