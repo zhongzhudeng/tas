@@ -83,7 +83,7 @@ elif [[ "$stack" == 'ovs-linux' ]]; then
     -device virtio-net-pci,netdev=net1,mac=$alt_mac,mq=on,vectors=$vectors \
     -object memory-backend-file,id=mem,size=10G,mem-path=/dev/hugepages,share=on \
     -numa node,memdev=mem -mem-prealloc \
-    -drive if=virtio,format=qcow2,file="base.snapshot.qcow2" \
+    -drive if=virtio,format=raw,file="base.img" \
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 elif [[ "$stack" == 'ovs-tas' ]]; then
@@ -94,11 +94,12 @@ elif [[ "$stack" == 'ovs-tas' ]]; then
     -cpu host \
     -smp $n_cores \
     -m ${memory}G \
+    -snapshot \
     -netdev user,id=net0,hostfwd=tcp::222${vm_id}-:22 \
     -device virtio-net-pci,netdev=net0 \
     -chardev socket,id=char0,path=/usr/local/var/run/openvswitch/$vhost \
-      -netdev type=vhost-user,chardev=char0,vhostforce=on,queues=$n_queues,id=net1 \
-    -device virtio-net-pci,netdev=net1,mac=$alt_mac,mq=on,vectors=$vectors \
+    -netdev type=vhost-user,chardev=char0,vhostforce=on,queues=$n_queues,id=net1 \
+    -device virtio-net-pci,netdev=net1,mac=$alt_mac,mq=on,vectors=$vectors,rss=on,hash=on \
     -object memory-backend-file,id=mem,size=10G,mem-path=/dev/hugepages,share=on \
     -numa node,memdev=mem -mem-prealloc \
     -drive if=virtio,format=qcow2,file="base.snapshot.qcow2" \
