@@ -131,8 +131,8 @@ class Node:
       time.sleep(2)
   
   def set_dpdk_interface(self, interface, pci_id):
-      cmd = "sudo ovs-vsctl set Interface {} " + \
-        "type=dpdk options:dpdk-devargs={}".format(interface, pci_id)
+      cmd = "sudo ovs-vsctl set Interface {} ".format(interface) + \
+        "type=dpdk options:dpdk-devargs={}".format(pci_id)
       self.setup_pane.send_keys(cmd)
      
   def ovsvhost_add(self, br_name, vhost_name, 
