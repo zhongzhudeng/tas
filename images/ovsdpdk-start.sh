@@ -11,7 +11,7 @@ ovs-vsctl --no-wait set Open_vSwitch . other_config:dpdk-init=true
 echo "Setting hugepages dir"
 ovs-vsctl --no-wait set Open_vSwitch . other_config:dpdk-hugepages-dir=/dev/hugepages
 echo "Setting cpu mask"
-ovs-vsctl --no-wait set Open_vSwitch . other_config:pmd-cpu-mask=0xa80
+ovs-vsctl --no-wait set Open_vSwitch . other_config:pmd-cpu-mask=0xaaaaa
 
 echo "Starting ovs switch"
 ovs-ctl --no-ovsdb-server --db-sock="$DB_SOCK" start
