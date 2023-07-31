@@ -2,6 +2,7 @@ import sys
 sys.path.append("../../../")
 
 import os
+import pandas as pd
 import experiments.plot_utils as putils
 
 
@@ -21,7 +22,6 @@ def check_cid(data, stack, run, nid, cid):
   if cid not in data[stack][run][nid]:
     data[stack][run][nid][cid] = ""
 
-
 def parse_metadata():
   dir_path = "./out/"
   data = {}
@@ -29,7 +29,7 @@ def parse_metadata():
   for f in os.listdir(dir_path):
     fname = os.fsdecode(f)
 
-    if "tas_c" == fname:
+    if "latency_hist" not in fname:
       continue
 
     run = putils.get_expname_run(fname)
@@ -50,41 +50,27 @@ def parse_data(parsed_md):
   data = {}
   out_dir = "./out/"
   for stack in parsed_md:
-    latencies = putils.init_latencies()
+    hist = None
+    data[stack] = {"lat": None, "count": None}
     for run in parsed_md[stack]:
       fname_c0 = out_dir + parsed_md[stack][run]['0']['0']
-      putils.append_latencies(latencies, fname_c0)
-
-    data[stack] = {
-      "lat": putils.get_latency_avg(latencies),
-      "std": putils.get_latency_std(latencies)
-    }
+      df = pd.read_table(fname_c0, delimiter=" ")
+      if hist is None:
+        hist = df
+      else:
+        # For some reason pandas named the column "0.1"
+        hist["0.1"] = hist["0.1"] + df["0.1"]
+    
+    data[stack]["count"] = hist["0.1"]
   
   return data
 
 def save_dat_file(data):
-  # stacks =  list(data.keys())
-  stacks = ["bare-tas", "bare-vtas", "virt-tas", "bare-tunoffvtas"]
-
-  header = "stack 50p-avg 90p-avg 99p-avg 99.9p-avg 99.99p-avg " + \
-      "50p-std 90p-std 99p-std 99.9p-std 99.99p-std\n"
-  fname = "./lat.dat"
-  f_avg = open(fname, "w+")
-  f_avg.write(header)
+  stacks = ["bare-tas", "bare-vtas", "virt-tas", "ovs-tas", "bare-linux", "ovs-linux"]
 
   for stack in stacks:
-    f_avg.write("{} {} {} {} {} {} {} {} {} {} {}\n".format(
-      stack,
-      data[stack]["lat"]["50p"],
-      data[stack]["lat"]["90p"],
-      data[stack]["lat"]["99p"],
-      data[stack]["lat"]["99.9p"],
-      data[stack]["lat"]["99.99p"],      
-      data[stack]["std"]["50p"],
-      data[stack]["std"]["90p"],
-      data[stack]["std"]["99p"],
-      data[stack]["std"]["99.9p"],
-      data[stack]["std"]["99.99p"]))
+    fname = "./{}_hist.dat".format(stack)
+    data[stack]["count"].to_csv(fname, header=False, sep=" ")
 
 def main():
   parsed_md = parse_metadata()

@@ -2,18 +2,76 @@
 set terminal pdf font "Latin Modern Roman"
 set output "plot.pdf"
 set key autotitle columnhead
-set key top left
+set key bottom right
 
-# Set the colors for each category
-set style fill pattern
-set style data histograms
-set style histogram errorbars
-set boxwidth 0.75 relative
+set datafile separator whitespace
+stats 'bare-tas_hist.dat' u 2 nooutput
 
-set ylabel 'Latency [us]'
-set xtics ("tas" 0, "bare-virtuoso" 1, "virtuoso" 2, "tunoff-virtuoso" 3)
+set table 'bare-tas_cdf.dat'
+cumulative = 0
+total_count = STATS_sum
+plot 'bare-tas_hist.dat' u ($0==0 ? cumulative=0 : cumulative=cumulative+$2, $1):(cumulative/total_count) with lines title 'CDF'
+unset table
 
-plot 'lat.dat' using 2:7 title "50p", \
-     'lat.dat' using 3:8 title "90p", \
-     'lat.dat' using 4:9 title "99p", \
-     'lat.dat' using 5:10 title "99.9p"
+
+set datafile separator whitespace
+stats 'bare-vtas_hist.dat' u 2 nooutput
+
+set table 'bare-vtas_cdf.dat'
+cumulative = 0
+total_count = STATS_sum
+plot 'bare-vtas_hist.dat' u ($0==0 ? cumulative=0 : cumulative=cumulative+$2, $1):(cumulative/total_count) with lines title 'CDF'
+unset table
+
+
+set datafile separator whitespace
+stats 'virt-tas_hist.dat' u 2 nooutput
+
+set table 'virt-tas_cdf.dat'
+cumulative = 0
+total_count = STATS_sum
+plot 'virt-tas_hist.dat' u ($0==0 ? cumulative=0 : cumulative=cumulative+$2, $1):(cumulative/total_count) with lines title 'CDF'
+unset table
+
+
+set datafile separator whitespace
+stats 'ovs-tas_hist.dat' u 2 nooutput
+
+set table 'ovs-tas_cdf.dat'
+cumulative = 0
+total_count = STATS_sum
+plot 'ovs-tas_hist.dat' u ($0==0 ? cumulative=0 : cumulative=cumulative+$2, $1):(cumulative/total_count) with lines title 'CDF'
+unset table
+
+
+set datafile separator whitespace
+stats 'bare-linux_hist.dat' u 2 nooutput
+
+set table 'bare-linux_cdf.dat'
+cumulative = 0
+total_count = STATS_sum
+plot 'bare-linux_hist.dat' u ($0==0 ? cumulative=0 : cumulative=cumulative+$2, $1):(cumulative/total_count) with lines title 'CDF'
+unset table
+
+
+set datafile separator whitespace
+stats 'ovs-linux_hist.dat' u 2 nooutput
+
+set table 'ovs-linux_cdf.dat'
+cumulative = 0
+total_count = STATS_sum
+plot 'ovs-linux_hist.dat' u ($0==0 ? cumulative=0 : cumulative=cumulative+$2, $1):(cumulative/total_count) with lines title 'CDF'
+unset table
+
+
+
+set yrange [0:1]
+set xrange [0:1000]
+set xlabel "Latency [us]"
+set ylabel "Cumulative Frequency"
+plot 'bare-tas_cdf.dat' with lines title 'tas', \
+     'bare-vtas_cdf.dat' with lines title 'bare-virtuoso', \
+     'virt-tas_cdf.dat' with lines title 'virtuoso', \
+     'ovs-tas_cdf.dat' with lines title 'ovs-tas', \
+     'bare-linux_cdf.dat' with lines title 'linux', \
+     'ovs-linux_cdf.dat' with lines title 'ovs-dpdk',

@@ -171,15 +171,20 @@ class ClientConfig:
         self.bench_dir = bench_dir
         self.lib_so = tas_dir + '/lib/libtas_interpose.so'
         self.exec_file = self.comp_dir + '/testclient_linux'
-        self.args = '{} {} {} foo {} {} {} {} {} {}'.format(ip, port, ncores, \
-                msize, mpending, nconns, open_delay, \
-                max_msgs_conn, max_pend_conns)
        
         self.out_dir = tas_dir + "/out"
         self.out_file = "{}_client{}_node{}_nconns{}_ncores{}_msize{}".format(
                 exp_name, idx, vmid, nconns, ncores, msize)
+        self.latency_file = self.out_file + "_latency_hist"
+        self.temp_file = "temp"
         self.out = self.out_dir + '/' + self.out_file
+        self.latency_out = self.out_dir + "/" + self.latency_file
+        self.latency_temp = self.out_dir + "/" + self.temp_file
        
+        self.args = '{} {} {} foo {} {} {} {} {} {} {} {}'.format(ip, port, ncores, \
+            msize, mpending, nconns, open_delay, \
+            max_msgs_conn, max_pend_conns, self.out_dir + "/", self.latency_file)
+
         self.groupid = groupid
         self.pane = pane
         self.id = idx

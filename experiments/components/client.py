@@ -75,9 +75,24 @@ class Client:
         self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
         time.sleep(1)
 
+        scp_com = utils.get_scp_command(self.machine_config, self.vm_config,
+            self.client_config.latency_out,
+            out_dir + '/' + self.client_config.latency_file)
+        self.save_logs_pane.send_keys(scp_com)
+        time.sleep(3)
+        self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
+        time.sleep(1)
+
         # Remove log from remote machine
         ssh_com = utils.get_ssh_command(self.machine_config, self.vm_config)
+ 
         ssh_com += " 'rm {}'".format(self.client_config.out)
+        self.save_logs_pane.send_keys(ssh_com)
+        time.sleep(3)
+        self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
+        time.sleep(1)
+
+        ssh_com += " 'rm {}'".format(self.client_config.latency_out)
         self.save_logs_pane.send_keys(ssh_com)
         time.sleep(3)
         self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
@@ -97,3 +112,6 @@ class Client:
 
         dest = out_dir + "/" + self.client_config.out_file
         os.rename(self.client_config.out, dest)
+
+        dest_latency = out_dir + "/" + self.client_config.latency_file
+        os.rename(self.client_config.latency_out, dest_latency)
