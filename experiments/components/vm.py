@@ -46,6 +46,11 @@ class VM:
         self.pane.send_keys(cmd)
         time.sleep(5)
 
+    def set_mtu(self, interface, mss):
+        cmd = "sudo ip link set dev {} mtu {} up".format(interface, mss)
+        self.pane.send_keys(cmd)
+        time.sleep(1)
+
     def enable_noiommu(self, vendor_id):
         self.pane.send_keys("sudo su -")
         time.sleep(1)

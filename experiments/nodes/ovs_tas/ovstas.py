@@ -35,21 +35,19 @@ class OvsTas(Node):
       mac = self.defaults.server_mac
 
     for vm_config in self.vm_configs:
-
       self.ovsvhost_add("br-int", 
                         "vhost{}".format(vm_config.id),
                         vm_config.n_queues,
                         vm_config.manager_dir)
   
     self.ovstunnel_add("br-int", "gre1", remote_ip, 
-                       self.vm_configs[0].manager_dir, 1)
+                       remote_ip, 1)
     self.ovsbr_add_physical("br-phy", mac, 
                             self.vm_configs[0].manager_dir)
     self.ovsbr_add_port("br-phy", self.interface)
     self.set_dpdk_interface(self.interface, self.pci_id)
     self.add_ip("br-phy", self.machine_config.ip + "/24")
     self.interface_up("br-phy")
-    self.iptables_f()
 
   def cleanup(self):
     super().cleanup()

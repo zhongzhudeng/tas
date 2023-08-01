@@ -22,35 +22,34 @@ class OvsLinux(Node):
     super().setup()
     self.ovs_make_install(self.defaults.original_ovs_path)
     self.start_ovsdpdk(self.vm_configs[0].manager_dir)
-    self.ovsbr_add("br0", 
-                   self.machine_config.ip + "/24", 
-                   self.machine_config.interface,
-                   self.vm_configs[0].manager_dir)
-    self.set_dpdk_interface(self.interface, self.pci_id)
+    self.ovsbr_add_internal("br-int", self.vm_configs[0].manager_dir)
+
+    if is_client:
+      remote_ip = self.defaults.server_ip
+      mac = self.defaults.client_mac
+    else:
+      remote_ip = self.defaults.client_ip
+      mac = self.defaults.server_mac
     
     for vm_config in self.vm_configs:
-      if is_client:
-        remote_ip = self.defaults.server_ip
-      else:
-        remote_ip = self.defaults.client_ip
-
-      greid = vm_config.id + 1
-      self.ovsvhost_add("br0", 
+      self.ovsvhost_add("br-int", 
                         "vhost{}".format(vm_config.id),
-                        "gre" + str(greid),
-                        remote_ip,
-                        greid,
                         vm_config.n_queues,
                         vm_config.manager_dir)
-      
-      self.setup_pane.send_keys("sudo ip addr add {} dev {}".format(
-            self.machine_config.ip + "/24",
-            "br0"
-      ))
+    
+    self.ovstunnel_add("br-int", "gre1", remote_ip, 
+                       remote_ip, 1)
+    self.ovsbr_add_physical("br-phy", mac, 
+                            self.vm_configs[0].manager_dir)
+    self.ovsbr_add_port("br-phy", self.interface)
+    self.set_dpdk_interface(self.interface, self.pci_id)
+    self.add_ip("br-phy", self.machine_config.ip + "/24")
+    self.interface_up("br-phy")
 
   def cleanup(self):
     super().cleanup()
-    self.ovsbr_del("br0")
+    self.ovsbr_del("br-int")
+    self.ovsbr_del("br-phy")
     self.stop_ovsdpdk(self.vm_configs[0].manager_dir)
 
     cmd = "sudo ip addr add {} dev {}".format(self.machine_config.ip + "/24",
@@ -70,6 +69,7 @@ class OvsLinux(Node):
     vm.enable_hugepages()
     vm.enable_noiommu("1af4 1110")
     vm.init_interface(vm_config.vm_ip, self.defaults.vm_interface)
+    vm.set_mtu(self.defaults.vm_interface, 1452)
   
   def start_vms(self):
     threads = []
