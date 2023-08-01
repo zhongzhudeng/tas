@@ -10,7 +10,7 @@ class Config:
         self.defaults = Defaults()
         
         # Server Machine
-        self.sstack = 'ovs-linux'
+        self.sstack = 'bare-linux'
         self.snum = 1
         self.snodenum = 1
         self.s_tas_configs = []
@@ -26,13 +26,13 @@ class Config:
 
         server0_config = ServerConfig(pane=self.defaults.s_server_pane,
                 idx=0, vmid=0,
-                port=1234, ncores=5, max_flows=4096, max_bytes=4096,
+                port=1234, ncores=1, max_flows=4096, max_bytes=4096,
                 bench_dir=self.defaults.default_obenchmark_dir_bare,
                 tas_dir=self.defaults.default_otas_dir_bare)
         self.server_configs.append(server0_config)
 
         # Client Machine
-        self.cstack = 'ovs-linux'
+        self.cstack = 'bare-linux'
         self.cnum = 1
         self.cnodenum = 1
         self.c_tas_configs = []
@@ -49,9 +49,9 @@ class Config:
         client0_config = ClientConfig(exp_name=exp_name, 
                 pane=self.defaults.c_client_pane,
                 idx=0, vmid=0, stack=self.cstack,
-                ip=self.defaults.server_ip, port=1234, ncores=5,
+                ip=self.defaults.server_ip, port=1234, ncores=1,
                 msize=msize, mpending=64, nconns=1000,
-                open_delay=15, max_msgs_conn=0, max_pend_conns=1,
+                open_delay=3, max_msgs_conn=0, max_pend_conns=1,
                 bench_dir=self.defaults.default_obenchmark_dir_bare,
                 tas_dir=self.defaults.default_otas_dir_bare)
         self.client_configs.append(client0_config)

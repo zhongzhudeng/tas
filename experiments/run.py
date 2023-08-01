@@ -19,6 +19,7 @@ parser.add_argument('--verbose', action='store_const', const=True,
 parser.add_argument('--reset', action='store_const', const=True,
         default=False,
         help="Close panes from previous run")
+parser.add_argument('--len', type=int, default=60)
 
 g_env = parser.add_argument_group('Environment')
 g_env.add_argument('--workdir', metavar='DIR', type=str,
@@ -52,6 +53,6 @@ for e in experiments:
             continue
     print('******' + e.get_name() + '********')
     e.run()
-    time.sleep(120)
+    time.sleep(args.len)
     e.save_logs()
     e.reset()

@@ -158,7 +158,8 @@ class ClientConfig:
     def __init__(self, pane, idx, vmid,
             ip, port, ncores, msize, mpending,
             nconns, open_delay, max_msgs_conn, max_pend_conns,
-            bench_dir, tas_dir, stack, exp_name, groupid=0):
+            bench_dir, tas_dir, stack, exp_name, 
+            bursty=0, burst_length_mean=0, burst_interval_mean=0, groupid=0):
         self.name = "client"
         self.exp_name = exp_name
         self.exp_name = ""
@@ -181,9 +182,11 @@ class ClientConfig:
         self.latency_out = self.out_dir + "/" + self.latency_file
         self.latency_temp = self.out_dir + "/" + self.temp_file
        
-        self.args = '{} {} {} foo {} {} {} {} {} {} {} {}'.format(ip, port, ncores, \
+        self.args = '{} {} {} foo {} {} {} {} {} {} {} {} {} {} {}'.format(ip, port, ncores, \
             msize, mpending, nconns, open_delay, \
-            max_msgs_conn, max_pend_conns, self.out_dir + "/", self.latency_file)
+            max_msgs_conn, max_pend_conns, \
+            bursty, burst_length_mean, burst_interval_mean, \
+            self.out_dir + "/", self.latency_file)
 
         self.groupid = groupid
         self.pane = pane
