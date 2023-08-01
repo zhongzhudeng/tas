@@ -18,6 +18,21 @@ class Node:
     self.cleanup_pane = self.wmanager.add_new_pane(self.cleanup_pane_name, 
         self.machine_config.is_remote)
 
+  def add_ip(self, interface, ip):
+    cmd = "sudo ip addr add {} dev {}".format(ip, interface)
+    self.setup_pane.send_keys(cmd)
+    time.sleep(1)
+
+  def interface_up(self, interface):
+    cmd = "sudo ip link set dev {} up".format(interface)
+    self.setup_pane.send_keys(cmd)
+    time.sleep(1)
+
+  def iptables_f(self):
+    cmd = "sudo iptables -F"
+    self.setup_pane.send_keys(cmd)
+    time.sleep(1)
+
   def tap_up(self, interface, script_dir, multi_queue):
     cmd = "cd {}".format(script_dir)
     self.setup_pane.send_keys(cmd)
@@ -117,6 +132,22 @@ class Node:
       self.setup_pane.send_keys(cmd)
       time.sleep(4)
 
+  def ovsbr_add_internal(self, br_name, script_dir):
+      cmd = "cd {}".format(script_dir)
+      self.setup_pane.send_keys(cmd)
+      time.sleep(1)
+      cmd = "sudo bash ovsbr-add-int.sh {}".format(br_name)
+      self.setup_pane.send_keys(cmd)
+      time.sleep(2)
+
+  def ovsbr_add_physical(self, br_name, mac, script_dir):
+      cmd = "cd {}".format(script_dir)
+      self.setup_pane.send_keys(cmd)
+      time.sleep(1)
+      cmd = "sudo bash ovsbr-add-phy.sh {} {}".format(br_name, mac)
+      self.setup_pane.send_keys(cmd)
+      time.sleep(2)
+
   def ovsbr_add_vtuoso(self, br_name, script_dir):
       cmd = "cd {}".format(script_dir)
       self.setup_pane.send_keys(cmd)
@@ -136,16 +167,19 @@ class Node:
       self.setup_pane.send_keys(cmd)
      
   def ovsvhost_add(self, br_name, vhost_name, 
-                   gre_name, remote_ip, gre_key,
                    n_queues, script_dir):
       cmd = "cd {}".format(script_dir)
       self.setup_pane.send_keys(cmd)
       time.sleep(1)
-      cmd = "sudo bash ovsvhost-add.sh {} {} {} {} {} {}".format(
-          br_name, vhost_name, gre_name, 
-          remote_ip, gre_key, n_queues)
+      cmd = "sudo bash ovsvhost-add.sh {} {} {}".format(
+          br_name, vhost_name, n_queues)
       self.setup_pane.send_keys(cmd)
       time.sleep(4)
+
+  def ovsbr_add_port(self, br_name, port_name):
+     cmd = "sudo ovs-vsctl add-port {} {}".format(br_name, port_name)
+     self.setup_pane.send_keys(cmd)
+     time.sleep(1)
 
   def ovsport_add_vtuoso(self, br_name, port_name, port_type, vmid, script_dir,
                          out_remote_ip=None, out_local_ip=None,
