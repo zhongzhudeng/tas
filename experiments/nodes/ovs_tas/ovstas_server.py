@@ -7,12 +7,17 @@ class OvsTasServer(OvsTas):
   
   def __init__(self, config, wmanager):
 
+    if hasattr(config, 's_tunnel'):
+      tunnel = config.c_tunnel
+    else:
+      tunnel = False
+
     OvsTas.__init__(self, config.defaults, config.s_machine_config,
         config.s_tas_configs, config.s_vm_configs,
         config.defaults.server_interface,
         config.defaults.server_interface_pci, 
         wmanager, config.defaults.s_setup_pane, 
-        config.defaults.s_cleanup_pane)
+        config.defaults.s_cleanup_pane, tunnel)
 
     self.server_configs = config.server_configs
     self.nodenum = config.snodenum

@@ -7,13 +7,19 @@ class OvsLinuxClient(OvsLinux):
   
   def __init__(self, config, wmanager):
 
+    if hasattr(config, 'c_tunnel'):
+      tunnel = config.c_tunnel
+    else:
+      tunnel = False
+
     OvsLinux.__init__(self, config.defaults, config.c_machine_config,
         config.c_vm_configs,
         config.defaults.client_interface,
         config.defaults.client_interface_pci,
         wmanager, 
         config.defaults.c_setup_pane, 
-        config.defaults.c_cleanup_pane)
+        config.defaults.c_cleanup_pane, 
+        tunnel)
 
     self.client_configs = config.client_configs
     self.nodenum = config.cnodenum
@@ -35,7 +41,7 @@ class OvsLinuxClient(OvsLinux):
             vm_config, 
             self.wmanager)
         self.clients.append(client)
-        client.run_virt(False, False)
+        client.run_virt(True, False)
         time.sleep(3)
 
   def run(self):

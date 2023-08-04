@@ -124,6 +124,11 @@ class Node:
       self.cleanup_pane.send_keys(cmd)
       time.sleep(2)
 
+  def ovs_route_add(self, br_name, ip):
+     cmd = "sudo ovs-appctl ovs/route/add {} {}".format(ip, br_name)
+     self.setup_pane.send_keys(cmd)
+     time.sleep(1)
+
   def ovsbr_add(self, br_name, ip, interface, script_dir):
       cmd = "cd {}".format(script_dir)
       self.setup_pane.send_keys(cmd)
@@ -161,9 +166,9 @@ class Node:
       self.cleanup_pane.send_keys(cmd)
       time.sleep(2)
   
-  def set_dpdk_interface(self, interface, pci_id):
+  def set_dpdk_interface(self, interface, pci_id, n_queues):
       cmd = "sudo ovs-vsctl set Interface {} ".format(interface) + \
-        "type=dpdk options:dpdk-devargs={}".format(pci_id)
+        "type=dpdk options:n_rxq={} options:dpdk-devargs={}".format(n_queues, pci_id)
       self.setup_pane.send_keys(cmd)
      
   def ovsvhost_add(self, br_name, vhost_name, 
