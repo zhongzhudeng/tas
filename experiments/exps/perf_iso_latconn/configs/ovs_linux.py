@@ -32,7 +32,7 @@ class Config:
                 idx=0,
                 n_cores=11,
                 memory=10,
-                num_queues=11)
+                n_queues=11)
         vm1_config = VMConfig(pane=self.defaults.s_vm_pane,
                 machine_config=self.s_machine_config,
                 tas_dir=self.defaults.default_vtas_dir_bare,
@@ -40,7 +40,7 @@ class Config:
                 idx=1,
                 n_cores=11,
                 memory=10,
-                num_queues=11)
+                n_queues=11)
 
         self.s_vm_configs.append(vm0_config)
         self.s_vm_configs.append(vm1_config)
@@ -98,7 +98,7 @@ class Config:
                 idx=0, vmid=0, stack=self.cstack,
                 ip=self.s_vm_configs[0].vm_ip, port=1234, ncores=1,
                 msize=64, mpending=64, nconns=1,
-                open_delay=15, max_msgs_conn=0, max_pend_conns=1,
+                open_delay=30, max_msgs_conn=0, max_pend_conns=1,
                 bench_dir=self.defaults.default_vbenchmark_dir_virt,
                 tas_dir=self.defaults.default_vtas_dir_virt)
         client1_config = ClientConfig(exp_name=exp_name, 
@@ -106,7 +106,7 @@ class Config:
                 idx=0, vmid=1, stack=self.cstack,
                 ip=self.s_vm_configs[1].vm_ip, port=1235, ncores=3,
                 msize=64, mpending=64, nconns=nconns,
-                open_delay=15, max_msgs_conn=0, max_pend_conns=1,
+                open_delay=30, max_msgs_conn=0, max_pend_conns=1,
                 bench_dir=self.defaults.default_obenchmark_dir_virt,
                 tas_dir=self.defaults.default_vtas_dir_virt)
 

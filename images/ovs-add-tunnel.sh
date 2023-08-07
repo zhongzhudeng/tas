@@ -13,4 +13,4 @@ remote_ip=$3
 tun_id=$4
 
 ovs-vsctl add-port $br_name $tun_name -- \
-    set interface $tun_name type=gre options:remote_ip=$remote_ip options:key=$tun_id 
+    set interface $tun_name type=gre options:remote_ip=$remote_ip options:key=$tun_id

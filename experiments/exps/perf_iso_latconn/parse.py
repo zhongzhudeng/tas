@@ -32,12 +32,11 @@ def parse_metadata():
 
   for f in os.listdir(dir_path):
     fname = os.fsdecode(f)
-
-    if "tas_c" in fname or "latency_hist" in fname:
+    if "tas_c" == fname or "latency_hist" in fname:
       continue
 
     run = putils.get_expname_run(fname)
-    nconns = putils.get_expname_conns(fname)
+    nconns = str(int(putils.get_expname_conns(fname)) * 3)
     cid = putils.get_client_id(fname)
     nid = putils.get_node_id(fname)
     stack = putils.get_stack(fname)
@@ -74,9 +73,9 @@ def parse_data(parsed_md):
 def save_dat_file(data):
   header = "nconns " + \
       "bare-tas-avg virt-tas-avg " + \
-      "ovs-linux-avg ovs-tas-avg" + \
+      "ovs-tas-avg ovs-linux-avg " + \
       "bare-tas-std virt-tas-std " + \
-      "ovs-linux-std ovs-tas-std\n"
+      "ovs-tas-std ovs-linux-std\n"
   
   nconns = list(data.keys())
   nconns = list(map(str, sorted(map(int, nconns))))
@@ -93,12 +92,12 @@ def save_dat_file(data):
           int(nconn),
           data[nconn]['bare-tas']["lat"][percentile],
           data[nconn]['virt-tas']["lat"][percentile],
-          data[nconn]['ovs-linux']["lat"][percentile],
           data[nconn]['ovs-tas']["lat"][percentile],
+          data[nconn]['ovs-linux']["lat"][percentile],
           data[nconn]['bare-tas']["std"][percentile],
           data[nconn]['virt-tas']["std"][percentile],
-          data[nconn]['ovs-linux']["std"][percentile],
-          data[nconn]['ovs-tas']["std"][percentile]))
+          data[nconn]['ovs-tas']["std"][percentile],
+          data[nconn]['ovs-linux']["std"][percentile]))
         
 def main():
   parsed_md = parse_metadata()

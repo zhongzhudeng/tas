@@ -26,7 +26,7 @@ class BareTasClient(BareTas):
           self.wmanager)
       self.clients.append(client)
       client.run_bare(True, True)
-      time.sleep(3)
+      time.sleep(5)
 
   def run(self):
     self.setup()

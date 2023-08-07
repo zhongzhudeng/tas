@@ -118,10 +118,10 @@ class VMConfig:
         self.memory = memory
         self.n_queues = n_queues
         if machine_config.is_server:
-            self.vm_ip = '10.0.0.{}'.format(1 + idx)
+            self.vm_ip = '192.168.10.{}'.format(20 + idx)
             self.tas_tap_ip = '10.0.1.{}'.format(1 + idx)
         else:
-            self.vm_ip = '10.0.0.{}'.format(20 + idx)
+            self.vm_ip = '192.168.10.{}'.format(40 + idx)
             self.tas_tap_ip = '10.0.1.{}'.format(20 + idx)
 
 class ProxyConfig:

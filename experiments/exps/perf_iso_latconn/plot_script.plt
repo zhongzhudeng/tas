@@ -1,17 +1,15 @@
 #!/usr/bin/gnuplot -persist
-set terminal pdf font "Latin Modern Roman"
+set terminal pdf font "Latin Modern Roman,16"
 set output "plot.pdf"
-set key autotitle columnhead
 
 set xlabel "Agressor Client # Connections"
-set ylabel "Victim Client Avg Latency (µs)"
+set ylabel "Victim Client 90p Latency (µs)"
+set key left center
 
-set yrange[0:]
-plot 'lat_50p.dat' using 1:3:7 with yerrorlines title 'virtuoso', \
-     'lat_50p.dat' using 1:2:6 with yerrorlines title 'tas', \
-     'lat_50p.dat' using 1:4:8 with yerrorlines title 'ovs-linux', \
-     'lat_50p.dat' using 1:5:9 with yerrorlines title 'ovs-tas', \
-
+plot 'lat_90p.dat' using 1:5:9 with yerrorlines title 'ovs-linux' linetype 4 ps 1, \
+     'lat_90p.dat' using 1:2:6 with yerrorlines title 'tas' linetype 1 ps 1, \
+     'lat_90p.dat' using 1:4:8 with yerrorlines title 'ovs-tas' linetype 3 ps 1, \
+     'lat_90p.dat' using 1:3:7 with yerrorlines title 'virtuoso' linetype 2 ps 1, \
 
 # # margins: left,right,bottom,top
 # # spacing: xspacing,yspacing

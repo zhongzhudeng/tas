@@ -55,7 +55,6 @@ class VirtTasClient(VirtTas):
             self.wmanager)
         self.clients.append(client)
         client.run_virt(True, True)
-        time.sleep(3)
 
   def run(self):
     self.setup()

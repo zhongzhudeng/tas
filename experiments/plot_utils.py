@@ -76,6 +76,11 @@ def get_expname_msize(fname):
   msize = re.search(regex, fname).group(0)
   return msize
 
+def get_expname_fpcores(fname):
+  regex = "(?<=-fpcores)[0-9]*"
+  msize = re.search(regex, fname).group(0)
+  return msize
+
 def get_expname_run(fname):
   run_id_regex = "(?<=-run)[0-9]*"
   run_id = re.search(run_id_regex, fname).group(0)

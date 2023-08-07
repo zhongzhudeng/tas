@@ -25,7 +25,7 @@ class Client:
         self.pane.send_keys(ssh_com)
         time.sleep(3)
         self.pane.send_keys("tas")
-        time.sleep(3)
+        time.sleep(2)
         self.run_benchmark_rpc(w_sudo, ld_preload, clean=False)
 
     def run_benchmark_rpc(self, w_sudo, ld_preload, clean, cores=None):
