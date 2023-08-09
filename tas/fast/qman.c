@@ -54,7 +54,7 @@
 #define TIMESTAMP_BITS 32
 #define TIMESTAMP_MASK 0xFFFFFFFF
 
-#define QUANTA BATCH_SIZE * TCP_MSS
+// #define QUANTA BATCH_SIZE * TCP_MSS
 
 /** Queue container for a virtual machine */
 struct vm_qman {
@@ -350,7 +350,7 @@ int vmcont_init(struct qman_thread *t)
   {
     vq = &vqman->queues[i];
     vq->avail = 0;
-    vq->dc = QUANTA;
+    // vq->dc = QUANTA;
 
     ret = flowcont_init(vq);
 
@@ -395,7 +395,7 @@ static inline int vm_qman_poll(struct dataplane_context *ctx,
 
     if (budgets[idx].budget > 0)
     {
-      vq->dc += QUANTA;
+      // vq->dc += QUANTA;
       fqman = vq->fqman;
       x = flow_qman_poll(t, vq, fqman, num - cnt, q_ids + cnt, q_bytes + cnt);
 
@@ -448,7 +448,7 @@ static inline int vm_qman_poll(struct dataplane_context *ctx,
 
     if (cnt < num && o_cnt == 0)
     {
-      vq->dc += QUANTA;
+      // vq->dc += QUANTA;
       struct flow_qman *fqman = vq->fqman;
       x = flow_qman_poll(t, vq, fqman, num - cnt, q_ids + cnt, q_bytes + cnt);
 
@@ -538,7 +538,7 @@ static inline void vm_set_impl(struct vm_qman *vqman, uint32_t v_idx,
 
   if (new_avail && vq->avail > 0 && ((vq->flags & (FLAG_INNOLIMITL)) == 0)) 
   {
-    vq->dc = QUANTA;
+    // vq->dc = QUANTA;
     vm_queue_activate(vqman, vq, v_idx);
   }
 
@@ -715,8 +715,7 @@ static inline unsigned flow_poll_nolimit(struct qman_thread *t, struct vm_queue 
   struct flow_queue *q;
   uint32_t idx;
 
-  for (cnt = 0; cnt < num && fqman->nolimit_head_idx != IDXLIST_INVAL
-      && vqueue->dc > 0;) {
+  for (cnt = 0; cnt < num && fqman->nolimit_head_idx != IDXLIST_INVAL;) {
     idx = fqman->nolimit_head_idx;
     q = fqman->queues + idx;
 
@@ -814,7 +813,7 @@ static inline unsigned flow_poll_skiplist(struct qman_thread *t,
   /* maximum virtual time stamp that can be reached */
   max_vts = t->ts_virtual + (cur_ts - t->ts_real);
 
-  for (cnt = 0; cnt < num && vqueue->dc > 0;) {
+  for (cnt = 0; cnt < num;) {
     idx = fqman->head_idx[0];
 
     /* no more queues */
@@ -892,7 +891,7 @@ static inline void flow_queue_fire(struct qman_thread *t,
   assert(q->avail > 0);
 
   bytes = (q->avail <= q->max_chunk ? q->avail : q->max_chunk);
-  bytes = (vqueue->dc < bytes ? vqueue->dc : bytes);
+  // bytes = (vqueue->dc < bytes ? vqueue->dc : bytes);
   q->avail -= bytes;
 
   dprintf("flow_queue_fire: t=%p q=%p idx=%u gidx=%u bytes=%u avail=%u rate=%u\n",
@@ -907,7 +906,7 @@ static inline void flow_queue_fire(struct qman_thread *t,
     flow_queue_activate(t, fqman, q, idx);
   }
 
-  vqueue->dc -= bytes;
+  // vqueue->dc -= bytes;
   *q_bytes = bytes;
   *q_id = idx;
 
