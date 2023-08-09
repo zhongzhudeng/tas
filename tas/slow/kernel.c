@@ -167,26 +167,11 @@ int slowpath_main(int threads_launched)
 
     if (cur_ts - last_print >= 1000000)
     {
-      // cycs_ts = util_rdtsc();
-
-      // bstats_vm0 = get_budget_stats(0, 0);
-      // bstats_vm1 = get_budget_stats(1, 0);
 
       if (!config.quiet)
       {
         printf("stats: drops=%" PRIu64 " k_rexmit=%" PRIu64 " ecn=%" PRIu64 " acks=%" PRIu64 "\n",
                kstats.drops, kstats.kernel_rexmit, kstats.ecn_marked, kstats.acks);
-
-        // printf("ts=%ld elapsed=%ld "
-        //        "RVM0=%ld RVM1=%ld "
-        //        "POLLVM0=%ld TXVM0=%ld RXVM0=%ld "
-        //        "POLLVM1=%ld TXVM1=%ld RXVM1=%ld "
-        //        "BUVM0=%ld BUVM1=%ld\n",
-        //        cycs_ts, cycs_ts - last_cycs_ts,
-        //        bstats_vm0.cycles_total, bstats_vm1.cycles_total,
-        //        bstats_vm0.cycles_poll, bstats_vm0.cycles_tx, bstats_vm0.cycles_rx,
-        //        bstats_vm1.cycles_poll, bstats_vm1.cycles_tx, bstats_vm1.cycles_rx,
-        //        bstats_vm0.budget, bstats_vm1.budget);
         fflush(stdout);
       }
       

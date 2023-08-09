@@ -161,9 +161,6 @@ int dataplane_context_init(struct dataplane_context *ctx)
     /* Initialize budget for each VM */
     ctx->budgets[i].vmid = i;
     ctx->budgets[i].budget = config.bu_max_budget;
-    ctx->budgets[i].cycles_poll = 0;
-    ctx->budgets[i].cycles_rx = 0;
-    ctx->budgets[i].cycles_tx = 0;
 
     /* Set phase counters to 0 */
     ctx->vm_counters[i] = 0;
@@ -871,20 +868,6 @@ static void spend_budget(struct dataplane_context *ctx,
     counter = ctx->vm_counters[vmid];
     vm_cycles = cycles * (counter / ctx->counters_total);
     __sync_fetch_and_sub(&ctx->budgets[vmid].budget, vm_cycles);
-
-    switch(phase)
-    {
-      case POLL_PHASE:
-        __sync_fetch_and_add(&ctx->budgets[vmid].cycles_poll, vm_cycles);
-        break;
-      case TX_PHASE:
-        __sync_fetch_and_add(&ctx->budgets[vmid].cycles_tx, vm_cycles);
-        break;
-      case RX_PHASE:
-        __sync_fetch_and_add(&ctx->budgets[vmid].cycles_rx, vm_cycles);
-        break;
-    }
-
     ctx->vm_counters[vmid] = 0;
   }
 
