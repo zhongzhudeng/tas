@@ -34,7 +34,8 @@
 #define CONF_MSS 1400
 
 static void cc_next_ts_vm(uint32_t cur_ts, int vmid, uint32_t *ts);
-static unsigned cc_poll_vm(int vmid, unsigned n, uint32_t diff_ts);
+static unsigned cc_poll_vm(int vmid, unsigned n, 
+    uint32_t cur_ts, uint32_t diff_ts);
 
 static inline void issue_retransmits(struct connection *c,
     struct nicif_connection_stats *stats, uint32_t cur_ts);
@@ -120,7 +121,7 @@ unsigned cc_poll(uint32_t cur_ts)
   for(i = 0; i < FLEXNIC_PL_VMST_NUM && n < 128; i++)
   {
     vmid = (next_vm + i) % FLEXNIC_PL_VMST_NUM;
-    n = cc_poll_vm(vmid, n, diff_ts);
+    n = cc_poll_vm(vmid, n, cur_ts, diff_ts);
   }
 
   last_ts = cur_ts;
@@ -128,7 +129,8 @@ unsigned cc_poll(uint32_t cur_ts)
   return n;
 }
 
-static unsigned cc_poll_vm(int vmid, unsigned n, uint32_t diff_ts)
+static unsigned cc_poll_vm(int vmid, unsigned n, 
+    uint32_t cur_ts, uint32_t diff_ts)
 {
   struct connection *c, *c_first;
   struct nicif_connection_stats stats;

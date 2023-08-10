@@ -142,8 +142,8 @@ int slowpath_main(int threads_launched)
   while (exited == 0)
   {
     unsigned n = 0;
+    
     cur_ts = util_timeout_time_us();
-
     n += nicif_poll();
     if (config.fp_gre)
       n += ovs_poll();
@@ -176,7 +176,6 @@ int slowpath_main(int threads_launched)
       }
       
       last_print = cur_ts;
-      // last_cycs_ts = cycs_ts;
     }
 
     /* Accumulate per context VM budget and update total budget */
@@ -210,7 +209,7 @@ static void update_budget(int threads_launched)
 
   cur_ts = util_rdtsc();
   total_budget = config.bu_boost * (cur_ts - last_bu_update_ts);
-
+  
   /* Update budget */
   for (vmid = 0; vmid < FLEXNIC_PL_VMST_NUM; vmid++)
   {

@@ -373,8 +373,8 @@ int fast_flows_packet(struct dataplane_context *ctx,
   fs_lock(fs);
 #ifdef FLEXNIC_TRACING
   struct flextcp_pl_trev_rxfs te_rxfs = {
-      .local_ip = f_beui32(p->ip.dest),
-      .remote_ip = f_beui32(p->ip.src),
+      .in_local_ip = f_beui32(p->ip.dest),
+      .in_remote_ip = f_beui32(p->ip.src),
       .local_port = f_beui16(p->tcp.dest),
       .remote_port = f_beui16(p->tcp.src),
 
@@ -669,8 +669,8 @@ unlock:
         .flow_id = flow_id,
         .db_id = fs->db_id,
 
-        .local_ip = f_beui32(p->ip.dest),
-        .remote_ip = f_beui32(p->ip.src),
+        .in_local_ip = f_beui32(p->ip.dest),
+        .in_remote_ip = f_beui32(p->ip.src),
         .local_port = f_beui16(p->tcp.dest),
         .remote_port = f_beui16(p->tcp.src),
       };
@@ -1394,8 +1394,8 @@ static void flow_tx_segment(struct dataplane_context *ctx,
 
 #ifdef FLEXNIC_TRACING
   struct flextcp_pl_trev_txseg te_txseg = {
-      .local_ip = f_beui32(p->ip.src),
-      .remote_ip = f_beui32(p->ip.dest),
+      .in_local_ip = f_beui32(p->ip.src),
+      .in_remote_ip = f_beui32(p->ip.dest),
       .local_port = f_beui16(p->tcp.src),
       .remote_port = f_beui16(p->tcp.dest),
 
@@ -1569,8 +1569,8 @@ static void flow_tx_ack(struct dataplane_context *ctx, uint32_t seq,
 
 #ifdef FLEXNIC_TRACING
   struct flextcp_pl_trev_txack te_txack = {
-      .local_ip = f_beui32(p->ip.src),
-      .remote_ip = f_beui32(p->ip.dest),
+      .in_local_ip = f_beui32(p->ip.src),
+      .in_remote_ip = f_beui32(p->ip.dest),
       .local_port = f_beui16(p->tcp.src),
       .remote_port = f_beui16(p->tcp.dest),
 
