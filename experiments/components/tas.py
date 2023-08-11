@@ -16,7 +16,7 @@ class TAS:
 
     def run_bare(self):
         tas_args = self.tas_config.args
-        tas_args += ' --dpdk-extra="--lcores=0@0,1@2,2@4,3@6,4@8,5@10,6@12,7@14,8@16,9@18,10@20"'
+        tas_args += ' --dpdk-extra="--lcores=0@1,1@3,2@5,3@7,4@9,5@11,6@13,7@15,8@17,9@19,10@21"'
         utils.compile_and_run(pane=self.pane,
                 comp_dir=self.tas_config.comp_dir,
                 comp_cmd=self.tas_config.comp_cmd,

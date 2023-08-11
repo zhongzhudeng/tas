@@ -37,7 +37,8 @@ echo $alt_mac
 # Note: vectors=<2 + 2 * queues_nr>
 
 if [[ "$stack" == 'virt-tas' ]]; then
-  taskset -c 22,24,26,28,30,32,34,36,38,40,42 sudo qemu-system-x86_64 \
+  taskset -c 23,25,27,29,31,33,35,37,39,41,43 \
+  sudo qemu-system-x86_64 \
     -nographic -monitor none -serial stdio \
     -machine accel=kvm,type=q35 \
     -cpu host \
@@ -52,7 +53,7 @@ if [[ "$stack" == 'virt-tas' ]]; then
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 elif [[ "$stack" == 'virt-linux' ]]; then
-  taskset -c 0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42 \
+  taskset -c 1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43 \
   sudo qemu-system-x86_64 \
       -nographic -monitor none -serial stdio \
       -machine accel=kvm,type=q35 \
@@ -68,7 +69,7 @@ elif [[ "$stack" == 'virt-linux' ]]; then
       -drive if=virtio,format=raw,file="seed.img" \
       ;
 elif [[ "$stack" == 'ovs-linux' ]]; then
-  taskset -c 0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42 \
+  taskset -c 1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43 \
     sudo qemu-system-x86_64 \
     -nographic -monitor none -serial stdio \
     -machine accel=kvm,type=q35 \
@@ -87,7 +88,7 @@ elif [[ "$stack" == 'ovs-linux' ]]; then
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 elif [[ "$stack" == 'ovs-tas' ]]; then
-  taskset -c 0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42 \
+  taskset -c 1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43 \
   sudo qemu-system-x86_64 \
     -nographic -monitor none -serial stdio \
     -machine accel=kvm,type=q35 \
@@ -106,7 +107,7 @@ elif [[ "$stack" == 'ovs-tas' ]]; then
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 elif [[ "$stack" == 'tap-tas' ]]; then
-  taskset -c 0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42 \
+  taskset -c 1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43 \
   sudo qemu-system-x86_64 \
     -nographic -monitor none -serial stdio \
     -machine accel=kvm,type=q35 \
@@ -124,7 +125,7 @@ elif [[ "$stack" == 'tap-tas' ]]; then
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 elif [[ "$stack" == 'gre' ]]; then
-  taskset -c 0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42 \
+  taskset -c 1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43 \
   sudo qemu-system-x86_64 \
     -nographic -monitor none -serial stdio \
     -machine accel=kvm,type=q35 \
