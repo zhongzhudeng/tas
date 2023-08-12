@@ -862,7 +862,7 @@ static void spend_budget(struct dataplane_context *ctx,
   {
     counter = ctx->vm_counters[vmid];
     vm_cycles = cycles * (counter / ctx->counters_total);
-    __sync_fetch_and_sub(&ctx->budgets[vmid].budget, vm_cycles);
+    ctx->budgets[vmid].budget -= vm_cycles;
     ctx->vm_counters[vmid] = 0;
   }
 
