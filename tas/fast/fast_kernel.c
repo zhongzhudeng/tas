@@ -27,6 +27,7 @@
 #include <rte_config.h>
 
 #include <tas_memif.h>
+#include <virtuoso.h>
 
 #include "internal.h"
 #include "fastemu.h"
@@ -66,14 +67,12 @@ int fast_kernel_poll(struct dataplane_context *ctx,
     dma_read(ktx->msg.packet.addr, len, buf, SP_MEM_ID);
 
     ret = 0;
-    if (config.fp_gre)
-    {
+    #if VIRTUOSO_GRE
       inject_tcp_ts_gre(buf, len, ts, nbh);
-    } else
-    {
+    #else
       inject_tcp_ts(buf, len, ts, nbh);
-    }
-    
+    #endif
+
     tx_send(ctx, nbh, 0, len);
   } else if (ktx->type == FLEXTCP_PL_KTX_PACKET_NOTS) {
     /* send packet without filling in timestamp */

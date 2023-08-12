@@ -32,6 +32,7 @@
 #include <rte_cycles.h>
 
 #include <tas_memif.h>
+#include <virtuoso.h>
 
 #include "internal.h"
 #include "fastemu.h"
@@ -388,13 +389,11 @@ static unsigned poll_rx(struct dataplane_context *ctx, uint32_t ts,
   }
 
   /* look up flow states */
-  if (config.fp_gre)
-  {
+  #if VIRTUOSO_GRE
     fast_flows_packet_fss_gre(ctx, bhs, fss, n);
-  } else
-  {
+  #else
     fast_flows_packet_fss(ctx, bhs, fss, n);
-  }
+  #endif
 
   /* prefetch packet contents (2nd cache line, TS opt overlaps) */
   for (i = 0; i < n; i++)
@@ -403,13 +402,11 @@ static unsigned poll_rx(struct dataplane_context *ctx, uint32_t ts,
   }
 
   /* parse packets */
-  if (config.fp_gre)
-  {
+  #if VIRTUOSO_GRE
     fast_flows_packet_parse_gre(ctx, bhs, fss, tcpopts, n);
-  } else
-  {
+  #else
     fast_flows_packet_parse(ctx, bhs, fss, tcpopts, n);
-  }
+  #endif
 
   for (i = 0; i < n; i++)
   {
@@ -419,13 +416,11 @@ static unsigned poll_rx(struct dataplane_context *ctx, uint32_t ts,
       /* at this point we know fss[i] is a flow state struct */
       fs = fss[i];
       
-      if (config.fp_gre)
-      {
+      #if VIRTUOSO_GRE
         ret = fast_flows_packet_gre(ctx, bhs[i], fss[i], &tcpopts[i], ts);
-      } else
-      {
+      #else
         ret = fast_flows_packet(ctx, bhs[i], fss[i], &tcpopts[i], ts);
-      }
+      #endif
 
       ctx->counters_total += 1;
       ctx->vm_counters[fs->vm_id] += 1;

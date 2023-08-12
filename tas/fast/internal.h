@@ -62,8 +62,6 @@ extern volatile unsigned fp_scale_to;
 #define QMAN_SET_AVAIL    (1 << 3)
 #define QMAN_ADD_AVAIL    (1 << 4)
 
-#define TCP_MSS (1500 - sizeof(struct pkt_gre))
-
 /** Node in a list of out of budget VMs to be activated */
 struct out_of_budget_vm {
   uint32_t vmid;

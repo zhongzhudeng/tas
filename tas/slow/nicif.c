@@ -28,6 +28,7 @@
 #include <unistd.h>
 
 #include <tas.h>
+#include <virtuoso.h>
 #include <tas_memif.h>
 #include <packet_defs.h>
 #include <utils.h>
@@ -880,14 +881,12 @@ static inline int rxq_poll(void)
   switch (type)
   {
   case FLEXTCP_PL_KRX_PACKET:
-    if (config.fp_gre)
-    {
+    #if VIRTUOSO_GRE
       process_packet_gre(buf->buf, krx);
-    } else
-    {
+    #else
       process_packet(buf->buf, krx->msg.packet.len, krx->msg.packet.fn_core,
                     krx->msg.packet.flow_group);
-    }
+    #endif
     break;
 
   default:
@@ -1372,13 +1371,11 @@ static inline int flow_slot_clear(uint32_t f_id, ip_addr_t lip, beui16_t lp,
   uint32_t h, k, j, ffid, eh;
   struct flextcp_pl_flowhte *e;
 
-  if (config.fp_gre)
-  {
+  #if VIRTUOSO_GRE
     h = flow_hash_gre(lp, rp, tid);
-  } else
-  {
+  #else
     h = flow_hash(lip, lp, rip, rp);
-  }
+  #endif
 
   for (j = 0; j < FLEXNIC_PL_FLOWHT_NBSZ; j++)
   {

@@ -63,7 +63,7 @@ static int fast_actx_rxq_probe(struct dataplane_context *ctx, uint32_t id,
     uint16_t vm_id);
     
 
-void fast_appctx_poll_pf_active_vm(struct dataplane_context *ctx, uint32_t vmid)
+void inline fast_appctx_poll_pf_active_vm(struct dataplane_context *ctx, uint32_t vmid)
 {
   uint32_t cid;
   struct polled_vm *act_vm;
@@ -76,7 +76,7 @@ void fast_appctx_poll_pf_active_vm(struct dataplane_context *ctx, uint32_t vmid)
   } while(cid != act_vm->act_ctx_head);
 }
 
-void fast_appctx_poll_pf_active(struct dataplane_context *ctx)
+void inline fast_appctx_poll_pf_active(struct dataplane_context *ctx)
 {
   uint32_t vmid;
 
@@ -87,7 +87,7 @@ void fast_appctx_poll_pf_active(struct dataplane_context *ctx)
   } while (vmid != ctx->act_head);
 } 
 
-void fast_appctx_poll_pf_all_vm(struct dataplane_context *ctx, uint32_t vmid)
+void inline fast_appctx_poll_pf_all_vm(struct dataplane_context *ctx, uint32_t vmid)
 {
   int i;
   uint32_t cid;
@@ -99,7 +99,7 @@ void fast_appctx_poll_pf_all_vm(struct dataplane_context *ctx, uint32_t vmid)
     }
 }
 
-void fast_appctx_poll_pf_all(struct dataplane_context *ctx)
+void inline fast_appctx_poll_pf_all(struct dataplane_context *ctx)
 {
   unsigned int i;
   uint32_t vmid;
@@ -111,7 +111,7 @@ void fast_appctx_poll_pf_all(struct dataplane_context *ctx)
   }
 }
 
-static void fast_appctx_poll_pf(struct dataplane_context *ctx, uint32_t cid, 
+static void inline fast_appctx_poll_pf(struct dataplane_context *ctx, uint32_t cid, 
     uint16_t vmid)
 {
   struct flextcp_pl_appctx *actx = &fp_state->appctx[ctx->id][vmid][cid];
@@ -150,7 +150,7 @@ void fast_appctx_poll_fetch_active_ctx(struct dataplane_context *ctx,
   }
 }
 
-void fast_appctx_poll_fetch_active_vm(struct dataplane_context *ctx, 
+void inline fast_appctx_poll_fetch_active_vm(struct dataplane_context *ctx, 
     struct polled_vm *act_vm, uint16_t *k, uint16_t max,
     unsigned *total, int *n_rem, struct polled_context *rem_ctxs[BATCH_SIZE],
     void *aqes[BATCH_SIZE])
@@ -240,7 +240,7 @@ int fast_appctx_poll_fetch_active(struct dataplane_context *ctx, uint16_t max,
   return k;
 }
 
-int fast_appctx_poll_fetch_all_ctx(struct dataplane_context *ctx, 
+int inline fast_appctx_poll_fetch_all_ctx(struct dataplane_context *ctx, 
     struct polled_vm *p_vm, struct polled_context *p_ctx, 
     uint32_t vmid, uint32_t ctxid, uint16_t *k, uint16_t max,
     unsigned *total, void *aqes[BATCH_SIZE])
@@ -276,7 +276,7 @@ int fast_appctx_poll_fetch_all_ctx(struct dataplane_context *ctx,
   return is_vm_active;
 }
 
-void fast_appctx_poll_fetch_all_vm(struct dataplane_context *ctx, 
+void inline fast_appctx_poll_fetch_all_vm(struct dataplane_context *ctx, 
     uint32_t vmid, uint16_t *k, uint16_t max,
     unsigned *total, void *aqes[BATCH_SIZE])
 {
@@ -415,7 +415,7 @@ static int fast_appctx_poll_fetch(struct dataplane_context *ctx, uint32_t actx_i
   return 0;
 }
 
-int fast_appctx_poll_bump(struct dataplane_context *ctx, void *pqe,
+int inline fast_appctx_poll_bump(struct dataplane_context *ctx, void *pqe,
     struct network_buf_handle *nbh, uint32_t ts)
 {
   int ret;
@@ -502,7 +502,7 @@ static int fast_actx_rxq_probe(struct dataplane_context *ctx, uint32_t cid,
   return 0;
 }
 
-void fast_actx_rxq_probe_active_vm(struct dataplane_context *ctx, 
+void inline fast_actx_rxq_probe_active_vm(struct dataplane_context *ctx, 
     struct polled_vm *act_vm)
 {
   uint32_t cid, vmid;
@@ -515,7 +515,7 @@ void fast_actx_rxq_probe_active_vm(struct dataplane_context *ctx,
   } while(cid != act_vm->act_ctx_head); 
 }
 
-void fast_actx_rxq_probe_active(struct dataplane_context *ctx)
+void inline fast_actx_rxq_probe_active(struct dataplane_context *ctx)
 {
   uint32_t vmid;
   struct polled_vm *act_vm;
@@ -528,7 +528,7 @@ void fast_actx_rxq_probe_active(struct dataplane_context *ctx)
   } while (vmid != ctx->act_head);
 }
 
-void fast_actx_rxq_probe_all_vm(struct dataplane_context *ctx, uint32_t vmid)
+void inline fast_actx_rxq_probe_all_vm(struct dataplane_context *ctx, uint32_t vmid)
 {
   unsigned int n;
 
@@ -538,7 +538,7 @@ void fast_actx_rxq_probe_all_vm(struct dataplane_context *ctx, uint32_t vmid)
   }
 }
 
-void fast_actx_rxq_probe_all(struct dataplane_context *ctx)
+void inline fast_actx_rxq_probe_all(struct dataplane_context *ctx)
 {
   uint32_t vmid;
 

@@ -33,6 +33,7 @@
 
 #include <utils.h>
 #include <tas.h>
+#include <virtuoso.h>
 #include "internal.h"
 
 static void slowpath_block(uint32_t cur_ts);
@@ -145,8 +146,9 @@ int slowpath_main(int threads_launched)
     
     cur_ts = util_timeout_time_us();
     n += nicif_poll();
-    if (config.fp_gre)
+    #if VIRTUOSO_GRE
       n += ovs_poll();
+    #endif
     n += cc_poll(cur_ts);
     n += appif_poll();
     n += kni_poll();

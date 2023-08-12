@@ -128,8 +128,6 @@ struct configuration {
   uint32_t fp_autoscale;
   /** FP: rss enabled */
   uint32_t fp_rss;
-  /** FP: GRE tunneling enabled */
-  uint32_t fp_gre;
   /** FP: use huge pages for internal and buffer memory */
   uint32_t fp_hugepages;
   /** FP: enable vlan stripping */

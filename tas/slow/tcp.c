@@ -33,13 +33,15 @@
 #include <rte_hash_crc.h>
 
 #include <tas.h>
+#include <virtuoso.h>
 #include <packet_defs.h>
 #include <utils.h>
 #include <utils_rng.h>
 #include "internal.h"
 #include "appif.h"
 
-#define TCP_MSS (1500 - sizeof(struct pkt_gre))
+// #define TCP_MSS (1500 - sizeof(struct pkt_gre))
+#define TCP_MSS 1412
 #define TCP_HTSIZE 4096
 
 #define PORT_MAX ((1u << 16) - 1)
@@ -177,7 +179,7 @@ int tcp_open(struct app_context *ctx,
 {
   int ret;
   struct connection *conn;
-  uint16_t local_port, vmid = ctx->app->vm_id;
+  uint16_t local_port;
 
   /* allocate connection struct */
   if ((conn = conn_alloc(ctx->app->vm_id)) == NULL) {
@@ -207,27 +209,26 @@ int tcp_open(struct app_context *ctx,
   conn->db_id = db_id;
   conn->flags = 0;
 
-  if (config.fp_gre) {
+  #if VIRTUOSO_GRE
     conn->in_remote_ip = remote_ip;
     conn->status = CONN_OVS_PENDING;
     /* These fields are 0 because we are waiting for OvS */
     conn->tunnel_id = 0;
     conn->in_local_ip = 0;
     conn->out_remote_ip = 0;
-  } else
-  {
+  #else
     conn->out_remote_ip = remote_ip;
     conn->status = CONN_ARP_PENDING;
     conn->comp.notify_fd = -1;
     conn->comp.status = 0;
-  }
+  #endif
 
   conn->comp.q = &conn_async_q;
   conn->comp.notify_fd = -1;
   conn->comp.status = 0;
 
-  if (config.fp_gre)
-  {
+  #if VIRTUOSO_GRE
+    uint16_t vmid = ctx->app->vm_id
     ret = send_ovs_fake_packet(remote_ip, remote_port, local_port, vmid, conn,
         TAS_TCP_SYN | TAS_TCP_ECE | TAS_TCP_CWR, 1, 0, TCP_MSS);
 
@@ -237,7 +238,7 @@ int tcp_open(struct app_context *ctx,
       conn_free(conn);
       return -1;
     }
-  } else {
+  #else
     ret = routing_resolve(&conn->comp, remote_ip, &conn->remote_mac);
     if (ret < 0) {
       fprintf(stderr, "tcp_open: nicif_arp failed\n");
@@ -255,7 +256,7 @@ int tcp_open(struct app_context *ctx,
     }
 
     ports[local_port] = (uintptr_t) conn | PORT_TYPE_CONN;
-  }
+  #endif
 
   *pconn = conn;
 
@@ -434,13 +435,11 @@ int tcp_accept(struct app_context *ctx, uint64_t opaque,
   }
 
   if (listen->backlog_used > 0) {
-    if (config.fp_gre)
-    {
+    #if VIRTUOSO_GRE
       listener_accept_gre(listen);
-    } else
-    {
+    #else
       listener_accept(listen);
-    }
+    #endif
   }
   return 0;
 }
@@ -550,13 +549,11 @@ int tcp_close(struct connection *conn)
   conn->local_seq = tx_seq;
 
   if (!tx_c || !rx_c) {
-    if (config.fp_gre)
-    {
+    #if VIRTUOSO_GRE
       send_control_gre(conn, TAS_TCP_RST, 0, 0, 0);
-    } else
-    {
+    #else
       send_control(conn, TAS_TCP_RST, 0, 0, 0);
-    }
+    #endif
   }
 
   cc_conn_remove(conn);
@@ -609,13 +606,11 @@ void tcp_timeout(struct timeout *to, enum timeout_type type)
   conn_timeout_arm(c, TO_TCP_HANDSHAKE);
 
   /* re-send SYN packet */
-  if (config.fp_gre)
-  {
+  #if VIRTUOSO_GRE
     send_control_gre(c, TAS_TCP_SYN | TAS_TCP_ECE | TAS_TCP_CWR, 1, 0, TCP_MSS);
-  } else
-  {
+  #else
     send_control(c, TAS_TCP_SYN | TAS_TCP_ECE | TAS_TCP_CWR, 1, 0, TCP_MSS);
-  }
+  #endif
 }
 
 static void conn_packet(struct connection *c, const struct pkt_tcp *p,
@@ -724,13 +719,11 @@ static int conn_arp_done(struct connection *conn)
   conn_timeout_arm(conn, TO_TCP_HANDSHAKE);
 
   /* send SYN */
-  if (config.fp_gre)
-  {
+  #if VIRTUOSO_GRE
     send_control_gre(conn, TAS_TCP_SYN | TAS_TCP_ECE | TAS_TCP_CWR, 1, 0, TCP_MSS);
-  } else
-  {
+  #else
     send_control(conn, TAS_TCP_SYN | TAS_TCP_ECE | TAS_TCP_CWR, 1, 0, TCP_MSS);
-  }
+  #endif
 
   CONN_DEBUG0(conn, "SYN SENT\n");
   return 0;
@@ -873,13 +866,11 @@ static int conn_reg_synack(struct connection *c)
   }
 
   /* send ACK */
-  if (config.fp_gre)
-  {
+  #if VIRTUOSO_GRE
     send_control_gre(c, TAS_TCP_SYN | TAS_TCP_ACK | ecn_flags, 1, c->syn_ts, TCP_MSS);
-  } else
-  {
+  #else
     send_control(c, TAS_TCP_SYN | TAS_TCP_ACK | ecn_flags, 1, c->syn_ts, TCP_MSS);
-  }
+  #endif
 
   appif_accept_conn(c, 0);
 
@@ -962,15 +953,13 @@ static void conn_register(struct connection *conn)
 {
   uint32_t h;
 
-  if (config.fp_gre)
-  {
+  #if VIRTUOSO_GRE
     h = conn_hash_gre(conn->tunnel_id, conn->local_port, conn->remote_port)
         % TCP_HTSIZE;
-  } else
-  {
+  #else
     h = conn_hash(conn->out_local_ip, conn->out_remote_ip, conn->local_port,
         conn->remote_port) % TCP_HTSIZE;
-  }
+  #endif
 
   conn->ht_next = tcp_hashtable[h];
   tcp_hashtable[h] = conn;
@@ -981,15 +970,13 @@ static void conn_unregister(struct connection *conn)
   struct connection *cp = NULL;
   uint32_t h;
 
-  if (config.fp_gre)
-  {
+  #if VIRTUOSO_GRE
     h = conn_hash_gre(conn->tunnel_id, conn->local_port, conn->remote_port)
         % TCP_HTSIZE;
-  } else
-  {
+  #else
     h = conn_hash(conn->out_local_ip, conn->out_remote_ip, conn->local_port,
         conn->remote_port) % TCP_HTSIZE;
-  }
+  #endif
 
   if (tcp_hashtable[h] == conn) {
     tcp_hashtable[h] = conn->ht_next;
