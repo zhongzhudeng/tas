@@ -32,10 +32,10 @@ class Defaults:
 
         # Mellanox interfaces on client and server machine
         self.client_interface = 'enp216s0f0np0'
-        self.client_interface_pci = "0000:3b:00.0"
+        self.client_interface_pci = "0000:d8:00.0"
         self.client_mac = "b8:59:9f:c4:af:e6"
         self.server_interface = 'enp216s0f0np0'
-        self.server_interface_pci = "0000:3b:00.0"
+        self.server_interface_pci = "0000:d8:00.0"
         self.server_mac = "b8:59:9f:c4:af:66"
 
         ### INTERNAL VM CONFIGS ###
@@ -76,7 +76,7 @@ class MachineConfig:
 
 class TasConfig:
     def __init__(self, pane, machine_config, project_dir, ip, n_cores, 
-            dpdk_extra="3b:00.0", cc="timely", cc_timely_min_rtt="15"):
+            dpdk_extra="d8:00.0", cc="timely", cc_timely_min_rtt="15"):
         self.name = "server" if machine_config. is_server else "client"
         
         self.project_dir = project_dir
@@ -95,7 +95,7 @@ class TasConfig:
         self.lib_so = self.comp_dir + 'lib/libtas_interpose.so'
         self.exec_file = self.comp_dir + '/tas/tas'
         self.args = '--ip-addr={}/24 --fp-cores-max={}'.format(ip, n_cores) + \
-            ' --fp-no-autoscale --fp-no-ints --fp-no-xsumoffload' + \
+            ' --fp-no-autoscale --fp-no-ints' + \
             ' --cc={}'.format(cc) + \
             ' --dpdk-extra="-a{}"'.format(dpdk_extra)   
         
