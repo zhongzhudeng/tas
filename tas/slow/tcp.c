@@ -40,7 +40,6 @@
 #include "internal.h"
 #include "appif.h"
 
-// #define TCP_MSS (1500 - sizeof(struct pkt_gre))
 #define TCP_MSS 1412
 #define TCP_HTSIZE 4096
 
@@ -228,7 +227,7 @@ int tcp_open(struct app_context *ctx,
   conn->comp.status = 0;
 
   #if VIRTUOSO_GRE
-    uint16_t vmid = ctx->app->vm_id
+    uint16_t vmid = ctx->app->vm_id;
     ret = send_ovs_fake_packet(remote_ip, remote_port, local_port, vmid, conn,
         TAS_TCP_SYN | TAS_TCP_ECE | TAS_TCP_CWR, 1, 0, TCP_MSS);
 
