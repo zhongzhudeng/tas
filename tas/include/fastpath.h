@@ -57,8 +57,6 @@ struct qman_thread {
   /* modified by owner thread */
   /************************************/
   struct vm_qman *vqman;
-  uint32_t ts_real;
-  uint32_t ts_virtual;
   struct utils_rng rng;
 };
 
