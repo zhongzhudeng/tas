@@ -103,6 +103,8 @@ struct skiplist_fstate {
   uint32_t cur_ts;
   /* Signals if any of the flows for a VM was rate limited */
   uint8_t rate_limited;
+  /** The original number of packets requested. Probably batch size */
+  unsigned int orig_num;
 };
 
 /** Queue state for flow */
@@ -423,6 +425,7 @@ static inline int vm_qman_poll(struct dataplane_context *ctx,
     {
       fqman = vq->fqman;
       skpl_state->rate_limited = 0;
+      skpl_state->orig_num = num; 
       bytes_sum = 0;
       x = flow_qman_poll(t, vq, fqman, skpl_state, num - cnt, 
           q_ids + cnt, q_bytes + cnt, &bytes_sum);
@@ -486,7 +489,6 @@ static inline int vm_qman_poll(struct dataplane_context *ctx,
       bytes_sum = 0;
       x = flow_qman_poll(t, vq, fqman, skpl_state,
           num - cnt, q_ids + cnt, q_bytes + cnt, &bytes_sum);
-
       cnt += x;
 
       // Update vm_id list
@@ -883,7 +885,7 @@ static inline unsigned flow_poll_skiplist(struct qman_thread *t,
   }
 
   /* if we reached the limit, update the virtual timestamp correctly */
-  if (cnt == num) {
+  if (cnt == skpl_state->orig_num) {
     idx = fqman->head_idx[0];
     if (idx != IDXLIST_INVAL &&
         timestamp_lessthaneq(vqueue, fqman->queues[idx].next_ts, max_vts))
