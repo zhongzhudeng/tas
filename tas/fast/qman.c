@@ -209,8 +209,6 @@ int tas_qman_poll(struct dataplane_context *ctx, unsigned num, unsigned *vm_ids,
   int ret;
   struct skiplist_fstate skpl_state;
 
-  skpl_state.cur_ts = timestamp();
-
   ret = vm_qman_poll(ctx, &skpl_state, num, vm_ids, q_ids, q_bytes);
   return ret;
 }
@@ -635,6 +633,8 @@ static inline int flow_qman_poll(struct qman_thread *t, struct vm_queue *vqueue,
 
 {
   unsigned x, y;
+  skpl_state->cur_ts = timestamp();
+
   /* poll nolimit list and skiplist alternating the order between */
   if (fqman->nolimit_first) {
     x = flow_poll_nolimit(t, vqueue, fqman, skpl_state->cur_ts, 
@@ -897,7 +897,7 @@ static inline unsigned flow_poll_skiplist(struct qman_thread *t,
     }
   }
 
-  vqueue->ts_real = cur_ts;
+  vqueue->ts_real = skpl_state->cur_ts;
   return cnt;
 }
 

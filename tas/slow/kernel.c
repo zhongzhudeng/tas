@@ -172,7 +172,7 @@ int slowpath_main(int threads_launched)
 
       if (!config.quiet)
       {
-        printf("stats: drops=%" PRIu64 " k_rexmit=%" PRIu64 " ecn=%" PRIu64 " acks=%" PRIu64 "\n",
+        printf("stats: drops=%" PRIu64 " k_rexmit=%" PRIu64 " ecn=%" PRIu64 " acks=%" PRIu64"\n",
                kstats.drops, kstats.kernel_rexmit, kstats.ecn_marked, kstats.acks);
         fflush(stdout);
       }

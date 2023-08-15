@@ -175,6 +175,7 @@ int dataplane_context_init(struct dataplane_context *ctx)
       polled_ctx_init(p_ctx, j, i);
     }
   }
+  
   ctx->counters_total = 0;
   ctx->poll_rounds = 0;
   ctx->poll_next_vm = 0;
