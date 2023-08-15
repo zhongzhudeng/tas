@@ -176,13 +176,13 @@ int fast_appctx_poll_fetch_active(struct dataplane_context *ctx, uint16_t max,
     unsigned *total, int *n_rem, struct polled_context *rem_ctxs[BATCH_SIZE], 
     void *aqes[BATCH_SIZE])
 {
-  uint16_t k = 0;
+  uint16_t temp_k, k = 0;
   uint32_t vmid;
   unsigned total_prev;
   struct polled_vm *act_vm;
-  struct out_of_budget_vm *oob_vm, *prev_oob_vm;
-  struct out_of_budget_vm *oob_head = NULL;
-  struct out_of_budget_vm *oob_tail = NULL;
+
+  int oob_i = 0, oob_n;
+  int oob_vms[FLEXNIC_PL_VMST_NUM];
   
   vmid = ctx->act_head;
   do {
@@ -201,40 +201,24 @@ int fast_appctx_poll_fetch_active(struct dataplane_context *ctx, uint16_t max,
       }
     } else
     {
-      oob_vm = malloc(sizeof(struct out_of_budget_vm));
-      oob_vm->vmid = vmid;
-      oob_vm->next = NULL;
-
-      if (oob_head == NULL) 
-      {
-        oob_head = oob_vm;
-        oob_tail = oob_vm;
-      }
-      else {
-        oob_tail->next = oob_vm;
-        oob_tail = oob_vm;
-      }
+      oob_vms[oob_i] = vmid;
+      oob_i++;
     }
 
     vmid = ctx->polled_vms[vmid].next; 
   } while (vmid != ctx->act_head && k < max);
 
-  oob_vm = oob_head;
-  int o_k = k;
-  while(oob_vm != NULL)
+  oob_n = oob_i;
+  temp_k = k;
+  for (oob_i = 0; oob_i < oob_n && temp_k == 0; oob_i++)
   {
-    vmid = oob_vm->vmid;
+    vmid = oob_vms[oob_i];
     act_vm = &ctx->polled_vms[vmid];
-
-    if (k < max && o_k == 0)
+    if (k < max)
     {
       fast_appctx_poll_fetch_active_vm(ctx, act_vm, &k, max, total, n_rem, 
           rem_ctxs, aqes);
     }
-
-    prev_oob_vm = oob_vm;
-    oob_vm = oob_vm->next;
-    free(prev_oob_vm);
   }
 
   return k;
@@ -309,11 +293,11 @@ int fast_appctx_poll_fetch_all(struct dataplane_context *ctx, uint16_t max,
     unsigned *total, void *aqes[BATCH_SIZE])
 {
   unsigned i_v, total_prev;
-  uint16_t k = 0;
+  uint16_t temp_k, k = 0;
   uint32_t vmid;
-  struct out_of_budget_vm *oob_vm, *prev_oob_vm;
-  struct out_of_budget_vm *oob_head = NULL;
-  struct out_of_budget_vm *oob_tail = NULL;
+
+  int oob_n, oob_i = 0;
+  int oob_vms[FLEXNIC_PL_VMST_NUM];
 
   for (i_v = 0; i_v < FLEXNIC_PL_VMST_NUM && k < max; i_v++)
   {
@@ -332,37 +316,21 @@ int fast_appctx_poll_fetch_all(struct dataplane_context *ctx, uint16_t max,
 
     } else 
     {
-      oob_vm = malloc(sizeof(struct out_of_budget_vm));
-      oob_vm->vmid = vmid;
-      oob_vm->next = NULL;
-
-      if (oob_head == NULL) 
-      {
-        oob_head = oob_vm;
-        oob_tail = oob_vm;
-      }
-      else {
-        oob_tail->next = oob_vm;
-        oob_tail = oob_vm;
-      }
+      oob_vms[oob_i] = vmid;
+      oob_i++;
     }
     ctx->poll_next_vm = (ctx->poll_next_vm + 1) % (FLEXNIC_PL_VMST_NUM);
   }
 
-  oob_vm = oob_head;
-  int o_k = k;
-  while(oob_vm != NULL)
+  temp_k = k;
+  oob_n = oob_i;
+  for (oob_i = 0; oob_i < oob_n && temp_k == 0; oob_i++)
   {
-    vmid = oob_vm->vmid;
-    
-    if (k < max && o_k == 0)
+    vmid = oob_vms[oob_i];
+    if (k < max)
     {
       fast_appctx_poll_fetch_all_vm(ctx, vmid, &k, max, total, aqes);
     }
-
-    prev_oob_vm = oob_vm;
-    oob_vm = oob_vm->next;
-    free(prev_oob_vm);
 
     ctx->poll_next_vm = (ctx->poll_next_vm + 1) % (FLEXNIC_PL_VMST_NUM);
   }
