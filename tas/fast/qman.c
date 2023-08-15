@@ -80,6 +80,8 @@ struct flow_qman {
 
 /** Queue state for a virtual machine */
 struct vm_queue {
+  /** Id of this VM */
+  uint32_t id;
   /** Next pointer */
   uint32_t next_idx;
   /** Pointer to container with flows for this VM */
@@ -148,9 +150,10 @@ static inline void vm_queue_activate(struct vm_qman *vqman,
 
 /** Qman management functions for flows */
 static inline int flowcont_init(struct vm_queue *vq);
-static inline int flow_qman_poll(struct qman_thread *t, struct vm_queue *vqueue,
-    struct flow_qman *fqman, struct skiplist_fstate *skpl_state,
-    unsigned num, unsigned *q_ids, uint16_t *q_bytes, int *bytes_sum);
+static inline int flow_qman_poll(struct qman_thread *t, 
+    struct vm_queue *vqueue, struct flow_qman *fqman, 
+    struct skiplist_fstate *skpl_state, unsigned num, unsigned *q_ids,
+    uint16_t *q_bytes, uint32_t *vm_ids, int *bytes_sum);
 int flow_qman_set(struct qman_thread *t, struct vm_queue *vq,
     struct flow_qman *fqman, uint32_t flow_id,
     uint32_t rate, uint32_t avail, uint16_t max_chunk, uint8_t flags);
@@ -164,7 +167,7 @@ static inline void flow_queue_activate_nolimit(struct flow_qman *fqman,
 static inline unsigned flow_poll_nolimit(struct qman_thread *t, 
     struct vm_queue *vqueue, struct flow_qman *fqman, 
     uint32_t cur_ts, unsigned num, unsigned *q_ids, 
-    uint16_t *q_bytes, int *bytes_sum);
+    uint16_t *q_bytes, uint32_t *vm_ids, int *bytes_sum);
 /** Add queue to the flow skip list list */
 static inline void flow_queue_activate_skiplist(struct qman_thread *t,
     struct vm_queue *vq, struct flow_qman *fqman, 
@@ -173,13 +176,13 @@ static inline unsigned flow_poll_skiplist(struct qman_thread *t,
     struct vm_queue *vqueue, struct flow_qman *fqman,
     struct skiplist_fstate *skpl_state,
     unsigned num, unsigned *q_ids, 
-    uint16_t *q_bytes, int *bytes_sum);
+    uint16_t *q_bytes, uint32_t *vm_ids, int *bytes_sum);
 static inline uint8_t flow_queue_level(struct qman_thread *t, 
     struct flow_qman *fqman);
 static inline void flow_queue_fire(struct qman_thread *t, 
     struct vm_queue *vqueue, struct flow_qman *fqman,
     struct flow_queue *q, uint32_t idx, unsigned *q_id, 
-    uint16_t *q_bytes, int *bytes_sum);
+    uint16_t *q_bytes, uint32_t *vm_ids, int *bytes_sum);
 static inline void flow_queue_activate(struct qman_thread *t, struct vm_queue *vq,
     struct flow_qman *fqman, struct flow_queue *q, uint32_t idx);
 static inline uint32_t flow_queue_new_ts(struct vm_queue *vq, struct flow_queue *q,
@@ -369,6 +372,7 @@ int vmcont_init(struct qman_thread *t)
   {
     vq = &vqman->queues[i];
     vq->avail = 0;
+    vq->id = i;
     vq->readded = 0;
     vq->ts_virtual = 0;
     vq->ts_real = timestamp();
@@ -390,16 +394,15 @@ static inline int vm_qman_poll(struct dataplane_context *ctx,
 {
   uint32_t idx;
   uint8_t flag_readded = 0;
-  int i, cnt, x, bytes_sum;
+  int cnt, temp_cnt, x, bytes_sum;
   struct qman_thread *t = &ctx->qman;
   struct vm_budget *budgets = ctx->budgets;
   struct vm_qman *vqman = t->vqman;
   struct flow_qman *fqman;
   struct vm_queue *vq;
   
-  struct out_of_budget_vm *oob_vm, *prev_oob_vm;
-  struct out_of_budget_vm *oob_head = NULL;
-  struct out_of_budget_vm *oob_tail = NULL;
+  int oob_n, oob_i = 0;
+  struct vm_queue *oob_vms[FLEXNIC_PL_VMST_NUM];
 
   for (cnt = 0; cnt < num && vqman->head_idx != IDXLIST_INVAL;)
   {
@@ -413,7 +416,6 @@ static inline int vm_qman_poll(struct dataplane_context *ctx,
    
     vqman->head_idx = vq->next_idx;
     vq->flags &= ~FLAG_INNOLIMITL;
-
     if (vq->next_idx == IDXLIST_INVAL)
     {
       vqman->tail_idx = IDXLIST_INVAL;
@@ -426,15 +428,8 @@ static inline int vm_qman_poll(struct dataplane_context *ctx,
       skpl_state->orig_num = num; 
       bytes_sum = 0;
       x = flow_qman_poll(t, vq, fqman, skpl_state, num - cnt, 
-          q_ids + cnt, q_bytes + cnt, &bytes_sum);
-
+          q_ids + cnt, q_bytes + cnt, vm_ids + cnt, &bytes_sum);
       cnt += x;
-
-      // Update vm_id list
-      for (i = cnt - x; i < cnt; i++)
-      {
-        vm_ids[i] = idx;
-      }
 
       if (vq->avail > 0 && skpl_state->rate_limited && flag_readded == 0)
       {
@@ -453,65 +448,169 @@ static inline int vm_qman_poll(struct dataplane_context *ctx,
     {
       if (vq->avail > 0)
       {
-        oob_vm = malloc(sizeof(struct out_of_budget_vm));
-        oob_vm->vmid = idx;
-        oob_vm->next = NULL;
-
-        if (oob_head == NULL) 
-        {
-          oob_head = oob_vm;
-          oob_tail = oob_vm;
-        }
-        else {
-          oob_tail->next = oob_vm;
-          oob_tail = oob_vm;
-        }
+        oob_vms[oob_i] = vq;
+        oob_i++;
       }
     }
   }
 
-  /* Enqueue VMs out of budget that still have packets to send*/
-  oob_vm = oob_head;
-  int o_cnt = cnt;
-  while(oob_vm != NULL)
+  oob_n = oob_i;
+  temp_cnt = cnt;
+  for (oob_i = 0; oob_i < oob_n; oob_i++)
   {
-    idx = oob_vm->vmid;
-    struct vm_queue *vq = &vqman->queues[idx];
+    vq = oob_vms[oob_i];
     vq->flags &= ~FLAG_INNOLIMITL;
 
-
-    if (cnt < num && o_cnt == 0)
+    /** Only serve out of budget VMs if nothing in batch */
+    if (cnt < num && temp_cnt == 0)
     {
       fqman = vq->fqman;
       skpl_state->rate_limited = 0;
       bytes_sum = 0;
       x = flow_qman_poll(t, vq, fqman, skpl_state,
-          num - cnt, q_ids + cnt, q_bytes + cnt, &bytes_sum);
+          num - cnt, q_ids + cnt, q_bytes + cnt, vm_ids + cnt, 
+          &bytes_sum);
       cnt += x;
-
-      // Update vm_id list
-      for (i = cnt - x; i < cnt; i++)
-      {
-        vm_ids[i] = idx;
-      }
-
       if (vq->avail > 0)
       {
-        vm_queue_fire(vqman, vq, idx, q_bytes, bytes_sum, cnt - x, cnt);
+        vm_queue_fire(vqman, vq, vq->id, q_bytes, bytes_sum, cnt - x, cnt);
       }
-    } else 
+    } else
     {
-      vm_queue_activate(vqman, &vqman->queues[idx], idx);
+      vm_queue_activate(vqman, vq, vq->id);
     }
-
-    prev_oob_vm = oob_vm;
-    oob_vm = oob_vm->next;
-    free(prev_oob_vm);
-
   }
 
   return cnt;
 }
+
+// static inline int vm_qman_poll(struct dataplane_context *ctx,
+//     struct skiplist_fstate *skpl_state, unsigned num, 
+//     unsigned *vm_ids, unsigned *q_ids, uint16_t *q_bytes)
+// {
+//   uint32_t idx;
+//   uint8_t flag_readded = 0;
+//   int i, cnt, x, bytes_sum;
+//   struct qman_thread *t = &ctx->qman;
+//   struct vm_budget *budgets = ctx->budgets;
+//   struct vm_qman *vqman = t->vqman;
+//   struct flow_qman *fqman;
+//   struct vm_queue *vq;
+  
+//   struct out_of_budget_vm *oob_vm, *prev_oob_vm;
+//   struct out_of_budget_vm *oob_head = NULL;
+//   struct out_of_budget_vm *oob_tail = NULL;
+
+//   for (cnt = 0; cnt < num && vqman->head_idx != IDXLIST_INVAL;)
+//   {
+//     idx = vqman->head_idx;
+//     vq = &vqman->queues[idx];
+//     if (vq->readded)
+//     {
+//       vq->readded = 0;
+//       break;
+//     }
+   
+//     vqman->head_idx = vq->next_idx;
+//     vq->flags &= ~FLAG_INNOLIMITL;
+
+//     if (vq->next_idx == IDXLIST_INVAL)
+//     {
+//       vqman->tail_idx = IDXLIST_INVAL;
+//     }
+
+//     if (budgets[idx].budget > 0)
+//     {
+//       fqman = vq->fqman;
+//       skpl_state->rate_limited = 0;
+//       skpl_state->orig_num = num; 
+//       bytes_sum = 0;
+//       x = flow_qman_poll(t, vq, fqman, skpl_state, num - cnt, 
+//           q_ids + cnt, q_bytes + cnt, &bytes_sum);
+
+//       cnt += x;
+
+//       // Update vm_id list
+//       for (i = cnt - x; i < cnt; i++)
+//       {
+//         vm_ids[i] = idx;
+//       }
+
+//       if (vq->avail > 0 && skpl_state->rate_limited && flag_readded == 0)
+//       {
+//         vm_queue_fire(vqman, vq, idx, q_bytes, bytes_sum, cnt - x, cnt);
+//         vq->readded = 1;
+//         flag_readded = 1;
+//       } else if (vq->avail > 0)
+//       {
+//         vm_queue_fire(vqman, vq, idx, q_bytes, bytes_sum, cnt - x, cnt);
+//       }
+
+//       ctx->vm_counters[idx] += 1;
+//       ctx->counters_total += 1;
+
+//     } else
+//     {
+//       if (vq->avail > 0)
+//       {
+//         oob_vm = malloc(sizeof(struct out_of_budget_vm));
+//         oob_vm->vmid = idx;
+//         oob_vm->next = NULL;
+
+//         if (oob_head == NULL) 
+//         {
+//           oob_head = oob_vm;
+//           oob_tail = oob_vm;
+//         }
+//         else {
+//           oob_tail->next = oob_vm;
+//           oob_tail = oob_vm;
+//         }
+//       }
+//     }
+//   }
+
+//   /* Enqueue VMs out of budget that still have packets to send*/
+//   oob_vm = oob_head;
+//   int o_cnt = cnt;
+//   while(oob_vm != NULL)
+//   {
+//     idx = oob_vm->vmid;
+//     struct vm_queue *vq = &vqman->queues[idx];
+//     vq->flags &= ~FLAG_INNOLIMITL;
+
+
+//     if (cnt < num && o_cnt == 0)
+//     {
+//       fqman = vq->fqman;
+//       skpl_state->rate_limited = 0;
+//       bytes_sum = 0;
+//       x = flow_qman_poll(t, vq, fqman, skpl_state,
+//           num - cnt, q_ids + cnt, q_bytes + cnt, &bytes_sum);
+//       cnt += x;
+
+//       // Update vm_id list
+//       for (i = cnt - x; i < cnt; i++)
+//       {
+//         vm_ids[i] = idx;
+//       }
+
+//       if (vq->avail > 0)
+//       {
+//         vm_queue_fire(vqman, vq, idx, q_bytes, bytes_sum, cnt - x, cnt);
+//       }
+//     } else 
+//     {
+//       vm_queue_activate(vqman, &vqman->queues[idx], idx);
+//     }
+
+//     prev_oob_vm = oob_vm;
+//     oob_vm = oob_vm->next;
+//     free(prev_oob_vm);
+//   }
+
+//   return cnt;
+// }
 
 static inline int vm_qman_set(struct qman_thread *t, 
     uint32_t vm_id, uint32_t flow_id, 
@@ -629,7 +728,8 @@ int flowcont_init(struct vm_queue *vq)
 
 static inline int flow_qman_poll(struct qman_thread *t, struct vm_queue *vqueue, 
     struct flow_qman *fqman, struct skiplist_fstate *skpl_state,
-    unsigned num, unsigned *q_ids, uint16_t *q_bytes, int *bytes_sum)
+    unsigned num, unsigned *q_ids, uint16_t *q_bytes, uint32_t *vm_ids,
+    int *bytes_sum)
 
 {
   unsigned x, y;
@@ -638,14 +738,14 @@ static inline int flow_qman_poll(struct qman_thread *t, struct vm_queue *vqueue,
   /* poll nolimit list and skiplist alternating the order between */
   if (fqman->nolimit_first) {
     x = flow_poll_nolimit(t, vqueue, fqman, skpl_state->cur_ts, 
-        num, q_ids, q_bytes, bytes_sum);
+        num, q_ids, q_bytes, vm_ids, bytes_sum);
     y = flow_poll_skiplist(t, vqueue, fqman, skpl_state,
-        num - x, q_ids + x, q_bytes + x, bytes_sum);
+        num - x, q_ids + x, q_bytes + x, vm_ids + x, bytes_sum);
   } else {
     x = flow_poll_skiplist(t, vqueue, fqman, skpl_state,
-        num, q_ids, q_bytes, bytes_sum);
+        num, q_ids, q_bytes, vm_ids, bytes_sum);
     y = flow_poll_nolimit(t, vqueue, fqman, skpl_state->cur_ts, 
-        num - x, q_ids + x, q_bytes + x, bytes_sum);
+        num - x, q_ids + x, q_bytes + x, vm_ids + x, bytes_sum);
   }
   fqman->nolimit_first = !fqman->nolimit_first;
 
@@ -736,9 +836,10 @@ static inline void flow_queue_activate_nolimit(struct flow_qman *fqman,
 }
 
 /** Poll no-limit queues for flows */
-static inline unsigned flow_poll_nolimit(struct qman_thread *t, struct vm_queue *vqueue,
-    struct flow_qman *fqman, uint32_t cur_ts, unsigned num,
-    unsigned *q_ids, uint16_t *q_bytes, int *bytes_sum)
+static inline unsigned flow_poll_nolimit(struct qman_thread *t, 
+    struct vm_queue *vqueue, struct flow_qman *fqman, 
+    uint32_t cur_ts, unsigned num, unsigned *q_ids, 
+    uint16_t *q_bytes, uint32_t *vm_ids, int *bytes_sum)
 {
   unsigned cnt;
   struct flow_queue *q;
@@ -756,7 +857,8 @@ static inline unsigned flow_poll_nolimit(struct qman_thread *t, struct vm_queue 
     dprintf("flow_poll_nolimit: t=%p q=%p idx=%u avail=%u rate=%u flags=%x\n",
         t, q, idx, q->avail, q->rate, q->flags);
     if (q->avail > 0) {
-      flow_queue_fire(t, vqueue, fqman, q, idx, q_ids + cnt, q_bytes + cnt, bytes_sum);
+      flow_queue_fire(t, vqueue, fqman, q, idx, q_ids + cnt, 
+          q_bytes + cnt, vm_ids + cnt, bytes_sum);
       cnt++;
     }
   }
@@ -835,7 +937,8 @@ static inline void flow_queue_activate_skiplist(struct qman_thread *t,
 static inline unsigned flow_poll_skiplist(struct qman_thread *t, 
     struct vm_queue *vqueue, struct flow_qman *fqman,
     struct skiplist_fstate *skpl_state, unsigned num, 
-    unsigned *q_ids, uint16_t *q_bytes, int *bytes_sum)
+    unsigned *q_ids, uint16_t *q_bytes, uint32_t *vm_ids,
+    int *bytes_sum)
 {
   unsigned cnt;
   uint32_t idx, max_vts;
@@ -878,7 +981,8 @@ static inline unsigned flow_poll_skiplist(struct qman_thread *t,
         t, q, idx, q->avail, q->rate, q->flags);
 
     if (q->avail > 0) {
-      flow_queue_fire(t, vqueue, fqman, q, idx, q_ids + cnt, q_bytes + cnt, bytes_sum);
+      flow_queue_fire(t, vqueue, fqman, q, idx, q_ids + cnt, 
+          q_bytes + cnt, vm_ids + cnt, bytes_sum);
       cnt++;
     }
 
@@ -917,7 +1021,7 @@ static inline uint8_t flow_queue_level(struct qman_thread *t, struct flow_qman *
 static inline void flow_queue_fire(struct qman_thread *t,
     struct vm_queue *vqueue, struct flow_qman *fqman, 
     struct flow_queue *q, uint32_t idx, unsigned *q_id, 
-    uint16_t *q_bytes, int *bytes_sum)
+    uint16_t *q_bytes, uint32_t *vm_ids, int *bytes_sum)
 {
   uint32_t bytes;
 
@@ -941,6 +1045,7 @@ static inline void flow_queue_fire(struct qman_thread *t,
   *bytes_sum += bytes;
   *q_bytes = bytes;
   *q_id = idx;
+  *vm_ids = vqueue->id;
 
 #ifdef FLEXNIC_TRACE_QMAN
   struct flexnic_trace_entry_qman_event evt = {
