@@ -462,25 +462,24 @@ static inline int vm_qman_poll(struct dataplane_context *ctx,
     vq = oob_vms[oob_i];
     vq->flags &= ~FLAG_INNOLIMITL;
 
-    vm_queue_activate(vqman, vq, vq->id);
     /** Only serve out of budget VMs if nothing in batch */
-    // if (cnt < num && temp_cnt == 0)
-    // {
-    //   fqman = vq->fqman;
-    //   skpl_state->rate_limited = 0;
-    //   bytes_sum = 0;
-    //   x = flow_qman_poll(t, vq, fqman, skpl_state,
-    //       num - cnt, q_ids + cnt, q_bytes + cnt, vm_ids + cnt, 
-    //       &bytes_sum);
-    //   cnt += x;
-    //   if (vq->avail > 0)
-    //   {
-    //     vm_queue_fire(vqman, vq, vq->id, q_bytes, bytes_sum, cnt - x, cnt);
-    //   }
-    // } else
-    // {
-    //   vm_queue_activate(vqman, vq, vq->id);
-    // }
+    if (cnt < num && temp_cnt == 0)
+    {
+      fqman = vq->fqman;
+      skpl_state->rate_limited = 0;
+      bytes_sum = 0;
+      x = flow_qman_poll(t, vq, fqman, skpl_state,
+          num - cnt, q_ids + cnt, q_bytes + cnt, vm_ids + cnt, 
+          &bytes_sum);
+      cnt += x;
+      if (vq->avail > 0)
+      {
+        vm_queue_fire(vqman, vq, vq->id, q_bytes, bytes_sum, cnt - x, cnt);
+      }
+    } else
+    {
+      vm_queue_activate(vqman, vq, vq->id);
+    }
   }
 
   return cnt;
