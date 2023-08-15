@@ -63,9 +63,6 @@ int slowpath_main(int threads_launched)
   uint32_t last_print = 0;
   uint32_t last_baccum = 0;
   uint32_t loadmon_ts = 0;
-  // uint64_t cycs_ts;
-  // uint64_t last_cycs_ts = util_rdtsc();
-  // struct budget_statistics bstats_vm0, bstats_vm1;
 
   kernel_notifyfd = eventfd(0, EFD_NONBLOCK);
   assert(kernel_notifyfd != -1);

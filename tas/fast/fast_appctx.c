@@ -208,18 +208,18 @@ int fast_appctx_poll_fetch_active(struct dataplane_context *ctx, uint16_t max,
     vmid = ctx->polled_vms[vmid].next; 
   } while (vmid != ctx->act_head && k < max);
 
-  // oob_n = oob_i;
-  // temp_k = k;
-  // for (oob_i = 0; oob_i < oob_n && temp_k == 0; oob_i++)
-  // {
-  //   vmid = oob_vms[oob_i];
-  //   act_vm = &ctx->polled_vms[vmid];
-  //   if (k < max)
-  //   {
-  //     fast_appctx_poll_fetch_active_vm(ctx, act_vm, &k, max, total, n_rem, 
-  //         rem_ctxs, aqes);
-  //   }
-  // }
+  oob_n = oob_i;
+  temp_k = k;
+  for (oob_i = 0; oob_i < oob_n && temp_k == 0; oob_i++)
+  {
+    vmid = oob_vms[oob_i];
+    act_vm = &ctx->polled_vms[vmid];
+    if (k < max)
+    {
+      fast_appctx_poll_fetch_active_vm(ctx, act_vm, &k, max, total, n_rem, 
+          rem_ctxs, aqes);
+    }
+  }
 
   return k;
 }
@@ -322,18 +322,18 @@ int fast_appctx_poll_fetch_all(struct dataplane_context *ctx, uint16_t max,
     ctx->poll_next_vm = (ctx->poll_next_vm + 1) % (FLEXNIC_PL_VMST_NUM);
   }
 
-  // temp_k = k;
-  // oob_n = oob_i;
-  // for (oob_i = 0; oob_i < oob_n && temp_k == 0; oob_i++)
-  // {
-  //   vmid = oob_vms[oob_i];
-  //   if (k < max)
-  //   {
-  //     fast_appctx_poll_fetch_all_vm(ctx, vmid, &k, max, total, aqes);
-  //   }
+  temp_k = k;
+  oob_n = oob_i;
+  for (oob_i = 0; oob_i < oob_n && temp_k == 0; oob_i++)
+  {
+    vmid = oob_vms[oob_i];
+    if (k < max)
+    {
+      fast_appctx_poll_fetch_all_vm(ctx, vmid, &k, max, total, aqes);
+    }
 
-  //   ctx->poll_next_vm = (ctx->poll_next_vm + 1) % (FLEXNIC_PL_VMST_NUM);
-  // }
+    ctx->poll_next_vm = (ctx->poll_next_vm + 1) % (FLEXNIC_PL_VMST_NUM);
+  }
 
   return k;
 }
