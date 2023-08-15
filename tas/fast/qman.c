@@ -403,6 +403,7 @@ static inline int vm_qman_poll(struct dataplane_context *ctx,
   
   int oob_n, oob_i = 0;
   struct vm_queue *oob_vms[FLEXNIC_PL_VMST_NUM];
+  skpl_state->cur_ts = timestamp();
 
   for (cnt = 0; cnt < num && vqman->head_idx != IDXLIST_INVAL;)
   {
@@ -461,24 +462,25 @@ static inline int vm_qman_poll(struct dataplane_context *ctx,
     vq = oob_vms[oob_i];
     vq->flags &= ~FLAG_INNOLIMITL;
 
+    vm_queue_activate(vqman, vq, vq->id);
     /** Only serve out of budget VMs if nothing in batch */
-    if (cnt < num && temp_cnt == 0)
-    {
-      fqman = vq->fqman;
-      skpl_state->rate_limited = 0;
-      bytes_sum = 0;
-      x = flow_qman_poll(t, vq, fqman, skpl_state,
-          num - cnt, q_ids + cnt, q_bytes + cnt, vm_ids + cnt, 
-          &bytes_sum);
-      cnt += x;
-      if (vq->avail > 0)
-      {
-        vm_queue_fire(vqman, vq, vq->id, q_bytes, bytes_sum, cnt - x, cnt);
-      }
-    } else
-    {
-      vm_queue_activate(vqman, vq, vq->id);
-    }
+    // if (cnt < num && temp_cnt == 0)
+    // {
+    //   fqman = vq->fqman;
+    //   skpl_state->rate_limited = 0;
+    //   bytes_sum = 0;
+    //   x = flow_qman_poll(t, vq, fqman, skpl_state,
+    //       num - cnt, q_ids + cnt, q_bytes + cnt, vm_ids + cnt, 
+    //       &bytes_sum);
+    //   cnt += x;
+    //   if (vq->avail > 0)
+    //   {
+    //     vm_queue_fire(vqman, vq, vq->id, q_bytes, bytes_sum, cnt - x, cnt);
+    //   }
+    // } else
+    // {
+    //   vm_queue_activate(vqman, vq, vq->id);
+    // }
   }
 
   return cnt;
@@ -605,8 +607,6 @@ static inline int flow_qman_poll(struct qman_thread *t, struct vm_queue *vqueue,
 
 {
   unsigned x, y;
-  skpl_state->cur_ts = timestamp();
-
   /* poll nolimit list and skiplist alternating the order between */
   if (fqman->nolimit_first) {
     x = flow_poll_nolimit(t, vqueue, fqman, skpl_state->cur_ts, 
