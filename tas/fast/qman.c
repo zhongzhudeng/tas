@@ -414,7 +414,7 @@ static inline int vm_qman_poll(struct dataplane_context *ctx,
     if (vq->next_idx == IDXLIST_INVAL)
       vqman->tail_idx = IDXLIST_INVAL;
 
-    if (budgets[idx].budget > 0 || idx == 0)
+    if (budgets[idx].budget > 0)
     {
       fqman = vq->fqman;
       skpl_state->rate_limited = 0;

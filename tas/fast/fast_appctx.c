@@ -188,7 +188,7 @@ int fast_appctx_poll_fetch_active(struct dataplane_context *ctx, uint16_t max,
   do {
     act_vm = &ctx->polled_vms[vmid];
 
-    if (ctx->budgets[vmid].budget > 0 || vmid == 0)
+    if (ctx->budgets[vmid].budget > 0)
     {
       total_prev = *total;
       fast_appctx_poll_fetch_active_vm(ctx, act_vm, &k, max, total, 
@@ -303,7 +303,7 @@ int fast_appctx_poll_fetch_all(struct dataplane_context *ctx, uint16_t max,
   {
     vmid = ctx->poll_next_vm;
 
-    if (ctx->budgets[vmid].budget > 0 || vmid == 0)
+    if (ctx->budgets[vmid].budget > 0)
     {
       total_prev = *total;
       fast_appctx_poll_fetch_all_vm(ctx, vmid, &k, max, total, aqes);
