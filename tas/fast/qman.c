@@ -96,8 +96,6 @@ struct vm_queue {
   uint32_t ts_real;
   /** Virtual timestamp */
   uint32_t ts_virtual;
-  /* If this queue was readded */
-  uint8_t readded;
 };
 
 struct skiplist_fstate {
@@ -373,7 +371,6 @@ int vmcont_init(struct qman_thread *t)
     vq = &vqman->queues[i];
     vq->avail = 0;
     vq->id = i;
-    vq->readded = 0;
     vq->ts_virtual = 0;
     vq->ts_real = timestamp();
     ret = flowcont_init(vq);
@@ -393,36 +390,31 @@ static inline int vm_qman_poll(struct dataplane_context *ctx,
     unsigned *vm_ids, unsigned *q_ids, uint16_t *q_bytes)
 {
   uint32_t idx;
-  uint8_t flag_readded = 0;
   int cnt, temp_cnt, x, bytes_sum;
   struct qman_thread *t = &ctx->qman;
   struct vm_budget *budgets = ctx->budgets;
   struct vm_qman *vqman = t->vqman;
   struct flow_qman *fqman;
-  struct vm_queue *vq;
+  struct vm_queue *vq, *rvq;
   
   int oob_n, oob_i = 0;
   struct vm_queue *oob_vms[FLEXNIC_PL_VMST_NUM];
   skpl_state->cur_ts = timestamp();
 
+  rvq = NULL;
   for (cnt = 0; cnt < num && vqman->head_idx != IDXLIST_INVAL;)
   {
     idx = vqman->head_idx;
     vq = &vqman->queues[idx];
-    if (vq->readded)
-    {
-      vq->readded = 0;
+    if (rvq == vq)
       break;
-    }
    
     vqman->head_idx = vq->next_idx;
     vq->flags &= ~FLAG_INNOLIMITL;
     if (vq->next_idx == IDXLIST_INVAL)
-    {
       vqman->tail_idx = IDXLIST_INVAL;
-    }
 
-    if (budgets[idx].budget > 0)
+    if (budgets[idx].budget > 0 || idx == 0)
     {
       fqman = vq->fqman;
       skpl_state->rate_limited = 0;
@@ -432,14 +424,11 @@ static inline int vm_qman_poll(struct dataplane_context *ctx,
           q_ids + cnt, q_bytes + cnt, vm_ids + cnt, &bytes_sum);
       cnt += x;
 
-      if (vq->avail > 0 && skpl_state->rate_limited && flag_readded == 0)
+      if (vq->avail > 0)
       {
         vm_queue_fire(vqman, vq, idx, q_bytes, bytes_sum, cnt - x, cnt);
-        vq->readded = 1;
-        flag_readded = 1;
-      } else if (vq->avail > 0)
-      {
-        vm_queue_fire(vqman, vq, idx, q_bytes, bytes_sum, cnt - x, cnt);
+        if (skpl_state->rate_limited && rvq == NULL)
+          rvq = vq;
       }
 
       ctx->vm_counters[idx] += 1;
