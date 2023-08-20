@@ -100,15 +100,15 @@ def parse_data(parsed_md):
 def save_dat_file(data, fname):
   f = open(fname, "w+")
   header = "msize " + \
-      "bare-tas-avg bare-vtas-avg virt-tas-avg bare-linux-avg ovs-tas-avg ovs-linux-avg " + \
-      "bare-tas-std bare-vtas-std virt-tas-std bare-linux-std ovs-tas-std ovs-linux-std\n"
+      "bare-tas-avg virt-tas-avg ovs-tas-avg bare-linux-avg ovs-linux-avg " + \
+      "bare-tas-std virt-tas-std ovs-tas-std bare-linux-std ovs-linux-std\n"
   f.write(header)
   for dp in data:
-    f.write("{} {} {} {} {} {} {} {} {} {} {} {} {}\n".format(
+    f.write("{} {} {} {} {} {} {} {} {} {} {}\n".format(
       dp["msize"],
-      dp["bare-tas"]["tp"], dp["bare-vtas"]["tp"], dp["virt-tas"]["tp"],
+      dp["bare-tas"]["tp"], dp["virt-tas"]["tp"],
       dp["ovs-tas"]["tp"], dp["bare-linux"]["tp"], dp["ovs-linux"]["tp"],
-      dp["bare-tas"]["std"], dp["bare-vtas"]["std"], dp["virt-tas"]["std"],
+      dp["bare-tas"]["std"], dp["virt-tas"]["std"],
       dp["ovs-tas"]["std"], dp["bare-linux"]["std"], dp["ovs-linux"]["std"]))
         
 def main():

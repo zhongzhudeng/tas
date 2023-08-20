@@ -53,7 +53,7 @@ def parse_metadata():
   for f in os.listdir(dir_path):
     fname = os.fsdecode(f)
 
-    if "tas_c" in fname or "latency_hist" in fname:
+    if "tas_c" == fname or "latency_hist" in fname:
       continue
 
     run = putils.get_expname_run(fname)
@@ -106,17 +106,17 @@ def save_dat_file(data, fname):
   f = open(fname, "w+")
   header = "nconns " + \
       "bare-tas-avg virt-tas-avg " + \
-      "ovs-linux-avg ovs-tas-avg" + \
+      "ovs-tas-avg ovs-linux-avg" + \
       "bare-tas-std virt-tas-std " + \
-      "ovs-linux-std ovs-tas-std\n"
+      "ovs-tas-std ovs-linux-std\n"
   f.write(header)
   for dp in data:
     f.write("{} {} {} {} {} {} {} {} {}\n".format(
       dp["nconns"],
       dp["bare-tas"]["tp"], dp["virt-tas"]["tp"],
-      dp["ovs-linux"]["tp"], dp["ovs-tas"]["tp"],
+      dp["ovs-tas"]["tp"], dp["ovs-linux"]["tp"],
       dp["bare-tas"]["std"], dp["virt-tas"]["std"],
-      dp["ovs-linux"]["std"], dp["ovs-tas"]["std"]))
+      dp["ovs-tas"]["std"], dp["ovs-linux"]["std"]))
         
 def main():
   parsed_md = parse_metadata()

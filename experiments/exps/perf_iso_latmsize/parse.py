@@ -33,7 +33,7 @@ def parse_metadata():
   for f in os.listdir(dir_path):
     fname = os.fsdecode(f)
     
-    if "tas_c" in fname or "latency_hist" in fname:
+    if "tas_c" == fname or "latency_hist" in fname:
       continue
     
     run = putils.get_expname_run(fname)
@@ -73,10 +73,10 @@ def parse_data(parsed_md):
 
 def save_dat_file(data):
   header = "msize " + \
-      "bare-tas-avg bare-vtas-avg virt-tas-avg " + \
-      "ovs-linux-avg " + \
-      "bare-tas-std bare-vtas-std virt-tas-std " + \
-      "ovs-linux-std\n"
+      "bare-tas-avg virt-tas-avg " + \
+      "ovs-tas-avg ovs-linux-avg " + \
+      "bare-tas-std virt-tas-std " + \
+      "ovs-tas-std ovs-linux-std\n"
   
   msizes = list(data.keys())
   msizes = list(map(str, sorted(map(int, msizes))))
@@ -92,12 +92,12 @@ def save_dat_file(data):
         f.write("{} {} {} {} {} {} {} {} {}\n".format(
           msize,
           data[msize]['bare-tas']['lat'][percentile],
-          data[msize]['bare-vtas']["lat"][percentile],
           data[msize]['virt-tas']["lat"][percentile],
+          data[msize]['ovs-tas']["lat"][percentile],
           data[msize]['ovs-linux']["lat"][percentile],
           data[msize]['bare-tas']["std"][percentile],
-          data[msize]['bare-vtas']["std"][percentile],
           data[msize]['virt-tas']["std"][percentile],
+          data[msize]['ovs-tas']["std"][percentile],
           data[msize]['ovs-linux']["std"][percentile]))
 
         

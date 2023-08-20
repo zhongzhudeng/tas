@@ -32,7 +32,7 @@ class Config:
                 project_dir=self.defaults.default_vtas_dir_bare,
                 ip=self.s_machine_config.ip,
                 n_cores=10)
-        tas_config.args = tas_config.args + ' --vm-shm-len=4294967296'
+        tas_config.args = tas_config.args + " --vm-shm-len=4294967296"
         self.s_tas_configs.append(tas_config)
 
         self.s_proxyh_config = HostProxyConfig(pane=self.defaults.s_proxyh_pane,
@@ -82,7 +82,7 @@ class Config:
                 project_dir=self.defaults.default_vtas_dir_bare,
                 ip=self.c_machine_config.ip,
                 n_cores=10)
-        tas_config.args = tas_config.args + ' --vm-shm-len=4294967296'
+        tas_config.args = tas_config.args + " --vm-shm-len=4294967296"
         self.c_tas_configs.append(tas_config)
 
         self.c_proxyh_config = HostProxyConfig(pane=self.defaults.c_proxyh_pane,
@@ -110,7 +110,7 @@ class Config:
                 idx=0, vmid=0, stack=self.cstack,
                 ip=self.s_vm_configs[0].vm_ip, port=1234, ncores=10,
                 msize=msize, mpending=64, nconns=1000,
-                open_delay=3, max_msgs_conn=0, max_pend_conns=1,
+                open_delay=10, max_msgs_conn=0, max_pend_conns=1,
                 bench_dir=self.defaults.default_vbenchmark_dir_virt,
                 tas_dir=self.defaults.default_vtas_dir_virt)
 

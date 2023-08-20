@@ -76,7 +76,11 @@ class MachineConfig:
 
 class TasConfig:
     def __init__(self, pane, machine_config, project_dir, ip, n_cores, 
-            dpdk_extra="d8:00.0", cc="timely", cc_timely_min_rtt="15"):
+            dpdk_extra="d8:00.0", cc="timely", 
+            cc_timely_min_rtt="15",
+            cc_timely_tlow="30", cc_timely_thigh="2000",
+            cc_timely_beta="0.3", cc_timely_alpha="0.02",
+            cc_timely_minrate="10000", cc_timely_step="40000"):
         self.name = "server" if machine_config. is_server else "client"
         
         self.project_dir = project_dir
@@ -101,6 +105,12 @@ class TasConfig:
         
         if cc == "timely":
             self.args = self.args + " --cc-timely-minrtt={}".format(cc_timely_min_rtt)
+            self.args = self.args + " --cc-timely-tlow={}".format(cc_timely_tlow)
+            self.args = self.args + " --cc-timely-thigh={}".format(cc_timely_thigh)
+            self.args = self.args + " --cc-timely-beta={}".format(cc_timely_beta)
+            self.args = self.args + " --cc-timely-alpha={}".format(cc_timely_alpha)
+            self.args = self.args + " --cc-timely-minrate={}".format(cc_timely_minrate)
+            self.args = self.args + " --cc-timely-step={}".format(cc_timely_step)
 
         self.pane = pane
         self.ip = ip

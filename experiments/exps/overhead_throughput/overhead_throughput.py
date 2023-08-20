@@ -10,7 +10,7 @@ from exps.overhead_throughput.configs.ovs_linux import Config as OVSLinuxConf
 experiments = []
 
 msize = [64, 128, 256, 512, 1024, 2048]
-n_runs = 5
+n_runs = 3
 
 for n_r in range(n_runs):
   for n_m in msize:
@@ -23,7 +23,7 @@ for n_r in range(n_runs):
     ovs_linux_exp = exp.Experiment(OVSLinuxConf(exp_name + "ovs-linux", n_m), name=exp_name)
 
     experiments.append(tas_bare_exp)
-    experiments.append(vtas_bare_exp)
+    # experiments.append(vtas_bare_exp)
     experiments.append(tas_virt_exp)
     experiments.append(ovs_tas_exp)
     experiments.append(bare_linux_exp)
