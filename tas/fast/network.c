@@ -278,11 +278,13 @@ int network_thread_init(struct dataplane_context *ctx)
     }
 
     /* Configure inner header RSS */
-    if (config.fp_rss) {
-      if (add_rss_flow_rule(num_threads) < 0) {
-        fprintf(stderr, "RSS disabled\n");
+    #if VIRTUOSO_GRE
+      if (config.fp_rss) {
+        if (add_rss_flow_rule(num_threads) < 0) {
+          fprintf(stderr, "RSS disabled\n");
+        }
       }
-    }
+    #endif
 
     /* enable vlan stripping if configured */
     if (config.fp_vlan_strip) {
@@ -594,20 +596,12 @@ static struct rte_flow * add_rss_inbound_flow_rule(int n_threads)
   pattern[5].type = RTE_FLOW_ITEM_TYPE_END;
 
   /* Create queue action */
+  struct rte_flow_action_rss rss = { .level = 2,
+    .types = ETH_RSS_NONFRAG_IPV4_TCP,
+    .queue_num = n_threads,
+    .queue = queue_idxs,
+  };
 
-  #if VIRTUOSO_GRE
-    struct rte_flow_action_rss rss = { .level = 2,
-      .types = ETH_RSS_NVGRE,
-      .queue_num = n_threads,
-      .queue = queue_idxs,
-    };
-  #else
-    struct rte_flow_action_rss rss = { .level = 2,
-      .types = ETH_RSS_NONFRAG_IPV4_TCP,
-      .queue_num = n_threads,
-      .queue = queue_idxs,
-    };
-  #endif
   create_queue_idxs(num_threads, queue_idxs);
 
 
