@@ -362,7 +362,6 @@ static unsigned poll_rx(struct dataplane_context *ctx, uint32_t ts,
   unsigned i, n;
   uint8_t freebuf[BATCH_SIZE] = {0};
   void *fss[BATCH_SIZE];
-  struct flextcp_pl_flowst *fs;
   struct tcp_opts tcpopts[BATCH_SIZE];
   struct network_buf_handle *bhs[BATCH_SIZE];
 
@@ -414,17 +413,11 @@ static unsigned poll_rx(struct dataplane_context *ctx, uint32_t ts,
     /* run fast-path for flows with flow state */
     if (fss[i] != NULL)
     {
-      /* at this point we know fss[i] is a flow state struct */
-      fs = fss[i];
-      
       #if VIRTUOSO_GRE
         ret = fast_flows_packet_gre(ctx, bhs[i], fss[i], &tcpopts[i], ts);
       #else
         ret = fast_flows_packet(ctx, bhs[i], fss[i], &tcpopts[i], ts);
       #endif
-
-      ctx->counters_total += 1;
-      ctx->vm_counters[fs->vm_id] += 1;
     }
     else
     {
