@@ -36,25 +36,18 @@ socket1_cores_2ndhalf=23,25,27,29,31,33,35,37,39,41,43
 
 if [[ "$cores_tag" == 'socket0_cores' ]]; then
   core_mask=$socket0_cores
-  ;
 elif [[ "$cores_tag" == 'socket0_cores_1sthalf' ]]; then
   core_mask=$socket0_cores_1sthalf
-  ;
 elif [[ "$cores_tag" == 'socket0_cores_2ndhalf' ]]; then
   core_mask=$socket0_cores_2ndhalf
-  ;
 elif [[ "$cores_tag" == 'socket1_cores' ]]; then
   core_mask=$socket1_cores
-  ;
 elif [[ "$cores_tag" == 'socket1_cores_1sthalf' ]]; then
   core_mask=$socket1_cores_1sthalf
-  ;
 elif [[ "$cores_tag" == 'socket0_cores_2ndhalf' ]]; then
   core_mask=$socket1_cores_2ndhalf
-  ;
-else; then
+else
   echo "NO MATCH FOR CORES_TAG!"
-  ;
 fi
 
 if [ -n "$n_queues" ]; then
