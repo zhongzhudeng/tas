@@ -7,7 +7,7 @@ vm_id=$2
 interface=$3
 n_cores=$4
 memory=$5 # In Gigabytes
-cores_tag=$6
+cores_mask=$6
 n_queues=$7
 
 stty intr ^]
@@ -24,32 +24,6 @@ tastap=tastap$vm_id
 ovstap=ovstap$vm_id
 vhost=vhost$vm_id
 
-
-
-socket0_cores=0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42
-socket0_cores_1sthalf=0,2,4,6,8,10,12,14,16,18,20
-socket0_cores_2ndhalf=22,24,26,28,30,32,34,36,38,40,42
-
-socket1_cores=1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43
-socket1_cores_1sthalf=1,3,5,7,9,11,13,15,17,19,21
-socket1_cores_2ndhalf=23,25,27,29,31,33,35,37,39,41,43
-
-if [[ "$cores_tag" == 'socket0_cores' ]]; then
-  core_mask=$socket0_cores
-elif [[ "$cores_tag" == 'socket0_cores_1sthalf' ]]; then
-  core_mask=$socket0_cores_1sthalf
-elif [[ "$cores_tag" == 'socket0_cores_2ndhalf' ]]; then
-  core_mask=$socket0_cores_2ndhalf
-elif [[ "$cores_tag" == 'socket1_cores' ]]; then
-  core_mask=$socket1_cores
-elif [[ "$cores_tag" == 'socket1_cores_1sthalf' ]]; then
-  core_mask=$socket1_cores_1sthalf
-elif [[ "$cores_tag" == 'socket0_cores_2ndhalf' ]]; then
-  core_mask=$socket1_cores_2ndhalf
-else
-  echo "NO MATCH FOR CORES_TAG!"
-fi
-
 if [ -n "$n_queues" ]; then
   vectors=$(( n_queues*2 + 2 ))
 fi
@@ -63,7 +37,7 @@ echo $alt_mac
 # Note: vectors=<2 + 2 * queues_nr>
 
 if [[ "$stack" == 'virt-tas' ]]; then
-  taskset -c $core_mask \
+  taskset -c $cores_mask \
   sudo qemu-system-x86_64 \
     -nographic -monitor none -serial stdio \
     -machine accel=kvm,type=q35 \
@@ -79,7 +53,7 @@ if [[ "$stack" == 'virt-tas' ]]; then
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 elif [[ "$stack" == 'virt-linux' ]]; then
-  taskset -c $core_mask \
+  taskset -c $cores_mask \
   sudo qemu-system-x86_64 \
       -nographic -monitor none -serial stdio \
       -machine accel=kvm,type=q35 \
@@ -95,7 +69,7 @@ elif [[ "$stack" == 'virt-linux' ]]; then
       -drive if=virtio,format=raw,file="seed.img" \
       ;
 elif [[ "$stack" == 'ovs-linux' ]]; then
-  taskset -c $core_mask \
+  taskset -c $cores_mask \
     sudo qemu-system-x86_64 \
     -nographic -monitor none -serial stdio \
     -machine accel=kvm,type=q35 \
@@ -114,7 +88,7 @@ elif [[ "$stack" == 'ovs-linux' ]]; then
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 elif [[ "$stack" == 'ovs-tas' ]]; then
-  taskset -c $core_mask \
+  taskset -c $cores_mask \
   sudo qemu-system-x86_64 \
     -nographic -monitor none -serial stdio \
     -machine accel=kvm,type=q35 \
@@ -151,7 +125,7 @@ elif [[ "$stack" == 'tap-tas' ]]; then
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 elif [[ "$stack" == 'gre' ]]; then
-  taskset -c $core_mask \
+  taskset -c $cores_mask \
   sudo qemu-system-x86_64 \
     -nographic -monitor none -serial stdio \
     -machine accel=kvm,type=q35 \
