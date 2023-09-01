@@ -56,6 +56,7 @@ struct guest_proxy {
     int ctxreq_id_next;
 
     /* Fields used to block the proxy */
+    uint8_t block;
     int block_epfd;
     uint64_t block_elapsed;
     uint64_t poll_cycles_proxy;

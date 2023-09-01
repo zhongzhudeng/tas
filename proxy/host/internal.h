@@ -30,6 +30,7 @@ struct host_proxy {
   struct v_machine vms[10];
 
   /* Used to sleep proxy */
+  uint8_t block;
   uint64_t block_elapsed;
   uint64_t poll_cycles_proxy;
 };
