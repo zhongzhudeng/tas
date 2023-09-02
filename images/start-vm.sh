@@ -37,8 +37,8 @@ echo $alt_mac
 # Note: vectors=<2 + 2 * queues_nr>
 
 if [[ "$stack" == 'virt-tas' ]]; then
-  cset proc --exec --set=$cset \
-  sudo qemu-system-x86_64 \
+  csudo set proc --set=$cset --exec \
+  qemu-system-x86_64 -- \
     -nographic -monitor none -serial stdio \
     -machine accel=kvm,type=q35 \
     -cpu host \
@@ -53,8 +53,8 @@ if [[ "$stack" == 'virt-tas' ]]; then
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 elif [[ "$stack" == 'virt-linux' ]]; then
-  cset proc --exec --set=$cset \
-  sudo qemu-system-x86_64 \
+  sudo cset proc --set=$cset --exec \
+  qemu-system-x86_64 -- \
       -nographic -monitor none -serial stdio \
       -machine accel=kvm,type=q35 \
       -cpu host \
@@ -69,8 +69,8 @@ elif [[ "$stack" == 'virt-linux' ]]; then
       -drive if=virtio,format=raw,file="seed.img" \
       ;
 elif [[ "$stack" == 'ovs-linux' ]]; then
-  cset proc --exec --set=$cset \
-    sudo qemu-system-x86_64 \
+  sudo cset proc --set=$cset --exec \
+  qemu-system-x86_64 -- \
     -nographic -monitor none -serial stdio \
     -machine accel=kvm,type=q35 \
     -cpu host \
@@ -88,8 +88,8 @@ elif [[ "$stack" == 'ovs-linux' ]]; then
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 elif [[ "$stack" == 'ovs-tas' ]]; then
-  cset proc --exec --set=$cset \
-  sudo qemu-system-x86_64 \
+  sudo cset proc --set=$cset --exec \
+  qemu-system-x86_64 -- \
     -nographic -monitor none -serial stdio \
     -machine accel=kvm,type=q35 \
     -cpu host \
@@ -107,8 +107,8 @@ elif [[ "$stack" == 'ovs-tas' ]]; then
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 elif [[ "$stack" == 'tap-tas' ]]; then
-  cset proc --exec --set=$cset \
-  sudo qemu-system-x86_64 \
+  sudo cset proc --set=$cset --exec \
+  qemu-system-x86_64 -- \
     -nographic -monitor none -serial stdio \
     -machine accel=kvm,type=q35 \
     -cpu host \
@@ -125,8 +125,8 @@ elif [[ "$stack" == 'tap-tas' ]]; then
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 elif [[ "$stack" == 'gre' ]]; then
-  cset proc --exec --set=$cset \
-  sudo qemu-system-x86_64 \
+  sudo cset proc --set=$cset --exec \
+  qemu-system-x86_64 -- \
     -nographic -monitor none -serial stdio \
     -machine accel=kvm,type=q35 \
     -cpu host \
