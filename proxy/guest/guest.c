@@ -56,7 +56,7 @@ struct guest_proxy *guest_init_proxy()
 
 int main(int argc, char *argv[])
 {
-  int ret, ep_timeout = 0;
+  int ret;
   unsigned int n;
   uint64_t start, end;
   struct epoll_event evs[1];
@@ -77,9 +77,6 @@ int main(int argc, char *argv[])
     pxy->poll_cycles_proxy = atoi(argv[2]);
   }
 
-  if (pxy->block)
-    ep_timeout = -1;    
-
   if (ivshmem_init(pxy) < 0)
   {
     fprintf(stderr, "main: ivshmem_init failed.\n");
@@ -97,9 +94,9 @@ int main(int argc, char *argv[])
   {
     n = 0;
 
-    if (pxy->block_elapsed > pxy->poll_cycles_proxy)
+    if (pxy->block_elapsed > pxy->poll_cycles_proxy && pxy->block)
     {
-      epoll_wait(pxy->block_epfd, evs, 1, ep_timeout);
+      epoll_wait(pxy->block_epfd, evs, 1, -1);
     }
 
     start = util_rdtsc();
