@@ -8,11 +8,11 @@ from nodes.node import Node
 class OvsTas(Node):
   
   def __init__(self, defaults, machine_config, tas_configs,
-      vm_configs, interface, pci_id, wmanager, 
+      vm_configs, cset_configs, interface, pci_id, wmanager, 
       setup_pane_name, cleanup_pane_name, tunnel=False):
 
-    Node.__init__(self, defaults, machine_config, wmanager, 
-        setup_pane_name, cleanup_pane_name)
+    Node.__init__(self, defaults, machine_config, cset_configs,
+        wmanager, setup_pane_name, cleanup_pane_name)
   
     self.tunnel = tunnel
     self.interface = interface

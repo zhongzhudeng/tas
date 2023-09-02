@@ -2,9 +2,10 @@ import time
 
 class Node:
   
-  def __init__(self, defaults, machine_config,
+  def __init__(self, defaults, machine_config, cset_configs,
       wmanager, setup_pane_name, cleanup_pane_name):
     self.defaults = defaults
+    self.cset_configs = cset_configs
     self.machine_config = machine_config
     self.wmanager = wmanager
     self.setup_pane_name = setup_pane_name
@@ -13,10 +14,16 @@ class Node:
   def setup(self):
     self.setup_pane = self.wmanager.add_new_pane(self.setup_pane_name, 
         self.machine_config.is_remote)
+    
+    for cset in self.cset_configs:
+        self.set_cset(cset.cores_arg, cset.mem, cset.name, cset.exclusive)
 
   def cleanup(self):
     self.cleanup_pane = self.wmanager.add_new_pane(self.cleanup_pane_name, 
         self.machine_config.is_remote)
+    
+    for cset in self.cset_configs:
+       self.destroy_cset(cset.name)
 
   def set_cset(self, cores_arg, mem, name, exclusive):
     if exclusive:
@@ -25,10 +32,12 @@ class Node:
         cmd = "sudo cset set --cpu={} --mem={} --set={}".format(cores_arg, mem, name)
 
     self.setup_pane.send_keys(cmd)
+    time.sleep(1)
 
   def destroy_cset(self, name):
      cmd = "sudo cset set --destroy --set={}".format(name)
      self.cleanup_pane.send_keys(cmd)
+     time.sleep(1)
 
   def add_ip(self, interface, ip):
     cmd = "sudo ip addr add {} dev {}".format(ip, interface)

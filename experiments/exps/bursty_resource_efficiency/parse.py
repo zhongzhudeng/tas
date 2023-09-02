@@ -8,25 +8,29 @@ import bisect
 
 TSC_DIV = 100000
 
-def check_fpcores(data, fpcores):
-  if fpcores not in data:
-    data[fpcores] = {}
+def check_overlap(data, overlap):
+  if overlap not in data:
+    data[overlap] = {}
 
-def check_stack(data, msize, stack):
-  if stack not in data[msize]:
-    data[msize][stack] = {}
+def check_fpcores(data, overlap, fpcores):
+  if fpcores not in data[overlap]:
+    data[overlap][fpcores] = {}
 
-def check_run(data, msize, stack, run):
-  if run not in data[msize][stack]:
-    data[msize][stack][run] = {}
+def check_stack(data, overlap, fpcores, stack):
+  if stack not in data[overlap][fpcores]:
+    data[overlap][fpcores][stack] = {}
 
-def check_nid(data, msize, stack, run, nid):
-  if nid not in data[msize][stack][run]:
-    data[msize][stack][run][nid] = {}
+def check_run(data, overlap, fpcores, stack, run):
+  if run not in data[overlap][fpcores][stack]:
+    data[overlap][fpcores][stack][run] = {}
 
-def check_cid(data, msize, stack, run, nid, cid):
-  if cid not in data[msize][stack][run][nid]:
-    data[msize][stack][run][nid][cid] = ""
+def check_nid(data, overlap, fpcores, stack, run, nid):
+  if nid not in data[overlap][fpcores][stack][run]:
+    data[overlap][fpcores][stack][run][nid] = {}
+
+def check_cid(data, overlap, fpcores, stack, run, nid, cid):
+  if cid not in data[overlap][fpcores][stack][run][nid]:
+    data[overlap][fpcores][stack][run][nid][cid] = ""
 
 def parse_metadata():
   dir_path = "./out/"
@@ -39,77 +43,86 @@ def parse_metadata():
       continue
 
     run = putils.get_expname_run(fname)
+    overlap = putils.get_expname_overlap(fname)
     fpcores = putils.get_expname_fpcores(fname)
     cid = putils.get_client_id(fname)
     nid = putils.get_node_id(fname)
     stack = putils.get_stack(fname)
 
-    check_fpcores(data, fpcores)
-    check_stack(data, fpcores, stack)
-    check_run(data, fpcores, stack, run)
-    check_nid(data, fpcores, stack, run, nid)
-    check_cid(data, fpcores, stack, run, nid, cid)
+    check_overlap(data, overlap)
+    check_fpcores(data, overlap, fpcores)
+    check_stack(data, overlap, fpcores, stack)
+    check_run(data, overlap, fpcores, stack, run)
+    check_nid(data, overlap, fpcores, stack, run, nid)
+    check_cid(data, overlap, fpcores, stack, run, nid, cid)
 
-    data[fpcores][stack][run][nid][cid] = fname
+    data[overlap][fpcores][stack][run][nid][cid] = fname
 
   return data
 
 def parse_data(parsed_md):
   data = {}
   out_dir = "./out/"
-  for fpcores in parsed_md:
-    for stack in parsed_md[fpcores]:
-      for run in parsed_md[fpcores][stack]:
-        is_virt = stack == "virt-tas"
-        if is_virt:
-          c0_fname = out_dir + parsed_md[fpcores][stack][run]["0"]["0"]
-          c1_fname = out_dir + parsed_md[fpcores][stack][run]["1"]["0"]
-          c2_fname = out_dir + parsed_md[fpcores][stack][run]["2"]["0"]
-        else:
-          c0_fname = out_dir + parsed_md[fpcores][stack][run]["0"]["0"]
-          c1_fname = out_dir + parsed_md[fpcores][stack][run]["0"]["1"]
-          c2_fname = out_dir + parsed_md[fpcores][stack][run]["0"]["2"]
+  for overlap in parsed_md:
+    for fpcores in parsed_md[overlap]:
+      for stack in parsed_md[overlap][fpcores]:
+        for run in parsed_md[overlap][fpcores][stack]:
 
-        # ts_l = []
-        # ts_l_idx = []
-        # add_timestamps(c0_fname, ts_l, ts_l_idx, 0)
-        # add_timestamps(c1_fname, ts_l, ts_l_idx, 1)
-        # add_timestamps(c2_fname, ts_l, ts_l_idx, 2)
-        # ts_l.sort()
-        # ts_l_idx = sorted(ts_l_idx, key= lambda e: e["tsc"])
-        # ts_l = []
-        # add_to_ts_list(ts_l, c0_fname)
-        # add_to_ts_list(ts_l, c1_fname)
-        # add_to_ts_list(ts_l, c2_fname)
-        # intervals, counts = np.unique(ts_l, return_counts=True)
-        timestamps = get_timestamps(c0_fname)
-        tps = get_throughput(c0_fname)
-        c0_seconds = np.linspace(start=0, 
-                                 stop=len(timestamps), 
-                                 num=len(timestamps),
-                                 endpoint=False).astype(int)
-        assert(len(timestamps) == len(c0_seconds))
-        assert(len(tps) == len(c0_seconds))
+          c0_fname = out_dir + parsed_md[overlap][fpcores][stack][run]["0"]["0"]
+          c1_fname = out_dir + parsed_md[overlap][fpcores][stack][run]["1"]["0"]
+          c2_fname = out_dir + parsed_md[overlap][fpcores][stack][run]["2"]["0"]
+          c3_fname = out_dir + parsed_md[overlap][fpcores][stack][run]["3"]["0"]
+          c4_fname = out_dir + parsed_md[overlap][fpcores][stack][run]["4"]["0"]
+          c5_fname = out_dir + parsed_md[overlap][fpcores][stack][run]["5"]["0"]
+          # ts_l = []
+          # ts_l_idx = []
+          # add_timestamps(c0_fname, ts_l, ts_l_idx, 0)
+          # add_timestamps(c1_fname, ts_l, ts_l_idx, 1)
+          # add_timestamps(c2_fname, ts_l, ts_l_idx, 2)
+          # ts_l.sort()
+          # ts_l_idx = sorted(ts_l_idx, key= lambda e: e["tsc"])
+          # ts_l = []
+          # add_to_ts_list(ts_l, c0_fname)
+          # add_to_ts_list(ts_l, c1_fname)
+          # add_to_ts_list(ts_l, c2_fname)
+          # intervals, counts = np.unique(ts_l, return_counts=True)
+          timestamps = get_timestamps(c0_fname)
+          tps = get_throughput(c0_fname)
+          c0_seconds = np.linspace(start=0, 
+                                  stop=len(timestamps), 
+                                  num=len(timestamps),
+                                  endpoint=False).astype(int)
+          assert(len(timestamps) == len(c0_seconds))
+          assert(len(tps) == len(c0_seconds))
 
-        c1_seconds = timestamps_to_seconds(timestamps, c1_fname)
-        c2_seconds = timestamps_to_seconds(timestamps, c2_fname)
-        count_tp(tps, c0_seconds, c1_seconds, c1_fname)
-        count_tp(tps, c0_seconds, c2_seconds, c2_fname)
-        # populate_frequency_bins(tp, intervals, c0_fname)
-        # populate_frequency_bins(tp, intervals, c1_fname)
-        # populate_frequency_bins(tp, intervals, c2_fname)
-        # populate_frequency_bins(tp, ts_l, c0_fname)
-        # populate_frequency_bins(tp, ts_l, c1_fname)
-        # populate_frequency_bins(tp, ts_l, c2_fname)
+          c1_seconds = timestamps_to_seconds(timestamps, c1_fname)
+          c2_seconds = timestamps_to_seconds(timestamps, c2_fname)
+          c3_seconds = timestamps_to_seconds(timestamps, c3_fname)
+          c4_seconds = timestamps_to_seconds(timestamps, c4_fname)
+          c5_seconds = timestamps_to_seconds(timestamps, c5_fname)
+          count_tp(tps, c0_seconds, c1_seconds, c1_fname)
+          count_tp(tps, c0_seconds, c2_seconds, c2_fname)
+          count_tp(tps, c0_seconds, c3_seconds, c3_fname)
+          count_tp(tps, c0_seconds, c4_seconds, c4_fname)
+          count_tp(tps, c0_seconds, c5_seconds, c5_fname)
+          # populate_frequency_bins(tp, intervals, c0_fname)
+          # populate_frequency_bins(tp, intervals, c1_fname)
+          # populate_frequency_bins(tp, intervals, c2_fname)
+          # populate_frequency_bins(tp, ts_l, c0_fname)
+          # populate_frequency_bins(tp, ts_l, c1_fname)
+          # populate_frequency_bins(tp, ts_l, c2_fname)
 
-        if stack not in data:
-          data[stack] = {}
+          if stack not in data:
+            data[stack] = {}
 
-        if fpcores not in data[stack]:
-          data[stack][fpcores] = {}
-          
-        data[stack][fpcores]["tp"] = tps
-        data[stack][fpcores]["ts"] = c0_seconds
+          if overlap not in data[stack]:
+            data[stack][overlap] = {}
+
+          if fpcores not in data[stack][overlap]:
+            data[stack][overlap][fpcores] = {}
+            
+          data[stack][overlap][fpcores]["tp"] = tps
+          data[stack][overlap][fpcores]["ts"] = c0_seconds
 
   return data
 
@@ -137,11 +150,6 @@ def count_tp(tps, base_secs, secs, fname):
       break
 
     tp = float(putils.get_tp(line).replace(",", ""))
-    print(sec)
-    print(len(tps))
-    print(len(base_secs))
-    print(end_sec)
-    print()
     tps[sec] += tp
 
 def timestamps_to_seconds(timestamps, fname):
@@ -217,16 +225,21 @@ def save_dat_file(data, fname):
     f.write("{} {}\n".format(ts, tp))
         
 def main():
+  overlaps = ["33", "50", "83"]
+  stacks = ["ovs-tas", "virt-tas"]
+  fpcores = ["2", "4", "6"]
   parsed_md = parse_metadata()
   data = parse_data(parsed_md)
-  ovs_tas_1 = data["ovs-tas"]["1"]
-  virt_tas_1 = data["virt-tas"]["1"]
-  virt_tas_2 = data["virt-tas"]["2"]
-  virt_tas_3 = data["virt-tas"]["3"]
-  save_dat_file(ovs_tas_1, "./ovs_tas_1_tp.dat")
-  save_dat_file(virt_tas_1, "./virt_tas_1_tp.dat")
-  save_dat_file(virt_tas_2, "./virt_tas_2_tp.dat")
-  save_dat_file(virt_tas_3, "./virt_tas_3_tp.dat")
+
+  for stack in stacks:
+    for overlap in overlaps:
+      if stack == "virt-tas":
+        for fpcore in fpcores:
+          save_dat_file(data[stack][overlap][fpcore], 
+                        "./{}-{}-{}-tp.dat".format(stack, overlap, fpcore))
+      else:
+          save_dat_file(data[stack][overlap]["1"], 
+                        "./ovs-tas-{}-1-tp.dat".format(overlap))
 
 if __name__ == '__main__':
   main()

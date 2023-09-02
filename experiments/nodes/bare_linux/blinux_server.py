@@ -8,6 +8,7 @@ class BareLinuxServer(BareLinux):
   def __init__(self, config, wmanager):
 
     BareLinux.__init__(self, config.defaults, config.s_machine_config,
+        config.s_cset_configs,
         wmanager, config.defaults.s_setup_pane, 
         config.defaults.s_cleanup_pane)
 
@@ -22,7 +23,7 @@ class BareLinuxServer(BareLinux):
               server_config, 
               None,
               self.wmanager)
-      server.run_bare(False, False)
+      server.run_bare(True, False)
       time.sleep(3)
 
   def run(self):

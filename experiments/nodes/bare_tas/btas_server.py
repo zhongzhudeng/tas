@@ -9,7 +9,7 @@ class BareTasServer(BareTas):
   def __init__(self, config, wmanager):
 
     BareTas.__init__(self, config.defaults, config.s_machine_config,
-        config.s_tas_configs[0], wmanager, 
+        config.s_tas_configs[0], config.s_cset_configs, wmanager, 
         config.defaults.s_setup_pane, 
         config.defaults.s_cleanup_pane)
 

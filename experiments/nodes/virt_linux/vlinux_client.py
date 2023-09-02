@@ -1,4 +1,5 @@
 import time
+import threading
 
 from nodes.virt_linux.vlinux import VirtLinux
 from components.client import Client
@@ -17,20 +18,32 @@ class VirtLinuxClient(VirtLinux):
     self.cnum = config.cnum
     self.clients = []
 
+  def start_client(self, cidx, vm_config):
+    client_config = self.client_configs[cidx]
+    client = Client(self.defaults, 
+        self.machine_config,
+        client_config, 
+        vm_config, 
+        self.wmanager)
+    self.clients.append(client)
+    client.run_virt(False, False)
+    time.sleep(3)
+
+
   def start_clients(self):
+    threads = []
     for i in range(self.nodenum):
       vm_config = self.vm_configs[i]
       for j in range(self.cnum):
         cidx = self.cnum * i + j
-        client_config = self.client_configs[cidx]
-        client = Client(self.defaults, 
-            self.machine_config,
-            client_config, 
-            vm_config, 
-            self.wmanager)
-        self.clients.append(client)
-        client.run_virt(False, False)
-        time.sleep(3)
+        client_thread = threading.Thread(target=self.start_client, 
+                                         args=(cidx, vm_config,))
+        threads.append(client_thread)
+        client_thread.start()
+    
+    for t in threads:
+      t.join()
+
 
   def run(self):
     self.setup()

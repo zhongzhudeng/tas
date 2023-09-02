@@ -13,7 +13,7 @@ class OvsLinuxServer(OvsLinux):
       tunnel = False
 
     OvsLinux.__init__(self, config.defaults, config.s_machine_config,
-        config.s_vm_configs,
+        config.s_vm_configs, config.s_cset_configs,
         config.defaults.server_interface,
         config.defaults.server_interface_pci,
         wmanager, 

@@ -7,11 +7,11 @@ from nodes.node import Node
 class OvsLinux(Node):
   
   def __init__(self, defaults, machine_config,
-      vm_configs, interface, pci_id, wmanager, 
+      vm_configs, cset_configs, interface, pci_id, wmanager, 
       setup_pane_name, cleanup_pane_name, tunnel):
 
-    Node.__init__(self, defaults, machine_config, wmanager, 
-        setup_pane_name, cleanup_pane_name)
+    Node.__init__(self, defaults, machine_config, cset_configs,
+        wmanager, setup_pane_name, cleanup_pane_name)
         
     self.tunnel = tunnel
     self.interface = interface
