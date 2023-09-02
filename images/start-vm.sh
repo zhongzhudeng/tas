@@ -37,7 +37,7 @@ echo $alt_mac
 # Note: vectors=<2 + 2 * queues_nr>
 
 if [[ "$stack" == 'virt-tas' ]]; then
-  csudo set proc --set=$cset --exec \
+  sudo cset proc --set=$cset --exec \
   qemu-system-x86_64 -- \
     -nographic -monitor none -serial stdio \
     -machine accel=kvm,type=q35 \
