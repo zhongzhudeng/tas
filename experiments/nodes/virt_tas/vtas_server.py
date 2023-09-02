@@ -12,6 +12,7 @@ class VirtTasServer(VirtTas):
     VirtTas.__init__(self, config.defaults, config.s_machine_config,
         config.s_tas_configs[0], config.s_proxyh_config, 
         config.s_vm_configs, config.s_proxyg_configs,
+        config.s_cset_configs,
         wmanager, config.defaults.s_setup_pane, 
         config.defaults.s_cleanup_pane)
 
@@ -61,7 +62,7 @@ class VirtTasServer(VirtTas):
     proxyh = ProxyHost(self.defaults, self.machine_config, self.proxyh_config, self.wmanager)
 
     tas.run_bare()
-    time.sleep(5)
+    time.sleep(8)
     proxyh.run()
     time.sleep(3)
     self.setup_tunnels()

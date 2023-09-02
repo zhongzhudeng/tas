@@ -2,7 +2,7 @@ import time
 
 class Node:
   
-  def __init__(self, defaults, machine_config, 
+  def __init__(self, defaults, machine_config,
       wmanager, setup_pane_name, cleanup_pane_name):
     self.defaults = defaults
     self.machine_config = machine_config
@@ -17,6 +17,18 @@ class Node:
   def cleanup(self):
     self.cleanup_pane = self.wmanager.add_new_pane(self.cleanup_pane_name, 
         self.machine_config.is_remote)
+
+  def set_cset(self, cores_arg, mem, name, exclusive):
+    if exclusive:
+        cmd = "sudo cset set --cpu={} --mem={} --set={} --cpu_exclusive".format(cores_arg, mem, name)
+    else:
+        cmd = "sudo cset set --cpu={} --mem={} --set={}".format(cores_arg, mem, name)
+
+    self.setup_pane.send_keys(cmd)
+
+  def destroy_cset(self, name):
+     cmd = "sudo cset set --destroy --set={}".format(name)
+     self.cleanup_pane.send_keys(cmd)
 
   def add_ip(self, interface, ip):
     cmd = "sudo ip addr add {} dev {}".format(ip, interface)

@@ -2,6 +2,8 @@
     on the host machine if that happens
     echo 0 > /proc/sys/net/bridge/bridge-nf-call-iptables """
 
+import numpy as np
+
 class Defaults:
     def __init__(self):
         self.client_ip = '192.168.10.13'
@@ -47,6 +49,28 @@ class Defaults:
         self.pci_id = "0000:00:03.0"
         ############################
 
+        # All cores in client machine
+        self.c_cores = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
+                        18,19,20,21,22,23,24,25,26,27,28,29,30,31,
+                        32,33,34,35,36,37,38,39,40,41,42,42]
+        # Cores in socket 0
+        self.c_cores_s0 = [0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,
+                           30,32,34,36,38,40,42]
+        # Cores in socket 1
+        self.c_cores_s1 = [1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,
+                           31,33,35,37,39,41,43]
+        # All cores in server machine
+        self.s_cores = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
+                        18,19,20,21,22,23,24,25,26,27,28,29,30,31,
+                        32,33,34,35,36,37,38,39,40,41,42,42]
+        # Cores in socket 0
+        self.s_cores_s0 = [0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,
+                           30,32,34,36,38,40,42]
+        # Cores in socket 1
+        self.s_cores_s1 = [1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,
+                           31,33,35,37,39,41,43]
+        
+
         self.remote_connect_cmd = 'ssh swsnetlab04'
 
         self.home_dir = '/local/mstolet'
@@ -74,13 +98,28 @@ class MachineConfig:
         self.ip = ip
         self.stack = stack
 
+class CSetConfig:
+    def __init__(self, cores, mem, name, exclusive=True):
+        self.cores = cores
+        self.mem = mem
+        self.name = name
+        self.exclusive = exclusive
+        self.cores_arg = "{}".format(cores[0])
+        if len(cores) > 1:
+            for i in range(1, len(cores)):
+                self.cores_arg = "{},{}".format(self.cores_arg, cores[i])
+
 class TasConfig:
     def __init__(self, pane, machine_config, project_dir, ip, n_cores, 
-            dpdk_extra="d8:00.0", cc="timely", 
+            pci="d8:00.0",
+            cset="tas",
+            cores=[1,3,5,7,9,11,13,16,17,19,21],
+            cc="timely", 
             cc_timely_min_rtt="15",
             cc_timely_tlow="30", cc_timely_thigh="2000",
             cc_timely_beta="0.3", cc_timely_alpha="0.02",
-            cc_timely_minrate="10000", cc_timely_step="40000"):
+            cc_timely_minrate="10000", cc_timely_step="40000",
+            cc_const_rate=0):
         self.name = "server" if machine_config. is_server else "client"
         
         self.project_dir = project_dir
@@ -101,8 +140,20 @@ class TasConfig:
         self.args = '--ip-addr={}/24 --fp-cores-max={}'.format(ip, n_cores) + \
             ' --fp-no-autoscale --fp-no-ints' + \
             ' --cc={}'.format(cc) + \
-            ' --dpdk-extra="-a{}"'.format(dpdk_extra)   
+            ' --dpdk-extra="-a{}"'.format(pci)   
         
+        self.cset = cset
+        self.cores = np.array(cores)[range(0, n_cores + 1)]
+        self.lcores = '--lcores='
+        for i, core in enumerate(self.cores):
+            if i == len(self.cores) - 1:
+                self.lcores += "{}@{}".format(i, core)
+            else:
+                self.lcores += "{}@{},".format(i, core)
+
+        if cc == "const-rate":
+            self.args = self.args + " --cc-const-rate={}".format(cc_const_rate)
+
         if cc == "timely":
             self.args = self.args + " --cc-timely-minrtt={}".format(cc_timely_min_rtt)
             self.args = self.args + " --cc-timely-tlow={}".format(cc_timely_tlow)
@@ -118,7 +169,9 @@ class TasConfig:
 
 class VMConfig:
     def __init__(self, pane, machine_config, tas_dir, tas_dir_virt, idx,
-                 n_cores, memory, n_queues=None):
+                 n_cores, memory, 
+                 cset="vm",
+                 n_queues=None):
         self.name = "server" if machine_config.is_server else "client"
         
         self.manager_dir = tas_dir + '/images'
@@ -128,6 +181,8 @@ class VMConfig:
         self.id = idx
 
         self.n_cores = n_cores
+        self.cset = cset
+
         self.memory = memory
         self.n_queues = n_queues
         if machine_config.is_server:
@@ -150,21 +205,21 @@ class ProxyConfig:
         self.clean_cmd = 'make clean'
 
 class HostProxyConfig(ProxyConfig):
-    def __init__(self, pane, machine_config, comp_dir):
+    def __init__(self, pane, machine_config, comp_dir, block=0, poll_cycles=10000):
         ProxyConfig.__init__(self, machine_config, comp_dir)
-        self.exec_file = self.comp_dir + '/proxy/host/host'
+        self.exec_file = self.comp_dir + '/proxy/host/host 0'
         
-        self.out_file = 'proxy_h'
+        self.out_file = 'proxy_h {} {}'.format(block, poll_cycles)
         self.out = self.out_dir + '/' + self.out_file
         
         self.pane = pane
 
 class GuestProxyConfig(ProxyConfig):
-    def __init__(self, pane, machine_config, comp_dir):
+    def __init__(self, pane, machine_config, comp_dir, block=0, poll_cycles=10000):
         ProxyConfig.__init__(self, machine_config, comp_dir)
-        self.exec_file = self.comp_dir + '/proxy/guest/guest'
+        self.exec_file = self.comp_dir + '/proxy/guest/guest 0'
        
-        self.out_file = 'proxy_g'
+        self.out_file = 'proxy_g {} {}'.format(block, poll_cycles)
         self.out = self.out_dir + '/' + self.out_file
        
         self.pane = pane
@@ -174,7 +229,8 @@ class ClientConfig:
             ip, port, ncores, msize, mpending,
             nconns, open_delay, max_msgs_conn, max_pend_conns,
             bench_dir, tas_dir, stack, exp_name, 
-            bursty=0, burst_length_mean=0, burst_interval_mean=0, groupid=0):
+            bursty=False, rate_normal=10000, rate_burst=10000, 
+            burst_length=0, burst_interval=0, groupid=0, cset="client"):
         self.name = "client"
         self.exp_name = exp_name
         self.exp_name = ""
@@ -186,8 +242,12 @@ class ClientConfig:
        
         self.bench_dir = bench_dir
         self.lib_so = tas_dir + '/lib/libtas_interpose.so'
-        self.exec_file = self.comp_dir + '/testclient_linux'
-       
+
+        if bursty:
+            self.exec_file = self.comp_dir + '/testclient_linux_bursty'
+        else:
+            self.exec_file = self.comp_dir + '/testclient_linux'
+
         self.out_dir = tas_dir + "/out"
         self.out_file = "{}_client{}_node{}_nconns{}_ncores{}_msize{}".format(
                 exp_name, idx, vmid, nconns, ncores, msize)
@@ -197,12 +257,18 @@ class ClientConfig:
         self.latency_out = self.out_dir + "/" + self.latency_file
         self.latency_temp = self.out_dir + "/" + self.temp_file
        
-        self.args = '{} {} {} foo {} {} {} {} {} {} {} {} {} {} {}'.format(ip, port, ncores, \
-            msize, mpending, nconns, open_delay, \
-            max_msgs_conn, max_pend_conns, \
-            bursty, burst_length_mean, burst_interval_mean, \
-            self.out_dir + "/", self.latency_file)
+        if bursty:
+            self.args = '{} {} {} foo {} {} {} {} {} {} {} {} {} {}'.format(ip, port, ncores, \
+                msize, mpending, nconns, open_delay, \
+                max_msgs_conn, max_pend_conns, \
+                rate_normal, rate_burst, burst_length, burst_interval)
+        else:
+            self.args = '{} {} {} foo {} {} {} {} {} {} {} {}'.format(ip, port, ncores, \
+                msize, mpending, nconns, open_delay, \
+                max_msgs_conn, max_pend_conns, \
+                self.out_dir + "/", self.latency_file)
 
+        self.cset = cset
         self.groupid = groupid
         self.pane = pane
         self.id = idx
@@ -211,7 +277,7 @@ class ClientConfig:
 class ServerConfig:
     def __init__(self, pane, idx, vmid,
             port, ncores, max_flows, max_bytes,
-            bench_dir, tas_dir, groupid=0):
+            bench_dir, tas_dir, groupid=0, cset="server"):
         self.name = "server"
         self.tas_dir = tas_dir
         
@@ -228,6 +294,7 @@ class ServerConfig:
         self.out_file = 'rpc_s'
         self.out = self.out_dir + '/' + self.out_file
         
+        self.cset = cset
         self.groupid = groupid
         self.pane = pane
         self.id = idx

@@ -17,8 +17,7 @@ class Client:
                 machine_config.is_remote)
 
     def run_bare(self, w_sudo, ld_preload):
-        cores = "22,24,26,28,30,32,34,36,38,40,42"
-        self.run_benchmark_rpc(w_sudo, ld_preload, clean=False, cores=cores)
+        self.run_benchmark_rpc(w_sudo, ld_preload, clean=False, cset=True)
 
     def run_virt(self, w_sudo, ld_preload):
         ssh_com = utils.get_ssh_command(self.machine_config, self.vm_config)
@@ -26,9 +25,9 @@ class Client:
         time.sleep(3)
         self.pane.send_keys("tas")
         time.sleep(2)
-        self.run_benchmark_rpc(w_sudo, ld_preload, clean=False)
+        self.run_benchmark_rpc(w_sudo, ld_preload, clean=False, cset=False)
 
-    def run_benchmark_rpc(self, w_sudo, ld_preload, clean, cores=None):
+    def run_benchmark_rpc(self, w_sudo, ld_preload, clean, cset):
         self.pane.send_keys('cd ' + self.client_config.comp_dir)
 
         if clean:
@@ -41,21 +40,23 @@ class Client:
         time.sleep(3)
 
         cmd = 'stdbuf -oL '
-        
-        # Keep application on even cores, so it's the same NUMA node as TAS
-        if cores is not None:
-            cmd += "taskset -c {} ".format(cores)
 
         if w_sudo:
             cmd += 'sudo -E '
         
         if ld_preload:
             cmd += 'LD_PRELOAD=' + self.client_config.lib_so + ' '
-       
-        cmd += self.client_config.exec_file + ' ' + \
-                self.client_config.args + \
-                ' | tee ' + \
-                self.client_config.out
+
+        # Keep application on even cores, so it's the same NUMA node as TAS
+        if cset:
+            cmd += "sudo cset proc --set={} --exec ".format(self.client_config.cset)
+            cmd += self.client_config.exec_file + ' -- '
+            cmd += self.client_config.args + ' | tee ' + self.client_config.out
+        else:
+            cmd += self.client_config.exec_file + ' ' + \
+                    self.client_config.args + \
+                    ' | tee ' + \
+                    self.client_config.out
     
         self.pane.send_keys(cmd)
     
@@ -75,13 +76,14 @@ class Client:
         self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
         time.sleep(1)
 
-        scp_com = utils.get_scp_command(self.machine_config, self.vm_config,
-            self.client_config.latency_out,
-            out_dir + '/' + self.client_config.latency_file)
-        self.save_logs_pane.send_keys(scp_com)
-        time.sleep(3)
-        self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
-        time.sleep(1)
+        if self.client_config.latency_out is not None:
+            scp_com = utils.get_scp_command(self.machine_config, self.vm_config,
+                self.client_config.latency_out,
+                out_dir + '/' + self.client_config.latency_file)
+            self.save_logs_pane.send_keys(scp_com)
+            time.sleep(3)
+            self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
+            time.sleep(1)
 
         # Remove log from remote machine
         ssh_com = utils.get_ssh_command(self.machine_config, self.vm_config)
@@ -92,16 +94,14 @@ class Client:
         self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
         time.sleep(1)
 
-        ssh_com += " 'rm {}'".format(self.client_config.latency_out)
-        self.save_logs_pane.send_keys(ssh_com)
-        time.sleep(3)
-        self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
-        time.sleep(1)
+        if self.client_config.latency_out is not None:
+            ssh_com += " 'rm {}'".format(self.client_config.latency_out)
+            self.save_logs_pane.send_keys(ssh_com)
+            time.sleep(3)
+            self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
+            time.sleep(1)
 
     def save_log_bare(self, exp_path):
-        # kill process to force flush to file
-        # self.save_logs_pane.send_keys("sudo pkill testclient")
-
         # self.exp_path is set in the run.py file
         split_path = exp_path.split("/")
         n = len(split_path)
@@ -113,5 +113,6 @@ class Client:
         dest = out_dir + "/" + self.client_config.out_file
         os.rename(self.client_config.out, dest)
 
-        dest_latency = out_dir + "/" + self.client_config.latency_file
-        os.rename(self.client_config.latency_out, dest_latency)
+        if self.client_config.latency_file is not None:
+            dest_latency = out_dir + "/" + self.client_config.latency_file
+            os.rename(self.client_config.latency_out, dest_latency)

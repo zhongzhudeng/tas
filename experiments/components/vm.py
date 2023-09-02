@@ -13,15 +13,16 @@ class VM:
     def start(self):
         self.pane.send_keys('cd ' + self.vm_config.manager_dir)
         if self.vm_config.n_queues is None:
-            start_vm_cmd = "sudo bash start-vm.sh {} {} {} {} {}".format(
-                    self.machine_config.stack, self.vm_config.id,
-                    self.machine_config.interface, self.vm_config.n_cores,
-                    self.vm_config.memory)
-        else:
             start_vm_cmd = "sudo bash start-vm.sh {} {} {} {} {} {}".format(
                     self.machine_config.stack, self.vm_config.id,
+                    self.machine_config.interface, self.vm_config.n_cores, 
+                    self.vm_config.memory, self.vm_config.cset)
+        else:
+            start_vm_cmd = "sudo bash start-vm.sh {} {} {} {} {} {} {}".format(
+                    self.machine_config.stack, self.vm_config.id,
                     self.machine_config.interface, self.vm_config.n_cores,
-                    self.vm_config.memory, self.vm_config.n_queues)
+                    self.vm_config.memory, 
+                    self.vm_config.cset, self.vm_config.n_queues)
         self.pane.send_keys(start_vm_cmd)
        
         print("Started VM")

@@ -9,6 +9,7 @@ class VirtTas(Node):
   
   def __init__(self, defaults, machine_config, tas_config,
       proxyh_config, vm_configs, proxyg_configs,
+      cset_configs,
       wmanager, setup_pane_name, cleanup_pane_name):
 
     Node.__init__(self, defaults, machine_config, wmanager, 
@@ -17,8 +18,15 @@ class VirtTas(Node):
     self.tas_config = tas_config
     self.proxyh_config = proxyh_config
     self.vm_configs = vm_configs
+    self.cset_configs = cset_configs
     self.proxyg_configs = proxyg_configs
     self.vms = []
+
+  def setup(self):
+    super().setup()
+
+    for cset in self.cset_configs:
+      self.set_cset(cset.cores_arg, cset.mem, cset.name, cset.exclusive)
 
   def start_vm(self, vm):
     vm.start()
@@ -32,6 +40,9 @@ class VirtTas(Node):
     for vm in self.vms:
       vm.del_dummy_intf("eth0", vm.vm_config.vm_ip)
       vm.shutdown()
+
+    for cset in self.cset_configs:
+      self.destroy_cset(cset.name)
 
   def start_vms(self):
     threads = []

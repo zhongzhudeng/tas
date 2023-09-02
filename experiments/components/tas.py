@@ -15,8 +15,7 @@ class TAS:
                 machine_config.is_remote)
 
     def run_bare(self):
-        tas_args = self.tas_config.args
-        tas_args += ' --dpdk-extra="--lcores=0@1,1@3,2@5,3@7,4@9,5@11,6@13,7@15,8@17,9@19,10@21"'
+        tas_args = self.tas_config.args + " --dpdk-extra={}".format(self.tas_config.lcores)
         utils.compile_and_run(pane=self.pane,
                 comp_dir=self.tas_config.comp_dir,
                 comp_cmd=self.tas_config.comp_cmd,
@@ -26,7 +25,8 @@ class TAS:
                 args=tas_args,
                 save_log=True,
                 clean=False,
-                gdb=False)
+                gdb=False,
+                cset=self.tas_config.cset)
 
     def run_virt(self):
         ssh_com = utils.get_ssh_command(self.machine_config, self.vm_config)
