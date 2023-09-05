@@ -1,6 +1,5 @@
 from configs.gen_config import Defaults
 from configs.gen_config import MachineConfig
-from configs.gen_config import VMConfig
 from configs.gen_config import ClientConfig
 from configs.gen_config import ServerConfig
 

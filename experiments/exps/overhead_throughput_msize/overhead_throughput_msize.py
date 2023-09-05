@@ -14,7 +14,7 @@ n_runs = 3
 
 for n_r in range(n_runs):
   for n_m in msize:
-    exp_name = "overhead-throughput-run{}-msize{}_".format(n_r, n_m)
+    exp_name = "overhead-throughputmsgs-run{}-msize{}_".format(n_r, n_m)
     tas_bare_exp = exp.Experiment(TasBareConf(exp_name + "bare-tas", n_m), name=exp_name)
     vtas_bare_exp = exp.Experiment(VTasBareConf(exp_name + "bare-vtas", n_m), name=exp_name)
     tas_virt_exp = exp.Experiment(TasVirtConf(exp_name + "virt-tas", n_m), name=exp_name)

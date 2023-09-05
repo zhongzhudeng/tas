@@ -4,12 +4,22 @@ from configs.gen_config import TasConfig
 from configs.gen_config import VMConfig
 from configs.gen_config import ClientConfig
 from configs.gen_config import ServerConfig
+from configs.gen_config import CSetConfig
 
 class Config:
     def __init__(self, exp_name):
         self.exp_name = exp_name
         self.defaults = Defaults()
         
+        # Configure csets
+        self.s_cset_configs = []
+        self.c_cset_configs = []
+        vm0_cset = CSetConfig([1,3,5,7,9,11], "0-1", "vm0_server")
+        self.s_cset_configs.append(vm0_cset)
+
+        vm0_cset = CSetConfig([1,3,5,7,9,11], "0-1", "vm0_client")
+        self.c_cset_configs.append(vm0_cset)
+
         # Server Machine
         self.sstack = 'ovs-tas'
         self.snum = 1
@@ -30,14 +40,15 @@ class Config:
                 tas_dir=self.defaults.default_vtas_dir_bare,
                 tas_dir_virt=self.defaults.default_vtas_dir_virt,
                 idx=0,
-                n_cores=22,
-                memory=10,
+                n_cores=6,
+                cset="vm0_server",
+                memory=5,
                 n_queues=10)
         tas_config = TasConfig(pane=self.defaults.s_tas_pane,
                 machine_config=self.s_machine_config,
                 project_dir=self.defaults.default_otas_dir_virt,
                 ip=vm0_config.vm_ip,
-                n_cores=1, dpdk_extra="00:03.0")
+                n_cores=1, pci="00:03.0")
         tas_config.args = tas_config.args + " --fp-no-rss --fp-no-xsumoffload"
 
         self.s_tas_configs.append(tas_config)
@@ -70,14 +81,15 @@ class Config:
                 tas_dir=self.defaults.default_vtas_dir_bare,
                 tas_dir_virt=self.defaults.default_vtas_dir_virt,
                 idx=0,
-                n_cores=22,
-                memory=10,
+                n_cores=6,
+                cset="vm0_client",
+                memory=5,
                 n_queues=10)
         tas0_config = TasConfig(pane=self.defaults.c_tas_pane,
                 machine_config=self.c_machine_config,
                 project_dir=self.defaults.default_otas_dir_virt,
                 ip=vm0_config.vm_ip,
-                n_cores=1, dpdk_extra="00:03.0")
+                n_cores=1, pci="00:03.0")
         tas0_config.args = tas0_config.args + " --fp-no-rss --fp-no-xsumoffload"
 
         self.c_tas_configs.append(tas0_config)

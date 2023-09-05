@@ -32,12 +32,12 @@ class Node:
         cmd = "sudo cset set --cpu={} --mem={} --set={}".format(cores_arg, mem, name)
 
     self.setup_pane.send_keys(cmd)
-    time.sleep(1)
+    time.sleep(2)
 
   def destroy_cset(self, name):
      cmd = "sudo cset set --destroy --set={}".format(name)
      self.cleanup_pane.send_keys(cmd)
-     time.sleep(1)
+     time.sleep(2)
 
   def add_ip(self, interface, ip):
     cmd = "sudo ip addr add {} dev {}".format(ip, interface)

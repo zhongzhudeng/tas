@@ -1,15 +1,28 @@
 from configs.gen_config import Defaults
 from configs.gen_config import MachineConfig
-from configs.gen_config import TasConfig
 from configs.gen_config import VMConfig
 from configs.gen_config import ClientConfig
 from configs.gen_config import ServerConfig
+from configs.gen_config import CSetConfig
 
 class Config:
     def __init__(self, exp_name, msize):
         self.exp_name = exp_name
         self.defaults = Defaults()
         
+        # Configure csets
+        self.s_cset_configs = []
+        self.c_cset_configs = []
+        vm0_cset = CSetConfig([1,3,5,7,9,11,13,15,17,19,21], "0-1", "vm0_server")
+        self.s_cset_configs.append(vm0_cset)
+        vm1_cset = CSetConfig([23,25,27,29,31,33,35,37,39,41,43], "0-1", "vm1_server")
+        self.s_cset_configs.append(vm1_cset)
+
+        vm0_cset = CSetConfig([1,3], "0-1", "vm0_client")
+        self.c_cset_configs.append(vm0_cset)
+        vm1_cset = CSetConfig([23,25,27,29,31,33], "0-1", "vm1_client")
+        self.c_cset_configs.append(vm1_cset)
+
         # Server Machine
         self.sstack = 'ovs-linux'
         self.snum = 1
@@ -31,6 +44,7 @@ class Config:
                 tas_dir_virt=self.defaults.default_vtas_dir_virt,
                 idx=0,
                 n_cores=11,
+                cset="vm0_server",
                 memory=10,
                 n_queues=11)
         vm1_config = VMConfig(pane=self.defaults.s_vm_pane,
@@ -39,6 +53,7 @@ class Config:
                 tas_dir_virt=self.defaults.default_vtas_dir_virt,
                 idx=1,
                 n_cores=11,
+                cset="vm1_server",
                 memory=10,
                 n_queues=11)
 
@@ -47,12 +62,12 @@ class Config:
 
         server0_config = ServerConfig(pane=self.defaults.s_server_pane,
                 idx=0, vmid=0,
-                port=1234, ncores=5, max_flows=8192, max_bytes=4096,
+                port=1234, ncores=4, max_flows=8192, max_bytes=4096,
                 bench_dir=self.defaults.default_obenchmark_dir_virt,
                 tas_dir=self.defaults.default_vtas_dir_virt)
         server1_config = ServerConfig(pane=self.defaults.s_server_pane,
                 idx=1, vmid=1,
-                port=1235, ncores=5, max_flows=8192, max_bytes=4096,
+                port=1235, ncores=4, max_flows=8192, max_bytes=4096,
                 bench_dir=self.defaults.default_obenchmark_dir_virt,
                 tas_dir=self.defaults.default_vtas_dir_virt)
         self.server_configs.append(server0_config)
@@ -78,7 +93,8 @@ class Config:
                 tas_dir=self.defaults.default_vtas_dir_bare,
                 tas_dir_virt=self.defaults.default_vtas_dir_virt,
                 idx=0,
-                n_cores=11,
+                n_cores=4,
+                cset="vm0_client",
                 memory=10,
                 n_queues=11)
         vm1_config = VMConfig(pane=self.defaults.c_vm_pane,
@@ -86,7 +102,8 @@ class Config:
                 tas_dir=self.defaults.default_vtas_dir_bare,
                 tas_dir_virt=self.defaults.default_vtas_dir_virt,
                 idx=1,
-                n_cores=11,
+                n_cores=8,
+                cset="vm1_client",
                 memory=10,
                 n_queues=11)
 
@@ -104,8 +121,8 @@ class Config:
         client1_config = ClientConfig(exp_name=exp_name, 
                 pane=self.defaults.c_client_pane,
                 idx=0, vmid=1, stack=self.cstack,
-                ip=self.s_vm_configs[1].vm_ip, port=1235, ncores=3,
-                msize=msize, mpending=64, nconns=128,
+                ip=self.s_vm_configs[1].vm_ip, port=1235, ncores=5,
+                msize=msize, mpending=64, nconns=100,
                 open_delay=10, max_msgs_conn=0, max_pend_conns=1,
                 bench_dir=self.defaults.default_obenchmark_dir_virt,
                 tas_dir=self.defaults.default_vtas_dir_virt)

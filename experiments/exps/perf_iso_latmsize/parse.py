@@ -30,6 +30,7 @@ def parse_metadata():
   dir_path = "./out/"
   data = {}
 
+  putils.remove_cset_dir(dir_path)
   for f in os.listdir(dir_path):
     fname = os.fsdecode(f)
     

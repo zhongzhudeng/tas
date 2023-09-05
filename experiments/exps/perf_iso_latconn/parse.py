@@ -30,13 +30,14 @@ def parse_metadata():
   dir_path = "./out/"
   data = {}
 
+  putils.remove_cset_dir(dir_path)
   for f in os.listdir(dir_path):
     fname = os.fsdecode(f)
     if "tas_c" == fname or "latency_hist" in fname:
       continue
 
     run = putils.get_expname_run(fname)
-    nconns = str(int(putils.get_expname_conns(fname)) * 3)
+    nconns = str(int(putils.get_expname_conns(fname)))
     cid = putils.get_client_id(fname)
     nid = putils.get_node_id(fname)
     stack = putils.get_stack(fname)

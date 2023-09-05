@@ -6,12 +6,27 @@ from configs.gen_config import HostProxyConfig
 from configs.gen_config import GuestProxyConfig
 from configs.gen_config import ClientConfig
 from configs.gen_config import ServerConfig
+from configs.gen_config import CSetConfig
 
 class Config:
     def __init__(self, exp_name):
         self.exp_name = exp_name
         self.defaults = Defaults()
         
+        # Configure csets
+        self.s_cset_configs = []
+        self.c_cset_configs = []
+        tas_cset = CSetConfig([1,3], "0-1", "tas_server")
+        self.s_cset_configs.append(tas_cset)
+        tas_cset = CSetConfig([1,3], 1, "tas_client")
+        self.c_cset_configs.append(tas_cset)
+
+        vm0_cset = CSetConfig([5,7,9,11,13,15], "0-1", "vm0_server")
+        self.s_cset_configs.append(vm0_cset)
+
+        vm0_cset = CSetConfig([5,7,9,11,13,15], "0-1", "vm0_client")
+        self.c_cset_configs.append(vm0_cset)
+
         # Server Machine
         self.sstack = 'virt-tas'
         self.snum = 1
@@ -31,6 +46,7 @@ class Config:
                 machine_config=self.s_machine_config,
                 project_dir=self.defaults.default_vtas_dir_bare,
                 ip=self.s_machine_config.ip,
+                cset="tas_server",
                 n_cores=1)
         tas_config.args = tas_config.args
         self.s_tas_configs.append(tas_config)
@@ -44,8 +60,9 @@ class Config:
                 tas_dir=self.defaults.default_vtas_dir_bare,
                 tas_dir_virt=self.defaults.default_vtas_dir_virt,
                 idx=0,
-                n_cores=11,
-                memory=10)
+                n_cores=6,
+                cset="vm0_server",
+                memory=5)
 
         self.s_vm_configs.append(vm0_config)
 
@@ -81,6 +98,7 @@ class Config:
                 machine_config=self.c_machine_config,
                 project_dir=self.defaults.default_vtas_dir_bare,
                 ip=self.c_machine_config.ip,
+                cset="tas_client",
                 n_cores=1)
         tas_config.args = tas_config.args
         self.c_tas_configs.append(tas_config)
@@ -94,8 +112,9 @@ class Config:
                 tas_dir=self.defaults.default_vtas_dir_bare,
                 tas_dir_virt=self.defaults.default_vtas_dir_virt,
                 idx=0,
-                n_cores=11,
-                memory=10)
+                n_cores=6,
+                cset="vm0_client",
+                memory=5)
 
         self.c_vm_configs.append(vm0_config)
 

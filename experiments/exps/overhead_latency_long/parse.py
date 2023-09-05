@@ -26,6 +26,7 @@ def parse_metadata():
   dir_path = "./out/"
   data = {}
 
+  putils.remove_cset_dir(dir_path)
   for f in os.listdir(dir_path):
     fname = os.fsdecode(f)
 
@@ -66,7 +67,7 @@ def parse_data(parsed_md):
   return data
 
 def save_dat_file(data):
-  stacks = ["bare-tas", "bare-vtas", "virt-tas", "ovs-tas", "bare-linux", "ovs-linux"]
+  stacks = ["bare-tas", "virt-tas", "ovs-tas", "bare-linux", "ovs-linux"]
 
   for stack in stacks:
     fname = "./{}_hist.dat".format(stack)

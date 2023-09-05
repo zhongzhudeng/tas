@@ -39,17 +39,16 @@ class Client:
         self.pane.send_keys("cd " + self.client_config.tas_dir)
         time.sleep(3)
 
-        cmd = 'stdbuf -oL '
-
-        if w_sudo:
-            cmd += 'sudo -E '
+        cmd = ''
         
+        if w_sudo:
+            cmd += 'sudo '
+
         if ld_preload:
             cmd += 'LD_PRELOAD=' + self.client_config.lib_so + ' '
 
-        # Keep application on even cores, so it's the same NUMA node as TAS
         if cset:
-            cmd += "sudo cset proc --set={} --exec ".format(self.client_config.cset)
+            cmd += "cset proc --set={} --exec ".format(self.client_config.cset)
             cmd += self.client_config.exec_file + ' -- '
             cmd += self.client_config.args + ' | tee ' + self.client_config.out
         else:

@@ -27,12 +27,14 @@ g_env.add_argument('--workdir', metavar='DIR', type=str,
 
 args = parser.parse_args()
 experiments = []
+paths = []
 
 for path in args.experiments:
     modname, _ = os.path.splitext(os.path.basename(path))
     spec = importlib.util.spec_from_file_location(modname, path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
+    paths = paths + [path] * len(mod.experiments)
     experiments += mod.experiments
 
 if (args.reset):
@@ -40,9 +42,9 @@ if (args.reset):
         e.reset()
     exit()
 
-for e in experiments:
+for i, e in enumerate(experiments):
     e.reset()
-    e.exp_path = path
+    e.exp_path = paths[i]
     if (args.filter) and (len(args.filter) > 0):
         match = False
         for f in args.filter:

@@ -38,16 +38,14 @@ class Server:
 
         cmd = ''
         
-        # Keep application on even cores, so it's the same NUMA node as TAS
         if w_sudo:
-            cmd += 'sudo -E '
+            cmd += 'sudo '
         
         if ld_preload:
             cmd += 'LD_PRELOAD=' + self.server_config.lib_so + ' '
 
-        # Keep application on even cores, so it's the same NUMA node as TAS
         if cset:
-            cmd += "sudo cset proc --set={} --exec ".format(self.server_config.cset)
+            cmd += "cset proc --set={} --exec ".format(self.server_config.cset)
             cmd += self.server_config.exec_file + ' -- '
             cmd += self.server_config.args + ' | tee ' + self.server_config.out
         else:
