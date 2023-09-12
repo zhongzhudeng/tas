@@ -6,11 +6,11 @@
 
 #define IVSHMEM_SOCK_PATH "/run/tasproxy"
 
-/* These variables are all pre-determined by QEMU
+/* This variable is pre-determined by QEMU
    to get ivshmem to work */
 #define IVSHMEM_PROTOCOL_VERSION 0
 
-#define MAX_VMS 16
+#define MAX_VMS 30
 
 struct vmcontext_req {
     int app_id;
