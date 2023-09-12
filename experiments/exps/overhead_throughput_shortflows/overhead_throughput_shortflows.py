@@ -8,8 +8,8 @@ from exps.overhead_throughput_shortflows.configs.ovs_linux import Config as OVSL
 
 experiments = []
 
-flow_lens = [1, 64, 128, 256, 512, 1024, 2048]
-n_runs = 3
+flow_lens = [64, 128, 256, 512, 1024, 2048]
+n_runs = 1
 
 for n_r in range(n_runs):
   for flow_len in flow_lens:

@@ -8,8 +8,8 @@ from exps.perf_iso_latmsize.configs.ovs_tas import Config as OVSTasConf
 
 experiments = []
 
-msize = [64, 128, 256, 512, 1024, 2048]
-n_runs = 3
+msize = [1024,512,256,128,64]
+n_runs = 1
 
 for n_r in range(n_runs):
   for n_m in msize:
@@ -24,4 +24,4 @@ for n_r in range(n_runs):
     experiments.append(tas_virt_exp)
     # experiments.append(ovs_tas_exp)
     # experiments.append(ovs_linux_exp)
-  
+

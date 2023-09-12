@@ -16,23 +16,22 @@ class Config:
         # Configure Csets
         self.s_cset_configs = []
         self.c_cset_configs = []
-        tas_cset = CSetConfig([1,3,5,7,9], 1, "tas")
+        tas_cset = CSetConfig([1,3,5,7,9], "0-1", "tas")
         self.s_cset_configs.append(tas_cset)
         self.c_cset_configs.append(tas_cset)
 
-        vm0_cset = CSetConfig([11,13,15,17], 1, "vm0")
+        vm0_cset = CSetConfig([11,13,15,17], "0-1", "vm0")
         self.s_cset_configs.append(vm0_cset)
         self.c_cset_configs.append(vm0_cset)
-        vm1_cset = CSetConfig([19,21,23,25], 1, "vm1")
+        vm1_cset = CSetConfig([19,21,23,25], "0-1", "vm1")
         self.s_cset_configs.append(vm1_cset)
         self.c_cset_configs.append(vm1_cset)
-        vm2_cset = CSetConfig([27,29,31,33], 1, "vm2")
+        vm2_cset = CSetConfig([27,29,31,33], "0-1", "vm2")
         self.s_cset_configs.append(vm2_cset)
         self.c_cset_configs.append(vm2_cset)
-        vm3_cset = CSetConfig([35,37,39,41], 1, "vm3")
+        vm3_cset = CSetConfig([35,37,39,41], "0-1", "vm3")
         self.s_cset_configs.append(vm3_cset)
         self.c_cset_configs.append(vm3_cset)
-
 
         # Server Machine
         self.sstack = 'virt-tas'
@@ -137,7 +136,7 @@ class Config:
                         pane=self.defaults.c_client_pane,
                         idx=0, vmid=idx, stack=self.cstack,
                         ip=self.s_vm_configs[idx].vm_ip, port=port, ncores=3,
-                        msize=64, mpending=64, nconns=500,
+                        msize=64, mpending=64, nconns=100,
                         open_delay=open_delays[idx], max_msgs_conn=0, max_pend_conns=1,
                         bench_dir=self.defaults.default_vbenchmark_dir_virt,
                         tas_dir=self.defaults.default_vtas_dir_virt,

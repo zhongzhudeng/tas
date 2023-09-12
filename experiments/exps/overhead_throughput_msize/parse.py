@@ -35,7 +35,7 @@ def get_avg_tp(fname_c0):
 
   first_line = lines[0]
   last_line = lines[len(lines) - 1]
-
+  
   n_messages = int(putils.get_n_messages(last_line)) - \
       int(putils.get_n_messages(first_line))
   msize = int(putils.get_msize(fname_c0))
@@ -47,6 +47,7 @@ def parse_metadata():
   dir_path = "./out/"
   data = {}
 
+  putils.remove_cset_dir(dir_path)
   for f in os.listdir(dir_path):
     fname = os.fsdecode(f)
 

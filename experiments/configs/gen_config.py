@@ -32,7 +32,7 @@ class Defaults:
         self.c_setup_pane = "{}_setup".format(self.client_pane_prefix)
         self.c_cleanup_pane = "{}_cleanup".format(self.client_pane_prefix)
 
-        # Mellanox interfaces on client and server machine
+        # Mellanox interfaces on client and server machineremoved
         self.client_interface = 'enp216s0f0np0'
         self.client_interface_pci = "0000:d8:00.0"
         self.client_mac = "b8:59:9f:c4:af:e6"
@@ -91,15 +91,17 @@ class Defaults:
         self.modified_ovs_path = "/local/mstolet/projects/ovs"
 
 class MachineConfig:
-    def __init__(self, ip, interface, stack, is_remote, is_server):
+    def __init__(self, ip, interface, stack, is_remote, is_server,
+                 ovs_pmd_mask="0x55555"):
         self.is_server = is_server
         self.is_remote = is_remote
         self.interface = interface
         self.ip = ip
         self.stack = stack
+        self.ovs_pmd_mask = ovs_pmd_mask
 
 class CSetConfig:
-    def __init__(self, cores, mem, name, exclusive=True):
+    def __init__(self, cores, mem, name, exclusive=False):
         self.cores = cores
         self.mem = mem
         self.name = name
@@ -113,12 +115,11 @@ class TasConfig:
     def __init__(self, pane, machine_config, project_dir, ip, n_cores, 
             pci="d8:00.0",
             cset="tas",
-            cores=[1,3,5,7,9,11,13,16,17,19,21],
+            cores=[1,3,5,7,9,11,13,15,17,19,21],
             cc="timely", 
-            cc_timely_min_rtt="15",
-            cc_timely_tlow="30", cc_timely_thigh="2000",
-            cc_timely_beta="0.3", cc_timely_alpha="0.02",
-            cc_timely_minrate="10000", cc_timely_step="40000",
+            cc_timely_min_rtt="10",
+            cc_timely_tlow="30", cc_timely_thigh="1000",
+            cc_timely_minrate="10000", cc_timely_step="10000",
             cc_const_rate=0):
         self.name = "server" if machine_config. is_server else "client"
         
@@ -158,8 +159,6 @@ class TasConfig:
             self.args = self.args + " --cc-timely-minrtt={}".format(cc_timely_min_rtt)
             self.args = self.args + " --cc-timely-tlow={}".format(cc_timely_tlow)
             self.args = self.args + " --cc-timely-thigh={}".format(cc_timely_thigh)
-            self.args = self.args + " --cc-timely-beta={}".format(cc_timely_beta)
-            self.args = self.args + " --cc-timely-alpha={}".format(cc_timely_alpha)
             self.args = self.args + " --cc-timely-minrate={}".format(cc_timely_minrate)
             self.args = self.args + " --cc-timely-step={}".format(cc_timely_step)
 
@@ -189,7 +188,7 @@ class VMConfig:
             self.vm_ip = '192.168.10.{}'.format(20 + idx)
             self.tas_tap_ip = '10.0.1.{}'.format(1 + idx)
         else:
-            self.vm_ip = '192.168.10.{}'.format(40 + idx)
+            self.vm_ip = '192.168.10.{}'.format(60 + idx)
             self.tas_tap_ip = '10.0.1.{}'.format(20 + idx)
 
 class ProxyConfig:

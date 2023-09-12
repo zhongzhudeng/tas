@@ -3,6 +3,7 @@ set terminal pdf font "Latin Modern Roman"
 set output "plot.pdf"
 set key autotitle columnhead
 set key bottom right
+set colorsequence podo
 
 set datafile separator whitespace
 stats 'bare-tas_hist.dat' u 2 nooutput
@@ -14,14 +15,14 @@ plot 'bare-tas_hist.dat' u ($0==0 ? cumulative=0 : cumulative=cumulative+$2, $1)
 unset table
 
 
-set datafile separator whitespace
-stats 'bare-vtas_hist.dat' u 2 nooutput
+# set datafile separator whitespace
+# stats 'bare-vtas_hist.dat' u 2 nooutput
 
-set table 'bare-vtas_cdf.dat'
-cumulative = 0
-total_count = STATS_sum
-plot 'bare-vtas_hist.dat' u ($0==0 ? cumulative=0 : cumulative=cumulative+$2, $1):(cumulative/total_count) with lines title 'CDF'
-unset table
+# set table 'bare-vtas_cdf.dat'
+# cumulative = 0
+# total_count = STATS_sum
+# plot 'bare-vtas_hist.dat' u ($0==0 ? cumulative=0 : cumulative=cumulative+$2, $1):(cumulative/total_count) with lines title 'CDF'
+# unset table
 
 
 set datafile separator whitespace
@@ -65,13 +66,12 @@ unset table
 
 
 
-set yrange [0:1]
-set xrange [0:1000]
-set xlabel "Latency [us]"
-set ylabel "Cumulative Frequency"
-plot 'bare-tas_cdf.dat' with lines title 'tas', \
-     'bare-vtas_cdf.dat' with lines title 'bare-virtuoso', \
-     'virt-tas_cdf.dat' with lines title 'virtuoso', \
-     'ovs-tas_cdf.dat' with lines title 'ovs-tas', \
-     'bare-linux_cdf.dat' with lines title 'linux', \
-     'ovs-linux_cdf.dat' with lines title 'ovs-dpdk',
+# set yrange [0:1]
+# set xrange [0:1000]
+# set xlabel "Latency [us]"
+# set ylabel "Cumulative Frequency"
+# plot 'bare-tas_cdf.dat' with lines dt 1 lw 4 title 'tas', \
+#      'virt-tas_cdf.dat' with lines dt 2  lw 4 title 'virtuoso', \
+#      'ovs-tas_cdf.dat' with lines dt 3 lw 4 title 'ovs-tas', \
+#      'bare-linux_cdf.dat' with lines dt 4 lw 4 title 'linux', \
+#      'ovs-linux_cdf.dat' with lines dt 5 lw 4 title 'ovs-linux',

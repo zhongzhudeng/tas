@@ -16,19 +16,19 @@ class Config:
         # Configure Csets
         self.s_cset_configs = []
         self.c_cset_configs = []
-        tas_cset = CSetConfig([1,3,5,7,9,11], "0-1", "tas_server")
+        tas_cset = CSetConfig([1,3,5,7,9,11], "0-1", "tas_server", exclusive=True)
         self.s_cset_configs.append(tas_cset)
-        tas_cset = CSetConfig([1,3,5], 1, "tas_client")
+        tas_cset = CSetConfig([1,3,5], 1, "tas_client", exclusive=True)
         self.c_cset_configs.append(tas_cset)
 
-        vm0_cset = CSetConfig([13,15,17,19,21,23], "0-1", "vm0_server")
+        vm0_cset = CSetConfig([13,15,17,19,21,23], "0-1", "vm0_server", exclusive=True)
         self.s_cset_configs.append(vm0_cset)
-        vm1_cset = CSetConfig([25,27,29,31,33,35], "0-1", "vm1_server")
+        vm1_cset = CSetConfig([25,27,29,31,33,35], "0-1", "vm1_server", exclusive=True)
         self.s_cset_configs.append(vm1_cset)
         
-        vm0_cset = CSetConfig([7,9,11], "0-1", "vm0_client")
+        vm0_cset = CSetConfig([7,9,11], "0-1", "vm0_client", exclusive=True)
         self.c_cset_configs.append(vm0_cset)
-        vm1_cset = CSetConfig([13,15,17,19,21,23,25], "0-1", "vm1_client")
+        vm1_cset = CSetConfig([13,15,17,19,21,23,25], "0-1", "vm1_client", exclusive=True)
         self.c_cset_configs.append(vm1_cset)        
 
         # Server Machine
@@ -51,6 +51,7 @@ class Config:
                 project_dir=self.defaults.default_vtas_dir_bare,
                 ip=self.s_machine_config.ip,
                 cset="tas_server",
+                cc_timely_thigh="150",
                 n_cores=5)
         tas_config.args = tas_config.args + " --vm-shm-len=4294967296"
         self.s_tas_configs.append(tas_config)
@@ -122,6 +123,7 @@ class Config:
                 project_dir=self.defaults.default_vtas_dir_bare,
                 ip=self.c_machine_config.ip,
                 cset="tas_client",
+                cc_timely_thigh="150",
                 n_cores=2)
         tas_config.args = tas_config.args + " --vm-shm-len=4294967296"
         self.c_tas_configs.append(tas_config)

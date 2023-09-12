@@ -9,7 +9,7 @@ class OvsTas(Node):
   
   def __init__(self, defaults, machine_config, tas_configs,
       vm_configs, cset_configs, interface, pci_id, wmanager, 
-      setup_pane_name, cleanup_pane_name, tunnel=False):
+      setup_pane_name, cleanup_pane_name, tunnel):
 
     Node.__init__(self, defaults, machine_config, cset_configs,
         wmanager, setup_pane_name, cleanup_pane_name)
@@ -32,7 +32,8 @@ class OvsTas(Node):
 
   def setup_with_tunnel(self, is_client):
     self.ovs_make_install(self.defaults.original_ovs_path)
-    self.start_ovsdpdk(self.vm_configs[0].manager_dir)
+    self.start_ovsdpdk(self.machine_config.ovs_pmd_mask,
+                       self.vm_configs[0].manager_dir)
     self.ovsbr_add_internal("br-int", self.vm_configs[0].manager_dir)
 
     if is_client:
@@ -59,7 +60,8 @@ class OvsTas(Node):
 
   def setup_without_tunnel(self):
     self.ovs_make_install(self.defaults.original_ovs_path)
-    self.start_ovsdpdk(self.vm_configs[0].manager_dir)
+    self.start_ovsdpdk(self.machine_config.ovs_pmd_mask,
+                       self.vm_configs[0].manager_dir)
     self.ovsbr_add("br0", 
                    self.machine_config.ip + "/24",
                    self.machine_config.interface,

@@ -43,7 +43,8 @@ def get_avg_tp(fname_c0, fname_c1):
   msize = int(putils.get_msize(fname_c0))
   n = len(lines) - idx
 
-  return (n_messages * msize * 8 / n) / 1000000
+  return n_messages / n
+  # return (n_messages * msize * 8 / n) / 1000000
 
 def parse_metadata():
   dir_path = "./out/"

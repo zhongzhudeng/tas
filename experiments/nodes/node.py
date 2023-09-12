@@ -129,11 +129,11 @@ class Node:
       self.cleanup_pane.send_keys(cmd)
       time.sleep(2)
 
-  def start_ovsdpdk(self, script_dir):
+  def start_ovsdpdk(self, pmd_mask, script_dir):
       cmd = "cd {}".format(script_dir)
       self.setup_pane.send_keys(cmd)
       time.sleep(1)
-      cmd = "sudo bash ovsdpdk-start.sh"
+      cmd = "sudo bash ovsdpdk-start.sh {}".format(pmd_mask)
       self.setup_pane.send_keys(cmd)
       time.sleep(4)
 

@@ -1,10 +1,8 @@
 #!/usr/bin/gnuplot -persist
-# set terminal pdf font "Latin Modern Roman,16"
-# set output "plot.pdf"
-set term tikz
-set output 'plot.tex'
+set terminal pdf font "Latin Modern Roman,16"
+set output "plot.pdf"
 
-set multiplot layout 1, 2
+# set multiplot layout 1, 2
 
 set xlabel "Agressor Connections"
 set ylabel "Victim 99p Latency [µs]"
@@ -17,16 +15,16 @@ plot 'lat_99p.dat' using 1:2:6:xtic(1) with yerrorlines title 'tas' linetype 1 p
      'lat_99p.dat' using 1:3:7:xtic(1) with yerrorlines title 'virtuoso' linetype 2 ps 1, \
 
 
-set xlabel "Agressor Message Size [Bytes]"
-set ylabel "Victim 99p Latency [µs]"
-set key left top
-set logscale y 10
-set logscale x 2
+# set xlabel "Agressor Message Size [Bytes]"
+# set ylabel "Victim 99p Latency [µs]"
+# set key left top
+# set logscale y 10
+# set logscale x 2
 
-plot '../perf_iso_latmsize/lat_99p.dat' using 1:2:6 with yerrorlines title 'tas' linetype 1 ps 1, \
-     '../perf_iso_latmsize/lat_99p.dat' using 1:5:9 with yerrorlines title 'ovs-linux' linetype 4 ps 1, \
-     '../perf_iso_latmsize/lat_99p.dat' using 1:4:8 with yerrorlines title 'ovs-tas' linetype 3 ps 1, \
-     '../perf_iso_latmsize/lat_99p.dat' using 1:3:7 with yerrorlines title 'virtuoso' linetype 2 ps 1, \
+# plot '../perf_iso_latmsize/lat_99p.dat' using 1:2:6 with yerrorlines title 'tas' linetype 1 ps 1, \
+#      '../perf_iso_latmsize/lat_99p.dat' using 1:5:9 with yerrorlines title 'ovs-linux' linetype 4 ps 1, \
+#      '../perf_iso_latmsize/lat_99p.dat' using 1:4:8 with yerrorlines title 'ovs-tas' linetype 3 ps 1, \
+#      '../perf_iso_latmsize/lat_99p.dat' using 1:3:7 with yerrorlines title 'virtuoso' linetype 2 ps 1, \
 # # margins: left,right,bottom,top
 # # spacing: xspacing,yspacing
 # set multiplot layout 2,2 \
