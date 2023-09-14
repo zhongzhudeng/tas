@@ -9,15 +9,16 @@ class Config:
     def __init__(self, exp_name, n_vms):
         self.exp_name = exp_name
         self.defaults = Defaults()
+        vm_cores = 2
         
         # Configure Csets
-        pmd_mask = "0xaaa"
-        ovs_cores = [1,3,5,7,9,11,13]
+        pmd_mask = "0x555"
+        ovs_cores = [0,2,4,6,8,10]
 
         self.s_cset_configs = []
         self.c_cset_configs = []
 
-        vm_cset = create_vm_csets(n_vms, 1, skip_cores=ovs_cores)
+        vm_cset = create_vm_csets(n_vms, vm_cores, skip_cores=ovs_cores, exclusive=False)
         self.c_cset_configs = self.c_cset_configs + vm_cset
         self.s_cset_configs = self.s_cset_configs + vm_cset
 
@@ -43,7 +44,7 @@ class Config:
                         tas_dir=self.defaults.default_vtas_dir_bare,
                         tas_dir_virt=self.defaults.default_vtas_dir_virt,
                         idx=idx,
-                        n_cores=1,
+                        n_cores=vm_cores,
                         cset="vm{}".format(idx),
                         memory=1,
                         n_queues=len(ovs_cores))
@@ -78,7 +79,7 @@ class Config:
                         tas_dir=self.defaults.default_vtas_dir_bare,
                         tas_dir_virt=self.defaults.default_vtas_dir_virt,
                         idx=idx,
-                        n_cores=1,
+                        n_cores=vm_cores,
                         cset="vm{}".format(idx),
                         memory=1,
                         n_queues=len(ovs_cores))
@@ -89,8 +90,8 @@ class Config:
                         pane=self.defaults.c_client_pane,
                         idx=0, vmid=idx, stack=self.cstack,
                         ip=self.s_vm_configs[0].vm_ip, port=1234, ncores=1,
-                        msize=64, mpending=64, nconns=10,
-                        open_delay=1, max_msgs_conn=0, max_pend_conns=1,
+                        msize=64, mpending=64, nconns=100,
+                        open_delay=10, max_msgs_conn=0, max_pend_conns=1,
                         bench_dir=self.defaults.default_vbenchmark_dir_virt,
                         tas_dir=self.defaults.default_vtas_dir_virt)
 

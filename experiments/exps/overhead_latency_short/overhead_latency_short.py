@@ -9,7 +9,7 @@ from exps.overhead_latency_short.configs.ovs_linux import Config as OVSLinuxConf
 
 experiments = []
 
-flow_lens = [1]
+flow_lens = [64]
 n_runs = 3
 
 for n_r in range(n_runs):
@@ -24,9 +24,9 @@ for n_r in range(n_runs):
 
     experiments.append(tas_bare_exp)
     # experiments.append(vtas_bare_exp)
-    # experiments.append(tas_virt_exp)
-    # experiments.append(ovs_tas_exp)
-    # experiments.append(bare_linux_exp)
-    # experiments.append(ovs_linux_exp)
+    experiments.append(tas_virt_exp)
+    experiments.append(ovs_tas_exp)
+    experiments.append(bare_linux_exp)
+    experiments.append(ovs_linux_exp)
 
 

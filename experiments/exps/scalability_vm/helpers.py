@@ -16,12 +16,12 @@ def select_cores(n_cores, end_core, skip_cores):
     return cores
 
 
-def create_vm_csets(n_vms, n_cores, end_core=43, skip_cores=[]):
+def create_vm_csets(n_vms, n_cores, end_core=43, skip_cores=[], exclusive=False):
     csets = []
     for i in range(n_vms):
         cores = select_cores(n_cores, end_core, skip_cores)
         skip_cores = skip_cores + cores
-        cset = CSetConfig(cores, "0-1", "vm{}".format(i))
+        cset = CSetConfig(cores, "0-1", "vm{}".format(i), exclusive)
         csets.append(cset)
 
     return csets

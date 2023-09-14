@@ -45,11 +45,13 @@ def get_avg_tp(fname, start_ts, end_ts):
   n_messages = int(putils.get_n_messages(last_line)) - \
       int(putils.get_n_messages(first_line))
   msize = int(putils.get_msize(fname))
+  assert(end_idx >= start_idx)
   n = end_idx - start_idx
 
-  return (n_messages * msize * 8 / n) / 1000000
+  return n_messages / n
+  # return (n_messages * msize * 8 / n) / 1000000
 
-def get_vm_with_earliest_end(fnames):
+def get_earliest_end(fnames):
   vmid = -1
   earliest_ts = math.inf
 
@@ -57,7 +59,7 @@ def get_vm_with_earliest_end(fnames):
     fname = fnames[i]
     f = open(fname)
     lines = f.readlines()
-    ts = putils.get_ts(lines[len(lines - 1)])
+    ts = int(putils.get_ts(lines[len(lines) - 1]))
     
     if ts < earliest_ts:
       earliest_ts = ts
@@ -65,9 +67,9 @@ def get_vm_with_earliest_end(fnames):
 
   assert(vmid >= 0)
 
-  return vmid
+  return vmid, earliest_ts
 
-def get_vm_with_latest_start(fnames):
+def get_latest_start(fnames):
   vmid = -1
   latest_ts = -1
 
@@ -75,7 +77,7 @@ def get_vm_with_latest_start(fnames):
     fname = fnames[i]
     f = open(fname)
     lines = f.readlines()
-    ts = putils.get_ts(lines[0])
+    ts = int(putils.get_ts(lines[0]))
     
     if ts > latest_ts:
       latest_ts = ts
@@ -83,7 +85,7 @@ def get_vm_with_latest_start(fnames):
 
   assert(vmid >= 0)
 
-  return vmid
+  return vmid, latest_ts
 
 
 def parse_metadata():
@@ -121,15 +123,15 @@ def parse_data(parsed_md):
       tp_x = np.array([])
       for run in parsed_md[n_vms][stack]:
         fnames = []
-        for vmid in range(n_vms):
+        for vmid in range(int(n_vms)):
           fname = out_dir + parsed_md[n_vms][stack][run][str(vmid)]["0"]
           fnames.append(fname)
 
-        start_ts = get_vm_with_latest_start(fnames)
-        end_ts = get_vm_with_earliest_end(fnames)
-        
+        start_vm, start_ts = get_latest_start(fnames)
+        end_vm, end_ts = get_earliest_end(fnames)
+
         tp = 0
-        for i in range(n_vms):
+        for i in range(int(n_vms)):
           fname = fnames[i]
           tp += get_avg_tp(fname, start_ts, end_ts)
 

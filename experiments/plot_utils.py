@@ -234,7 +234,7 @@ def get_min_idx(path, c1_first_ts):
   for idx, l in enumerate(f):
     ts = get_ts(l)
 
-    if int(ts) > int(c1_first_ts):
+    if int(ts) >= int(c1_first_ts):
       return idx, ts
 
   return -1, -1

@@ -13,17 +13,20 @@ class Config:
     def __init__(self, exp_name, n_vms):
         self.exp_name = exp_name
         self.defaults = Defaults()
+        vm_cores = 2
 
         # Configure Csets
-        tas_cores = [1,3,5,7,9,11,13]
+        tas_cores = [1,3,5,7,9]
+        ovs_cores = [2]
+        skip_cores = ovs_cores + tas_cores
 
         self.s_cset_configs = []
         self.c_cset_configs = []
-        tas_cset = CSetConfig(tas_cores, "0-1", "tas")
+        tas_cset = CSetConfig(tas_cores, "0-1", "tas", exclusive=False)
         self.s_cset_configs.append(tas_cset)
         self.c_cset_configs.append(tas_cset)
 
-        vm_cset = create_vm_csets(n_vms, 1, skip_cores=tas_cores)
+        vm_cset = create_vm_csets(n_vms, vm_cores, skip_cores=skip_cores, exclusive=False)
         self.c_cset_configs = self.c_cset_configs + vm_cset
         self.s_cset_configs = self.s_cset_configs + vm_cset
 
@@ -48,7 +51,7 @@ class Config:
                                machine_config=self.s_machine_config,
                                project_dir=self.defaults.default_vtas_dir_bare,
                                ip=self.s_machine_config.ip,
-                               n_cores=6, cset="tas")
+                               n_cores=4, cset="tas")
         tas_config.args = tas_config.args
         self.s_tas_configs.append(tas_config)
 
@@ -62,7 +65,7 @@ class Config:
                                  tas_dir=self.defaults.default_vtas_dir_bare,
                                  tas_dir_virt=self.defaults.default_vtas_dir_virt,
                                  idx=idx,
-                                 n_cores=1,
+                                 n_cores=vm_cores,
                                  cset="vm{}".format(idx),
                                  memory=1)
             self.s_vm_configs.append(vm_config)
@@ -99,7 +102,7 @@ class Config:
                                machine_config=self.c_machine_config,
                                project_dir=self.defaults.default_vtas_dir_bare,
                                ip=self.c_machine_config.ip,
-                               n_cores=6)
+                               n_cores=4)
         tas_config.args = tas_config.args
         self.c_tas_configs.append(tas_config)
 
@@ -113,7 +116,7 @@ class Config:
                                  tas_dir=self.defaults.default_vtas_dir_bare,
                                  tas_dir_virt=self.defaults.default_vtas_dir_virt,
                                  idx=idx,
-                                 n_cores=1,
+                                 n_cores=vm_cores,
                                  cset="vm{}".format(idx),
                                  memory=1)
             self.c_vm_configs.append(vm_config)
@@ -128,8 +131,8 @@ class Config:
                                          pane=self.defaults.c_client_pane,
                                          idx=0, vmid=idx, stack=self.cstack,
                                          ip=self.s_vm_configs[idx].vm_ip, port=port, ncores=1,
-                                         msize=64, mpending=64, nconns=10,
-                                         open_delay=1, max_msgs_conn=0, max_pend_conns=1,
+                                         msize=64, mpending=64, nconns=100,
+                                         open_delay=10, max_msgs_conn=0, max_pend_conns=1,
                                          bench_dir=self.defaults.default_vbenchmark_dir_virt,
                                          tas_dir=self.defaults.default_vtas_dir_virt)
             self.client_configs.append(client_config)
