@@ -239,6 +239,7 @@ void appif_accept_conn(struct connection *c, int status)
     kout->data.accept_connection.flow_id = c->flow_id;
     kout->data.accept_connection.fn_core = c->fn_core;
 
+    c->app_next = app->conns;
     app->conns = c;
   } else {
     tcp_destroy(c);
@@ -432,7 +433,6 @@ static int kin_conn_close(struct application *app, struct app_context *ctx,
   struct connection *conn;
 
   for (conn = app->conns; conn != NULL; conn = conn->app_next) {
-    
     if (conn->out_local_ip == kin->data.conn_close.out_local_ip &&
         conn->out_remote_ip == kin->data.conn_close.out_remote_ip &&
         conn->in_local_ip == kin->data.conn_close.in_local_ip &&
