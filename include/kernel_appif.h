@@ -187,6 +187,7 @@ struct kernel_appin_conn_opened {
   uint32_t seq_tx;
   uint32_t flow_id;
   uint32_t tunnel_id;
+  uint32_t out_remote_ip;
   uint32_t out_local_ip;
   uint32_t in_local_ip;
   uint16_t local_port;

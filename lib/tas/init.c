@@ -558,6 +558,7 @@ static inline int event_kappin_conn_opened(
   }
 
   conn->status = CONN_OPEN;
+  conn->out_remote_ip = inev->out_remote_ip;
   conn->out_local_ip = inev->out_local_ip;
   conn->in_local_ip = inev->in_local_ip;
   conn->local_port = inev->local_port;
@@ -637,6 +638,7 @@ static inline int event_kappin_accept_conn(
   conn->status = CONN_OPEN;
   conn->out_local_ip = inev->out_local_ip;
   conn->out_remote_ip = inev->out_remote_ip;
+  printf("remote_ip=%x\n", inev->out_remote_ip);
   conn->in_local_ip = inev->in_local_ip;
   conn->in_remote_ip = inev->in_remote_ip;
   conn->remote_port = inev->remote_port;

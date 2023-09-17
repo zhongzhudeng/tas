@@ -208,6 +208,7 @@ int flextcp_connection_close(struct flextcp_context *ctx,
   kin->data.conn_close.out_local_ip = conn->out_local_ip;
   kin->data.conn_close.in_local_ip = conn->in_local_ip;
   kin->data.conn_close.local_port = conn->local_port;
+  kin->data.conn_close.tunnel_id = conn->tunnel_id;
   kin->data.conn_close.flags = f;
   MEM_BARRIER();
   kin->type = KERNEL_APPOUT_CONN_CLOSE;
