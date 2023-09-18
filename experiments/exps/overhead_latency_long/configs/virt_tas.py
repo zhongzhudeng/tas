@@ -74,7 +74,7 @@ class Config:
 
         server0_config = ServerConfig(pane=self.defaults.s_server_pane,
                 idx=0, vmid=0,
-                port=1234, ncores=1, max_flows=4096, max_bytes=4096,
+                port=1234, ncores=1, max_flows=4096, max_bytes=64,
                 bench_dir=self.defaults.default_vbenchmark_dir_virt,
                 tas_dir=self.defaults.default_vtas_dir_virt)
         self.server_configs.append(server0_config)
@@ -128,8 +128,9 @@ class Config:
                 pane=self.defaults.c_client_pane,
                 idx=0, vmid=0, stack=self.cstack,
                 ip=self.s_vm_configs[0].vm_ip, port=1234, ncores=1,
-                msize=64, mpending=64, nconns=1,
+                msize=64, mpending=1, nconns=1,
                 open_delay=3, max_msgs_conn=0, max_pend_conns=1,
+                conn_latency=True,
                 bench_dir=self.defaults.default_vbenchmark_dir_virt,
                 tas_dir=self.defaults.default_vtas_dir_virt)
 

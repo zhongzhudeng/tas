@@ -18,6 +18,12 @@ class Node:
     for cset in self.cset_configs:
         self.set_cset(cset.cores_arg, cset.mem, cset.name, cset.exclusive)
 
+    self.setup_pane.send_keys("sudo sysctl -w net.ipv4.tcp_tw_reuse=1")
+    time.sleep(1)
+    self.setup_pane.send_keys("sudo sysctl -w net.ipv4.tcp_fin_timeout=1")
+    time.sleep(1)
+    # self.setup_pane.send_keys('sudo sysctl -w net.ipv4.ip_local_port_range="1024 65535"')
+
   def cleanup(self):
     self.cleanup_pane = self.wmanager.add_new_pane(self.cleanup_pane_name, 
         self.machine_config.is_remote)

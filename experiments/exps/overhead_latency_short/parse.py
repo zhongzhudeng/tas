@@ -32,7 +32,7 @@ def parse_metadata():
   for f in os.listdir(dir_path):
     fname = os.fsdecode(f)
 
-    if "latency_hist" not in fname:
+    if "hist-overhead" not in fname:
       continue
 
     run = putils.get_expname_run(fname)
@@ -73,7 +73,7 @@ def parse_data(parsed_md):
   return data
 
 def save_dat_file(data):
-  flowlens = ["1", "64", "128"]
+  flowlens = ["1", "64"]
   stacks = ["bare-tas", "virt-tas", "ovs-tas", "bare-linux", "ovs-linux"]
 
   for flowlen in flowlens:

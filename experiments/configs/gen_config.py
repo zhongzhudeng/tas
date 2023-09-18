@@ -206,9 +206,9 @@ class ProxyConfig:
 class HostProxyConfig(ProxyConfig):
     def __init__(self, pane, machine_config, comp_dir, block=0, poll_cycles=10000):
         ProxyConfig.__init__(self, machine_config, comp_dir)
-        self.exec_file = self.comp_dir + '/proxy/host/host 0'
+        self.exec_file = self.comp_dir + '/proxy/host/host {} {}'.format(block, poll_cycles)
         
-        self.out_file = 'proxy_h {} {}'.format(block, poll_cycles)
+        self.out_file = 'proxy_h'
         self.out = self.out_dir + '/' + self.out_file
         
         self.pane = pane
@@ -216,9 +216,9 @@ class HostProxyConfig(ProxyConfig):
 class GuestProxyConfig(ProxyConfig):
     def __init__(self, pane, machine_config, comp_dir, block=0, poll_cycles=10000):
         ProxyConfig.__init__(self, machine_config, comp_dir)
-        self.exec_file = self.comp_dir + '/proxy/guest/guest 0'
+        self.exec_file = self.comp_dir + '/proxy/guest/guest {} {}'.format(block, poll_cycles)
        
-        self.out_file = 'proxy_g {} {}'.format(block, poll_cycles)
+        self.out_file = 'proxy_g'
         self.out = self.out_dir + '/' + self.out_file
        
         self.pane = pane
@@ -228,6 +228,7 @@ class ClientConfig:
             ip, port, ncores, msize, mpending,
             nconns, open_delay, max_msgs_conn, max_pend_conns,
             bench_dir, tas_dir, stack, exp_name, 
+            conn_latency=False,
             bursty=False, rate_normal=10000, rate_burst=10000, 
             burst_length=0, burst_interval=0, groupid=0, cset="client"):
         self.name = "client"
@@ -244,17 +245,22 @@ class ClientConfig:
 
         if bursty:
             self.exec_file = self.comp_dir + '/testclient_linux_bursty'
+        elif conn_latency:
+            self.exec_file = self.comp_dir + '/testclient_linux_open_latency'
         else:
             self.exec_file = self.comp_dir + '/testclient_linux'
 
         self.out_dir = tas_dir + "/out"
         self.out_file = "{}_client{}_node{}_nconns{}_ncores{}_msize{}".format(
                 exp_name, idx, vmid, nconns, ncores, msize)
-        self.latency_file = self.out_file + "_latency_hist"
+        self.hist_file = "hist-" + self.out_file
+        self.hist_msgs_file = "histmsgs-" + self.out_file
+        self.hist_open_file = "histopen-" + self.out_file
         self.temp_file = "temp"
         self.out = self.out_dir + '/' + self.out_file
-        self.latency_out = self.out_dir + "/" + self.latency_file
-        self.latency_temp = self.out_dir + "/" + self.temp_file
+        self.hist_out = self.out_dir + "/" + self.hist_file
+        self.hist_msgs_out = self.out_dir + "/" + self.hist_msgs_file
+        self.hist_open_out = self.out_dir + "/" + self.hist_open_file
        
         if bursty:
             self.args = '{} {} {} foo {} {} {} {} {} {} {} {} {} {}'.format(ip, port, ncores, \
@@ -265,7 +271,7 @@ class ClientConfig:
             self.args = '{} {} {} foo {} {} {} {} {} {} {} {}'.format(ip, port, ncores, \
                 msize, mpending, nconns, open_delay, \
                 max_msgs_conn, max_pend_conns, \
-                self.out_dir + "/", self.latency_file)
+                self.out_dir + "/", self.out_file)
 
         self.cset = cset
         self.groupid = groupid

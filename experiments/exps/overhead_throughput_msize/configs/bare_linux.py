@@ -13,10 +13,10 @@ class Config:
         self.s_cset_configs = []
         self.c_cset_configs = []
         
-        server0_cset = CSetConfig([1,3,5,7,9,11,13,15,17,19,21,23,25], "0-1", "server")
+        server0_cset = CSetConfig([1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43], "0-1", "server")
         self.s_cset_configs.append(server0_cset)
 
-        client0_cset = CSetConfig([1,3,5,7,9,11,13,15,17,19,21,23,25], "0-1", "client")
+        client0_cset = CSetConfig([1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43], "0-1", "client")
         self.c_cset_configs.append(client0_cset)
         
         # Server Machine

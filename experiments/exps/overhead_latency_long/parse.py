@@ -30,7 +30,7 @@ def parse_metadata():
   for f in os.listdir(dir_path):
     fname = os.fsdecode(f)
 
-    if "latency_hist" not in fname:
+    if "hist-overhead" not in fname:
       continue
 
     run = putils.get_expname_run(fname)

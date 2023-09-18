@@ -75,10 +75,28 @@ class Client:
         self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
         time.sleep(1)
 
-        if self.client_config.latency_out is not None:
+        if self.client_config.hist_out is not None:
             scp_com = utils.get_scp_command(self.machine_config, self.vm_config,
-                self.client_config.latency_out,
-                out_dir + '/' + self.client_config.latency_file)
+                self.client_config.hist_out,
+                out_dir + '/' + self.client_config.hist_file)
+            self.save_logs_pane.send_keys(scp_com)
+            time.sleep(3)
+            self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
+            time.sleep(1)
+
+        if self.client_config.hist_msgs_out is not None:
+            scp_com = utils.get_scp_command(self.machine_config, self.vm_config,
+                self.client_config.hist_msgs_out,
+                out_dir + '/' + self.client_config.hist_msgs_file)
+            self.save_logs_pane.send_keys(scp_com)
+            time.sleep(3)
+            self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
+            time.sleep(1)
+
+        if self.client_config.hist_open_out is not None:
+            scp_com = utils.get_scp_command(self.machine_config, self.vm_config,
+                self.client_config.hist_open_out,
+                out_dir + '/' + self.client_config.hist_open_file)
             self.save_logs_pane.send_keys(scp_com)
             time.sleep(3)
             self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
@@ -93,8 +111,22 @@ class Client:
         self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
         time.sleep(1)
 
-        if self.client_config.latency_out is not None:
-            ssh_com += " 'rm {}'".format(self.client_config.latency_out)
+        if self.client_config.hist_out is not None:
+            ssh_com += " 'rm {}'".format(self.client_config.hist_out)
+            self.save_logs_pane.send_keys(ssh_com)
+            time.sleep(3)
+            self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
+            time.sleep(1)
+
+        if self.client_config.hist_msgs_out is not None:
+            ssh_com += " 'rm {}'".format(self.client_config.hist_msgs_out)
+            self.save_logs_pane.send_keys(ssh_com)
+            time.sleep(3)
+            self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
+            time.sleep(1)
+
+        if self.client_config.hist_open_out is not None:
+            ssh_com += " 'rm {}'".format(self.client_config.hist_open_out)
             self.save_logs_pane.send_keys(ssh_com)
             time.sleep(3)
             self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
@@ -112,6 +144,14 @@ class Client:
         dest = out_dir + "/" + self.client_config.out_file
         os.rename(self.client_config.out, dest)
 
-        if self.client_config.latency_file is not None:
-            dest_latency = out_dir + "/" + self.client_config.latency_file
-            os.rename(self.client_config.latency_out, dest_latency)
+        if self.client_config.hist_file is not None:
+            dest_hist = out_dir + "/" + self.client_config.hist_file
+            os.rename(self.client_config.hist_out, dest_hist)
+
+        if self.client_config.hist_msgs_file is not None:
+            dest_hist = out_dir + "/" + self.client_config.hist_msgs_file
+            os.rename(self.client_config.hist_msgs_out, dest_hist)
+
+        if self.client_config.hist_open_file is not None:
+            dest_hist = out_dir + "/" + self.client_config.hist_open_file
+            os.rename(self.client_config.hist_open_out, dest_hist)

@@ -26,8 +26,16 @@ class VM:
         self.pane.send_keys(start_vm_cmd)
        
         print("Started VM")
-        time.sleep(25)
+        time.sleep(30)
         self.login_vm()
+
+    def tcp_tw_reuse(self, val):
+        cmd = "sudo sysctl -w net.ipv4.tcp_tw_reuse={}".format(val)
+        self.pane.send_keys(cmd)
+
+    def tcp_fin_timeout(self, val):
+        cmd = "sudo sysctl -w net.ipv4.tcp_fin_timeout={}".format(val)
+        self.pane.send_keys(cmd)
 
     def enable_offloads(self, interface):
         cmd = "sudo ethtool --ofload {} gso on tso on sg on gro on".format(

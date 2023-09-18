@@ -14,15 +14,15 @@ class Config:
         # Configure Cset
         self.s_cset_configs = []
         self.c_cset_configs = []
-        tas_cset = CSetConfig([1,3,5,7,9,11], "0-1", "tas_server")
+        tas_cset = CSetConfig([1,3,5,7,9,11,13,15,17,19,21], "0-1", "tas_server")
         self.s_cset_configs.append(tas_cset)
-        tas_cset = CSetConfig([1,3,5,7,9,11], "0-1", "tas_client")
+        tas_cset = CSetConfig([1,3,5,7,9,11,13,15,17,19,21], "0-1", "tas_client")
         self.c_cset_configs.append(tas_cset)
 
-        server0_cset = CSetConfig([15,17,19,21,23,25,27,29,31,33,35,37,39], "0-1", "server0")
+        server0_cset = CSetConfig([21,23,25,27,29,31,33,35,37,39,41], "0-1", "server0")
         self.s_cset_configs.append(server0_cset)
 
-        client0_cset = CSetConfig([15,17,19,21,23,25,27,29,31,33,35,37,39], "0-1", "client0")
+        client0_cset = CSetConfig([21,23,25,27,29,31,33,35,37,39,41], "0-1", "client0")
         self.c_cset_configs.append(client0_cset)
         
         # Server Machine
@@ -45,13 +45,13 @@ class Config:
                 project_dir=self.defaults.default_vtas_dir_bare,
                 ip=self.s_machine_config.ip,
                 cset="tas_server",
-                n_cores=6)
+                n_cores=10)
         tas_config.args = tas_config.args
         self.s_tas_configs.append(tas_config)
 
         server0_config = ServerConfig(pane=self.defaults.s_server_pane,
                 idx=0, vmid=0, groupid=0,
-                port=1234, ncores=12, max_flows=4096, max_bytes=msize * flow_len,
+                port=1234, ncores=5, max_flows=4096, max_bytes=msize,
                 cset="server0",
                 bench_dir=self.defaults.default_vbenchmark_dir_bare,
                 tas_dir=self.defaults.default_vtas_dir_bare)
@@ -78,16 +78,16 @@ class Config:
                 project_dir=self.defaults.default_vtas_dir_bare,
                 ip=self.c_machine_config.ip,
                 cset="tas_client",
-                n_cores=6)
+                n_cores=10)
         tas_config.args = tas_config.args
         self.c_tas_configs.append(tas_config)
 
         client0_config = ClientConfig(exp_name=exp_name, 
                 pane=self.defaults.c_client_pane,
                 idx=0, vmid=0, groupid=0, stack=self.cstack,
-                ip=self.defaults.server_ip, port=1234, ncores=12,
-                msize=msize, mpending=flow_len, nconns=100,
-                open_delay=0, max_msgs_conn=0, max_pend_conns=16,
+                ip=self.defaults.server_ip, port=1234, ncores=5,
+                msize=msize, mpending=1, nconns=100,
+                open_delay=0, max_msgs_conn=flow_len, max_pend_conns=1,
                 cset="client0",
                 bench_dir=self.defaults.default_vbenchmark_dir_bare,
                 tas_dir=self.defaults.default_vtas_dir_bare)

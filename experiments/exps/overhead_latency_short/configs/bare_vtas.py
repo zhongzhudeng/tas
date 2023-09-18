@@ -53,7 +53,7 @@ class Config:
 
         server0_config = ServerConfig(pane=self.defaults.s_server_pane,
                 idx=0, vmid=0, groupid=0,
-                port=1234, ncores=1, max_flows=4096, max_bytes=msize * flow_len,
+                port=1234, ncores=1, max_flows=4096, max_bytes=msize,
                 cset="server0",
                 bench_dir=self.defaults.default_vbenchmark_dir_bare,
                 tas_dir=self.defaults.default_vtas_dir_bare)
@@ -88,8 +88,9 @@ class Config:
                 pane=self.defaults.c_client_pane,
                 idx=0, vmid=0, groupid=0, stack=self.cstack,
                 ip=self.defaults.server_ip, port=1234, ncores=1,
-                msize=msize, mpending=msize, nconns=1000,
+                msize=msize, mpending=1, nconns=1,
                 open_delay=0, max_msgs_conn=flow_len, max_pend_conns=1,
+                conn_latency=True,
                 cset="client0",
                 bench_dir=self.defaults.default_vbenchmark_dir_bare,
                 tas_dir=self.defaults.default_vtas_dir_bare)

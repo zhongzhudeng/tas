@@ -9,6 +9,9 @@ class Config:
     def __init__(self, exp_name, msize):
         self.exp_name = exp_name
         self.defaults = Defaults()
+
+        pmd_mask = "0x1551"
+        ovs_cores = [0,2,4,6,8,10,12]
         
         # Configure csets
         self.s_cset_configs = []
@@ -32,6 +35,7 @@ class Config:
         self.s_machine_config = MachineConfig(ip=self.defaults.server_ip, 
                 interface=self.defaults.server_interface,
                 stack=self.sstack,
+                ovs_pmd_mask=pmd_mask,
                 is_remote=True,
                 is_server=True)
         
@@ -66,6 +70,7 @@ class Config:
         self.c_machine_config = MachineConfig(ip=self.defaults.client_ip, 
                 interface=self.defaults.client_interface,
                 stack=self.cstack,
+                ovs_pmd_mask=pmd_mask,
                 is_remote=False,
                 is_server=False)
         

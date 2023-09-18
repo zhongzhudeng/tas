@@ -18,10 +18,10 @@ class Config:
         tas_cset = CSetConfig([1,3,5,7,9,11], "0-1", "tas_client")
         self.c_cset_configs.append(tas_cset)
 
-        vm0_cset = CSetConfig([19,21,23,25,27,29,31,33,35,37,39,41,43], "0-1", "server")
+        vm0_cset = CSetConfig([13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43], "0-1", "server")
         self.s_cset_configs.append(vm0_cset)
 
-        vm0_cset = CSetConfig([19,21,23,25,27,29,31,33,35,37,39,41,43], "0-1", "client")
+        vm0_cset = CSetConfig([13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43], "0-1", "client")
         self.c_cset_configs.append(vm0_cset)
 
         # Server Machine
