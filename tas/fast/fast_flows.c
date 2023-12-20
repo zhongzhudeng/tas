@@ -754,7 +754,7 @@ int fast_flows_packet_gre(struct dataplane_context *ctx,
 #endif
 
   if (ctx->budgets[fs->vm_id].budget <= 0) {
-    return 1;
+    return 0;
   }
 
   fs_lock(fs);
