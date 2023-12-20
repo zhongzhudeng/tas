@@ -19,6 +19,7 @@ class Defaults:
         self.s_proxyg_pane = "{}_proxyg".format(self.server_pane_prefix)
         self.s_proxyh_pane = "{}_proxy_h".format(self.server_pane_prefix)
         self.s_server_pane = "{}".format(self.server_pane_prefix)
+        self.s_container_pane = "{}_container".format(self.server_pane_prefix)
         self.s_savelogs_pane = "{}_savelogs".format(self.server_pane_prefix)
         self.s_setup_pane = "{}_setup".format(self.server_pane_prefix)
         self.s_cleanup_pane = "{}_cleanup".format(self.server_pane_prefix)
@@ -28,11 +29,12 @@ class Defaults:
         self.c_proxyg_pane = "{}_proxyg".format(self.client_pane_prefix)
         self.c_proxyh_pane = "{}_proxyh".format(self.client_pane_prefix)
         self.c_client_pane = "{}".format(self.client_pane_prefix)
+        self.c_container_pane = "{}_container".format(self.client_pane_prefix)
         self.c_savelogs_pane = "{}_savelogs".format(self.client_pane_prefix)
         self.c_setup_pane = "{}_setup".format(self.client_pane_prefix)
         self.c_cleanup_pane = "{}_cleanup".format(self.client_pane_prefix)
 
-        # Mellanox interfaces on client and server machineremoved
+        # Mellanox interfaces on client and server machine
         self.client_interface = 'enp216s0f0np0'
         self.client_interface_pci = "0000:d8:00.0"
         self.client_mac = "b8:59:9f:c4:af:e6"
@@ -166,6 +168,35 @@ class TasConfig:
         self.ip = ip
         self.n_cores = n_cores
 
+class ContainerConfig:
+    def __init__(self, pane, machine_config, vtas_dir, vtas_dir_virt, tas_dir, idx, n_cores,
+                 memory, n_queues=1, tunnel=False, cset="container"):
+        self.name = (
+            "server_{}".format(idx)
+            if machine_config.is_server
+            else "client_{}".format(idx)
+        )   
+
+        self.pane = pane
+        self.id = idx
+
+        self.n_cores = n_cores
+        self.memory = memory
+        self.n_queues = n_queues
+        self.tunnel = tunnel
+        self.cset = cset 
+
+        self.tas_dir = tas_dir
+        self.manager_dir = vtas_dir + '/images'
+        self.manager_dir_virt = vtas_dir_virt + '/images'
+
+        if machine_config.is_server:
+            self.veth_bridge_ip = '192.168.10.{}'.format(20 + idx)
+            self.veth_container_ip = '192.168.10.{}'.format(1 + idx)
+        else:
+            self.veth_bridge_ip = '192.168.10.{}'.format(60 + idx)
+            self.veth_container_ip = '192.168.10.{}'.format(20 + idx)
+
 class VMConfig:
     def __init__(self, pane, machine_config, tas_dir, tas_dir_virt, idx,
                  n_cores, memory, 
@@ -242,6 +273,8 @@ class ClientConfig:
        
         self.bench_dir = bench_dir
         self.lib_so = tas_dir + '/lib/libtas_interpose.so'
+
+        self.conn_latency = conn_latency
 
         if bursty:
             self.exec_file = self.comp_dir + '/testclient_linux_bursty'

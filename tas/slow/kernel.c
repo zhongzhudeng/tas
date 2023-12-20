@@ -43,8 +43,10 @@ void flexnic_loadmon(uint32_t cur_ts);
 
 static void init_vm_weights(double *vm_weights);
 static void update_budget(int threads_launched);
+uint64_t get_budget_delta(int vmid, int ctxid);
 void boost_budget(int vmid, int ctxid, int64_t incr);
 struct budget_statistics get_budget_stats(int vmid, int ctxid);
+void print_budget();
 
 struct timeout_manager timeout_mgr;
 static int exited = 0;
@@ -171,6 +173,7 @@ int slowpath_main(int threads_launched)
       {
         printf("stats: drops=%" PRIu64 " k_rexmit=%" PRIu64 " ecn=%" PRIu64 " acks=%" PRIu64"\n",
                kstats.drops, kstats.kernel_rexmit, kstats.ecn_marked, kstats.acks);
+        print_budget();
         fflush(stdout);
       }
       
@@ -203,8 +206,11 @@ static void update_budget(int threads_launched)
 {
   int vmid, ctxid;
   uint64_t cur_ts;
-  int64_t incr;
-  uint64_t total_budget;
+  int64_t incr, weighted_incr;
+  int64_t total_budget;
+  double delta_weight;
+  double deltas_sum;
+  double deltas[threads_launched];
 
   cur_ts = util_rdtsc();
   total_budget = config.bu_boost * (cur_ts - last_bu_update_ts);
@@ -212,10 +218,27 @@ static void update_budget(int threads_launched)
   /* Update budget */
   for (vmid = 0; vmid < FLEXNIC_PL_VMST_NUM; vmid++)
   {
-    incr = ((total_budget * vm_weights[vmid]) / vm_weights_sum);
+    incr = ((total_budget * vm_weights[vmid]) / vm_weights_sum) * threads_launched;
+
+    deltas_sum = 0;
     for (ctxid = 0; ctxid < threads_launched; ctxid++)
     {
-      boost_budget(vmid, ctxid, incr);
+      deltas[ctxid] = get_budget_delta(vmid, ctxid);
+      deltas_sum += deltas[ctxid];
+    }
+
+    for (ctxid = 0; ctxid < threads_launched; ctxid++)
+    {
+      if (deltas_sum == 0) {
+        delta_weight = 1.0 / threads_launched;
+      } else {
+        delta_weight = deltas[ctxid] / deltas_sum;
+      }
+  
+      weighted_incr = incr * delta_weight;
+      assert(weighted_incr >= 0);
+      assert(delta_weight >= 0 && delta_weight <= 1);
+      boost_budget(vmid, ctxid, weighted_incr);
     }
   }
 

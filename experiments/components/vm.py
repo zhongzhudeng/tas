@@ -2,27 +2,32 @@ import time
 
 class VM:
 
-    def __init__(self, defaults, machine_config, vm_config, wmanager):
+    def __init__(self, defaults, machine_config, vm_config, cset_configs, wmanager):
         self.defaults = defaults
         self.machine_config = machine_config
         self.vm_config = vm_config
+        self.cset_configs = cset_configs
         self.wmanager = wmanager
         self.pane = self.wmanager.add_new_pane(vm_config.pane,
                 machine_config.is_remote)
     
     def start(self):
         self.pane.send_keys('cd ' + self.vm_config.manager_dir)
+        
         if self.vm_config.n_queues is None:
-            start_vm_cmd = "sudo bash start-vm.sh {} {} {} {} {} {}".format(
+            start_vm_cmd = "sudo bash start-vm.sh {} {} {} {} {} {} '{}'".format(
                     self.machine_config.stack, self.vm_config.id,
                     self.machine_config.interface, self.vm_config.n_cores, 
-                    self.vm_config.memory, self.vm_config.cset)
+                    self.vm_config.memory, self.vm_config.cset, 
+                    self.cset_configs[self.vm_config.cset].cores_arg)
         else:
-            start_vm_cmd = "sudo bash start-vm.sh {} {} {} {} {} {} {}".format(
+            start_vm_cmd = "sudo bash start-vm.sh {} {} {} {} {} {} '{}' {}".format(
                     self.machine_config.stack, self.vm_config.id,
                     self.machine_config.interface, self.vm_config.n_cores,
                     self.vm_config.memory, 
-                    self.vm_config.cset, self.vm_config.n_queues)
+                    self.vm_config.cset, 
+                    self.cset_configs[self.vm_config.cset].cores_arg,
+                    self.vm_config.n_queues)
         self.pane.send_keys(start_vm_cmd)
        
         print("Started VM")
@@ -38,12 +43,12 @@ class VM:
         self.pane.send_keys(cmd)
 
     def enable_offloads(self, interface):
-        cmd = "sudo ethtool --ofload {} gso on tso on sg on gro on".format(
+        cmd = "sudo ethtool --offload {} gso on tso on sg on gro on".format(
                     interface)
         self.pane.send_keys(cmd)
 
     def disable_offloads(self, interface):
-        cmd = "sudo ethtool --ofload {} gso off tso off sg off gro off".format(
+        cmd = "sudo ethtool --offload {} gso off tso off sg off gro off".format(
                     interface)
         self.pane.send_keys(cmd)
 

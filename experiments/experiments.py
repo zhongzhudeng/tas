@@ -17,6 +17,12 @@ from nodes.ovs_linux.ovslinux_server import OvsLinuxServer
 from nodes.ovs_linux.ovslinux_client import OvsLinuxClient
 from nodes.ovs_tas.ovstas_server import OvsTasServer
 from nodes.ovs_tas.ovstas_client import OvsTasClient
+from nodes.container_tas.container_tas_server import ContainerTasServer
+from nodes.container_tas.container_tas_client import ContainerTasClient
+from nodes.container_virtuoso.container_virtuoso_server import ContainerVirtuosoServer
+from nodes.container_virtuoso.container_virtuoso_client import ContainerVirtuosoClient
+from nodes.container_ovs_dpdk.container_ovs_dpdk_server import ContainerOVSDPDKServer
+from nodes.container_ovs_dpdk.container_ovs_dpdk_client import ContainerOVSDPDKClient
 
 class Experiment:
 
@@ -45,6 +51,12 @@ class Experiment:
             node = OvsLinuxServer(self.config, self.wmanager)
         elif stack == "ovs-tas":
             node = OvsTasServer(self.config, self.wmanager)
+        elif stack == "container-tas":
+            node = ContainerTasServer(self.config, self.wmanager)
+        elif stack == "container-virtuoso":
+            node = ContainerVirtuosoServer(self.config, self.wmanager)
+        elif stack == "container-ovsdpdk":
+            node = ContainerOVSDPDKServer(self.config, self.wmanager)
 
         return node
 
@@ -65,6 +77,12 @@ class Experiment:
             node = OvsLinuxClient(self.config, self.wmanager)
         elif stack == "ovs-tas":
             node = OvsTasClient(self.config, self.wmanager)
+        elif stack == "container-tas":
+            node = ContainerTasClient(self.config, self.wmanager)
+        elif stack == "container-virtuoso":
+            node = ContainerVirtuosoClient(self.config, self.wmanager)
+        elif stack == "container-ovsdpdk":
+            node = ContainerOVSDPDKClient(self.config, self.wmanager)
 
         return node
 

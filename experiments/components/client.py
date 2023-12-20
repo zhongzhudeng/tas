@@ -5,11 +5,12 @@ import utils
 
 class Client:
     
-    def __init__(self, defaults, machine_config, client_config, vm_config, wmanager):
+    def __init__(self, defaults, machine_config, client_config, vm_config, cset_configs, wmanager):
         self.defaults = defaults
         self.machine_config = machine_config
         self.client_config = client_config
         self.vm_config = vm_config
+        self.cset_configs = cset_configs
         self.wmanager = wmanager
         self.pane = self.wmanager.add_new_pane(client_config.pane, 
                 machine_config.is_remote)
@@ -48,8 +49,8 @@ class Client:
             cmd += 'LD_PRELOAD=' + self.client_config.lib_so + ' '
 
         if cset:
-            cmd += "cset proc --set={} --exec ".format(self.client_config.cset)
-            cmd += self.client_config.exec_file + ' -- '
+            cmd += "taskset -c {} ".format(self.cset_configs[self.client_config.cset].cores_arg)
+            cmd += self.client_config.exec_file + ' '
             cmd += self.client_config.args + ' | tee ' + self.client_config.out
         else:
             cmd += self.client_config.exec_file + ' ' + \
@@ -111,21 +112,21 @@ class Client:
         self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
         time.sleep(1)
 
-        if self.client_config.hist_out is not None:
+        if self.client_config.hist_out is not None and self.client_config.conn_latency:
             ssh_com += " 'rm {}'".format(self.client_config.hist_out)
             self.save_logs_pane.send_keys(ssh_com)
             time.sleep(3)
             self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
             time.sleep(1)
 
-        if self.client_config.hist_msgs_out is not None:
+        if self.client_config.hist_msgs_out is not None and self.client_config.conn_latency:
             ssh_com += " 'rm {}'".format(self.client_config.hist_msgs_out)
             self.save_logs_pane.send_keys(ssh_com)
             time.sleep(3)
             self.save_logs_pane.send_keys(suppress_history=False, cmd='tas')
             time.sleep(1)
 
-        if self.client_config.hist_open_out is not None:
+        if self.client_config.hist_open_out is not None and self.client_config.conn_latency:
             ssh_com += " 'rm {}'".format(self.client_config.hist_open_out)
             self.save_logs_pane.send_keys(ssh_com)
             time.sleep(3)
@@ -144,14 +145,14 @@ class Client:
         dest = out_dir + "/" + self.client_config.out_file
         os.rename(self.client_config.out, dest)
 
-        if self.client_config.hist_file is not None:
+        if self.client_config.hist_file is not None and self.client_config.conn_latency:
             dest_hist = out_dir + "/" + self.client_config.hist_file
             os.rename(self.client_config.hist_out, dest_hist)
 
-        if self.client_config.hist_msgs_file is not None:
+        if self.client_config.hist_msgs_file is not None and self.client_config.conn_latency:
             dest_hist = out_dir + "/" + self.client_config.hist_msgs_file
             os.rename(self.client_config.hist_msgs_out, dest_hist)
 
-        if self.client_config.hist_open_file is not None:
+        if self.client_config.hist_open_file is not None and self.client_config.conn_latency:
             dest_hist = out_dir + "/" + self.client_config.hist_open_file
             os.rename(self.client_config.hist_open_out, dest_hist)

@@ -15,12 +15,9 @@ def init_latencies():
 
 def append_latencies(latencies, fname_c0):
   f = open(fname_c0)
-  lines = f.readlines()
-
-  # Latencies are already accumulated over all time
+  lines = f.readlines()  # Latencies are already accumulated over all time
   # period in the logs
   line = lines[len(lines) - 1]
-
   lat = int(get_50p_lat(line))
   if lat > 0:
     latencies["50p"] = np.append(latencies["50p"], lat)
@@ -101,6 +98,26 @@ def get_expname_run(fname):
   run_id_regex = "(?<=-run)[0-9]*"
   run_id = re.search(run_id_regex, fname).group(0)
   return run_id
+
+def get_expname_freq(fname):
+  regex = "(?<=-frq)[0-9]*"
+  freq = re.search(regex, fname).group(0)
+  return freq
+
+def get_expname_boost_(fname):
+  regex = "(?<=-boost)[0-9]\.*[0-9]*(?=_)"
+  boost = re.search(regex, fname).group(0)
+  return boost
+
+def get_expname_boost(fname):
+  regex = "(?<=-boost)[0-9]\.*[0-9]*"
+  boost = re.search(regex, fname).group(0)
+  return boost
+
+def get_expname_budget(fname):
+  regex = "(?<=-budget)[0-9]*(?=_)"
+  budget = re.search(regex, fname).group(0)
+  return budget
 
 def get_expname_conns(fname):
   regex = "(?<=-conns)[0-9]*"

@@ -5,7 +5,9 @@ class Node:
   def __init__(self, defaults, machine_config, cset_configs,
       wmanager, setup_pane_name, cleanup_pane_name):
     self.defaults = defaults
-    self.cset_configs = cset_configs
+    self.cset_configs = {}
+    for cset_config in cset_configs:
+      self.cset_configs[cset_config.name] = cset_config
     self.machine_config = machine_config
     self.wmanager = wmanager
     self.setup_pane_name = setup_pane_name
@@ -14,9 +16,10 @@ class Node:
   def setup(self):
     self.setup_pane = self.wmanager.add_new_pane(self.setup_pane_name, 
         self.machine_config.is_remote)
-    
-    for cset in self.cset_configs:
-        self.set_cset(cset.cores_arg, cset.mem, cset.name, cset.exclusive)
+
+    # We disabled cset for now because it doesn't work with cgroups v2    
+    # for cset in self.cset_configs:
+    #     self.set_cset(cset.cores_arg, cset.mem, cset.name, cset.exclusive)
 
     self.setup_pane.send_keys("sudo sysctl -w net.ipv4.tcp_tw_reuse=1")
     time.sleep(1)
@@ -28,8 +31,31 @@ class Node:
     self.cleanup_pane = self.wmanager.add_new_pane(self.cleanup_pane_name, 
         self.machine_config.is_remote)
     
-    for cset in self.cset_configs:
-       self.destroy_cset(cset.name)
+    # We disabled cset for now because it doesn't work with cgroups v2  
+    # for cset in self.cset_configs:
+    #   self.destroy_cset(cset.name)
+
+  def remove_file(self, pane, filename):
+     cmd = "rm {}".format(filename)
+     pane.send_keys(cmd)
+
+  def add_ip_in_pane(self, pane, interface, ip):
+    cmd = "sudo ip addr add {} dev {}".format(ip, interface)
+    pane.send_keys(cmd)
+    time.sleep(1)
+
+  def interface_up_in_pane(self, pane, interface):
+    cmd = "sudo ip link set dev {} up".format(interface)
+    pane.send_keys(cmd)
+    time.sleep(1)
+
+  def interface_del_in_pane(self, pane, interface):
+    cmd = "sudo ip link delete {}".format(interface)
+    pane.send_keys(cmd)
+    time.sleep(1)
+
+  def interface_del(self, interface):
+    self.interface_del_in_pane(self.cleanup_pane, interface)
 
   def set_cset(self, cores_arg, mem, name, exclusive):
     if exclusive:
@@ -263,3 +289,19 @@ class Node:
       cmd = "sudo bash ovsflow-add.sh {} {} {}".format(br_name, in_port, out_port)
       self.setup_pane.send_keys(cmd)
       time.sleep(2)
+
+  def ovsveth_add(self, br_name, veth_name_bridge, 
+                  veth_name_container, script_dir, 
+                  container_name, veth_bridge_ip,                                       
+                  veth_container_ip, n_queues=1):
+      
+      cmd = "cd {}".format(script_dir)
+      self.setup_pane.send_keys(cmd)
+      time.sleep(1)
+      cmd = "sudo bash ovsveth-add.sh {} {} {} {} {} {} {}".format(
+            br_name, veth_name_bridge, 
+            veth_name_container, n_queues, 
+            container_name, veth_bridge_ip, 
+            veth_container_ip)
+      self.setup_pane.send_keys(cmd)
+      time.sleep(1)

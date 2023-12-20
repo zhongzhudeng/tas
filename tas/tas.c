@@ -290,10 +290,27 @@ struct budget_statistics get_budget_stats(int vmid, int ctxid)
   return stats;
 }
 
+void print_budget() {
+  for (int vmid = 0; vmid < FLEXNIC_PL_VMST_NUM; vmid++)
+  {
+    for (int ctxid = 0; ctxid < threads_launched; ctxid++)
+    {
+      fprintf(stderr, "vmid=%d ctxid=%d budget=%ld\n",
+          vmid, ctxid, ctxs[ctxid]->budgets[vmid].budget);
+    }
+  }
+}
+
+uint64_t get_budget_delta(int vmid, int ctxid)
+{
+  int64_t budget = __sync_fetch_and_add(&ctxs[ctxid]->budgets[vmid].budget, 0);
+  return config.bu_max_budget - budget;
+}
+
 void boost_budget(int vmid, int ctxid, int64_t incr)
 {
-  uint64_t old_budget, new_budget, max_budget;
-  old_budget = ctxs[ctxid]->budgets[vmid].budget;
+  int64_t old_budget, new_budget, max_budget;
+  old_budget = __sync_fetch_and_add(&ctxs[ctxid]->budgets[vmid].budget, 0);
   new_budget = old_budget + incr;
   max_budget = config.bu_max_budget;  
 
