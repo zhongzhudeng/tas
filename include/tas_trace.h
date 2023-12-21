@@ -212,6 +212,7 @@ struct flextcp_pl_trev_rexmit {
   uint32_t tx_next_pos;
   uint32_t tx_next_seq;
   uint32_t rx_remote_avail;
+  uint32_t vm_id;
 } __attribute__((packed));
 
 
