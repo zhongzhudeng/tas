@@ -88,10 +88,12 @@ static void flow_tx_segment_gre(struct dataplane_context *ctx,
 #endif
 static void flow_tx_ack(struct dataplane_context *ctx, uint32_t seq,
     uint32_t ack, uint32_t rxwnd, uint32_t echots, uint32_t myts,
-    struct network_buf_handle *nbh, struct tcp_timestamp_opt *ts_opt);
+    struct network_buf_handle *nbh, struct tcp_timestamp_opt *ts_opt,
+    int oob);
 static void flow_tx_ack_gre(struct dataplane_context *ctx, uint32_t seq,
     uint32_t ack, uint32_t rxwnd, uint32_t echo_ts, uint32_t my_ts,
-    struct network_buf_handle *nbh, struct tcp_timestamp_opt *ts_opt);
+    struct network_buf_handle *nbh, struct tcp_timestamp_opt *ts_opt,
+    int oob);
 static void flow_reset_retransmit(struct flextcp_pl_flowst *fs);
 
 static inline void tcp_checksums(struct network_buf_handle *nbh,
@@ -374,11 +376,16 @@ int fast_flows_packet(struct dataplane_context *ctx,
       f_beui32(p->tcp.ackno), TCPH_FLAGS(&p->tcp), payload_bytes);
 #endif
 
-  if (ctx->budgets[fs->vm_id].budget <= 0) {
-    return 1;
-  }
 
   fs_lock(fs);
+  
+  if (ctx->budgets[fs->vm_id].budget <= 0) {
+    flow_tx_ack(ctx, fs->tx_next_seq, fs->rx_next_seq, fs->rx_avail,
+        fs->tx_next_ts, ts, nbh, opts->ts, 1);
+    fs_unlock(fs);
+    return 0;
+  }
+  
   ctx->vm_counters[fs->vm_id] += payload_bytes;
   ctx->counters_total += payload_bytes;
 
@@ -707,7 +714,7 @@ unlock:
   /* if we need to send an ack, also send packet to TX pipeline to do so */
   if (trigger_ack) {
     flow_tx_ack(ctx, fs->tx_next_seq, fs->rx_next_seq, fs->rx_avail,
-        fs->tx_next_ts, ts, nbh, opts->ts);
+        fs->tx_next_ts, ts, nbh, opts->ts, 0);
   }
 
   fs_unlock(fs);
@@ -753,11 +760,16 @@ int fast_flows_packet_gre(struct dataplane_context *ctx,
       f_beui32(p->tcp.ackno), TCPH_FLAGS(&p->tcp), payload_bytes);
 #endif
 
-  if (ctx->budgets[fs->vm_id].budget <= 0) {
-    return 0;
-  }
 
   fs_lock(fs);
+
+  if (ctx->budgets[fs->vm_id].budget <= 0) {
+    flow_tx_ack_gre(ctx, fs->tx_next_seq, fs->rx_next_seq, fs->rx_avail,
+        fs->tx_next_ts, ts, nbh, opts->ts, 1);
+    fs_unlock(fs);
+    return 1;
+  }
+
   ctx->vm_counters[fs->vm_id] += payload_bytes;
   ctx->counters_total += payload_bytes;
 
@@ -1093,7 +1105,7 @@ unlock:
   /* if we need to send an ack, also send packet to TX pipeline to do so */
   if (trigger_ack) {
     flow_tx_ack_gre(ctx, fs->tx_next_seq, fs->rx_next_seq, fs->rx_avail,
-        fs->tx_next_ts, ts, nbh, opts->ts);
+        fs->tx_next_ts, ts, nbh, opts->ts, 0);
   }
 
   fs_unlock(fs);
@@ -1531,7 +1543,8 @@ static void flow_tx_segment_gre(struct dataplane_context *ctx,
 
 static void flow_tx_ack(struct dataplane_context *ctx, uint32_t seq,
     uint32_t ack, uint32_t rxwnd, uint32_t echots, uint32_t myts,
-    struct network_buf_handle *nbh, struct tcp_timestamp_opt *ts_opt)
+    struct network_buf_handle *nbh, struct tcp_timestamp_opt *ts_opt,
+    int oob)
 {
   struct pkt_tcp *p;
   struct tas_eth_addr eth;
@@ -1573,8 +1586,18 @@ static void flow_tx_ack(struct dataplane_context *ctx, uint32_t seq,
   p->tcp.seqno = t_beui32(seq);
   p->tcp.ackno = t_beui32(ack);
   TCPH_HDRLEN_FLAGS_SET(&p->tcp, TCPH_HDRLEN(&p->tcp), TAS_TCP_ACK | ecn_flags);
-  p->tcp.wnd = t_beui16(TAS_MIN(0xFFFF, rxwnd));
   p->tcp.urgp = t_beui16(0);
+
+  /* If RX processing identified that VM is out of budget
+     send an ack with window 0. */
+  if (oob)
+  {
+    p->tcp.wnd = t_beui16(0);
+  }
+  else
+  {
+    p->tcp.wnd = t_beui16(TAS_MIN(0xFFFF, rxwnd));
+  }
 
   /* fill in timestamp option */
   ts_opt->ts_val = t_beui32(myts);
@@ -1606,7 +1629,8 @@ static void flow_tx_ack(struct dataplane_context *ctx, uint32_t seq,
 
 static void flow_tx_ack_gre(struct dataplane_context *ctx, uint32_t seq,
     uint32_t ack, uint32_t rxwnd, uint32_t echots, uint32_t myts,
-    struct network_buf_handle *nbh, struct tcp_timestamp_opt *ts_opt)
+    struct network_buf_handle *nbh, struct tcp_timestamp_opt *ts_opt,
+    int oob)
 {
   struct pkt_gre *p;
   struct tas_eth_addr eth;
@@ -1653,8 +1677,18 @@ static void flow_tx_ack_gre(struct dataplane_context *ctx, uint32_t seq,
   p->tcp.seqno = t_beui32(seq);
   p->tcp.ackno = t_beui32(ack);
   TCPH_HDRLEN_FLAGS_SET(&p->tcp, TCPH_HDRLEN(&p->tcp), TAS_TCP_ACK | ecn_flags);
-  p->tcp.wnd = t_beui16(TAS_MIN(0xFFFF, rxwnd));
   p->tcp.urgp = t_beui16(0);
+
+  /* If RX processing identified that VM is out of budget
+     send an ack with window 0. */
+  if (oob)
+  {
+    p->tcp.wnd = t_beui16(0);
+  }
+  else
+  {
+    p->tcp.wnd = t_beui16(TAS_MIN(0xFFFF, rxwnd));
+  }
 
   /* fill in timestamp option */
   ts_opt->ts_val = t_beui32(myts);
