@@ -35,10 +35,15 @@ printf -v alt_mac '02:00:00:%02X:%02X:%02X' $((RANDOM%256)) $((RANDOM%256)) $((R
 echo $mac
 echo $alt_mac
 
-# Note: vectors=<2 + 2 * queues_nr>
+taskset_cmd="taskset $core_args"
 
+if [[ "$cset" == None ]]; then
+  taskset_cmd=""
+fi
+
+# Note: vectors=<2 + 2 * queues_nr>
 if [[ "$stack" == 'virt-tas' ]]; then
-  sudo taskset $core_args \
+  sudo $taskset_cmd \
   qemu-system-x86_64 \
     -snapshot \
     -nographic -monitor none -serial stdio \
@@ -54,7 +59,7 @@ if [[ "$stack" == 'virt-tas' ]]; then
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 elif [[ "$stack" == 'virt-linux' ]]; then
-  sudo taskset $core_args \
+  sudo $taskset_cmd \
   qemu-system-x86_64 \
       -snapshot \
       -nographic -monitor none -serial stdio \
@@ -70,7 +75,7 @@ elif [[ "$stack" == 'virt-linux' ]]; then
       -drive if=virtio,format=raw,file="seed.img" \
       ;
 elif [[ "$stack" == 'ovs-linux' ]]; then
-  sudo taskset $core_args \
+  sudo $taskset_cmd \
   qemu-system-x86_64 \
     -snapshot \
     -nographic -monitor none -serial stdio \
@@ -89,7 +94,7 @@ elif [[ "$stack" == 'ovs-linux' ]]; then
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 elif [[ "$stack" == 'ovs-tas' ]]; then
-  sudo taskset -c $core_args \
+  sudo $taskset_cmd \
   qemu-system-x86_64 \
     -snapshot \
     -nographic -monitor none -serial stdio \
@@ -108,7 +113,7 @@ elif [[ "$stack" == 'ovs-tas' ]]; then
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 elif [[ "$stack" == 'tap-tas' ]]; then
-  sudo taskset $core_args \
+  sudo $taskset_cmd \
   qemu-system-x86_64 \
     -snapshot \
     -nographic -monitor none -serial stdio \
@@ -126,7 +131,7 @@ elif [[ "$stack" == 'tap-tas' ]]; then
     -drive if=virtio,format=raw,file="seed.img" \
     ;
 elif [[ "$stack" == 'gre' ]]; then
-  sudo taskset $core_args \
+  sudo $taskset_cmd \
   qemu-system-x86_64 \
     -snapshot \
     -nographic -monitor none -serial stdio \
