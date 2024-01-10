@@ -70,11 +70,6 @@ class OvsLinux(Node):
                         "vhost{}".format(vm_config.id),
                         vm_config.n_queues,
                         vm_config.manager_dir)
-      
-      self.setup_pane.send_keys("sudo ip addr add {} dev {}".format(
-            self.machine_config.ip + "/24",
-            "br0"
-      ))
 
     self.add_ip("br0", self.machine_config.ip + "/24")
     self.interface_up("br0")

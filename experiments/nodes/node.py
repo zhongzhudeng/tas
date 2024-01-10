@@ -167,7 +167,7 @@ class Node:
       time.sleep(1)
       cmd = "sudo bash ovsdpdk-start.sh {}".format(pmd_mask)
       self.setup_pane.send_keys(cmd)
-      time.sleep(4)
+      time.sleep(7)
 
   def stop_ovsdpdk(self, script_dir):
       cmd = "cd {}".format(script_dir)
