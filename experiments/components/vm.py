@@ -13,25 +13,30 @@ class VM:
     
     def start(self):
         self.pane.send_keys('cd ' + self.vm_config.manager_dir)
+
+        if self.vm_config.cset is None:
+            cores_arg = "0"
+        else:
+            cores_arg = self.cset_configs[self.vm_config.cset].cores_arg
         
         if self.vm_config.n_queues is None:
             start_vm_cmd = "sudo bash start-vm.sh {} {} {} {} {} {} '{}'".format(
                     self.machine_config.stack, self.vm_config.id,
                     self.machine_config.interface, self.vm_config.n_cores, 
                     self.vm_config.memory, self.vm_config.cset, 
-                    self.cset_configs[self.vm_config.cset].cores_arg)
+                    cores_arg)
         else:
             start_vm_cmd = "sudo bash start-vm.sh {} {} {} {} {} {} '{}' {}".format(
                     self.machine_config.stack, self.vm_config.id,
                     self.machine_config.interface, self.vm_config.n_cores,
                     self.vm_config.memory, 
                     self.vm_config.cset, 
-                    self.cset_configs[self.vm_config.cset].cores_arg,
+                    cores_arg,
                     self.vm_config.n_queues)
         self.pane.send_keys(start_vm_cmd)
        
         print("Started VM")
-        time.sleep(30)
+        time.sleep(75)
         self.login_vm()
 
     def tcp_tw_reuse(self, val):
@@ -92,10 +97,10 @@ class VM:
 
     def login_vm(self):
         self.pane.send_keys(suppress_history=False, cmd='tas')
-        time.sleep(3)
+        time.sleep(2)
         self.pane.send_keys(suppress_history=False, cmd='tas')
         self.pane.enter()
-        time.sleep(5)
+        time.sleep(2)
 
     def add_dummy_intf(self, interface, ip, mac):
         cmd = 'cd ' + self.vm_config.manager_dir_virt

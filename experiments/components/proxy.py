@@ -38,7 +38,7 @@ class ProxyGuest(Proxy):
     def run(self):
         ssh_com = utils.get_ssh_command(self.machine_config, self.vm_config)
         self.pane.send_keys(ssh_com)
-        time.sleep(3)
+        time.sleep(5)
         self.pane.send_keys("tas")
         time.sleep(2)
 
