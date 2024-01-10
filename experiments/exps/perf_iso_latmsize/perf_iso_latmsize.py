@@ -9,7 +9,7 @@ from exps.perf_iso_latmsize.configs.ovs_tas import Config as OVSTasConf
 experiments = []
 
 msize = [1024,512,256,128,64]
-n_runs = 3
+n_runs = 1
 
 for n_r in range(n_runs):
   for n_m in msize:

@@ -13,20 +13,20 @@ class Config:
         # Configure csets
         self.s_cset_configs = []
         self.c_cset_configs = []
-        tas_cset = CSetConfig([1,3,5], "0-1", "tas_server")
+        tas_cset = CSetConfig([23,25,27,29,31], "0-1", "tas_server", exclusive=True)
         self.s_cset_configs.append(tas_cset)
-        tas_cset = CSetConfig([1,3,5,7,9,11], 1, "tas_client")
+        tas_cset = CSetConfig([23,25,27,29,31,33,35,37,39], 1, "tas_client", exclusive=True)
         self.c_cset_configs.append(tas_cset)
 
-        server0_cset = CSetConfig([7,9,11,13,15], "0-1", "server0")
-        self.s_cset_configs.append(server0_cset)
-        server1_cset = CSetConfig([17,19,21,23,25,27], "0-1", "server1")
-        self.s_cset_configs.append(server1_cset)
+        vm0_cset = CSetConfig([3,4,5,6,7,8,9,10,11,12], "0-1", "server0", exclusive=True)
+        self.s_cset_configs.append(vm0_cset)
+        vm1_cset = CSetConfig([13,14,15,16,17,18,19,20,21,22], "0-1", "server1", exclusive=True)
+        self.s_cset_configs.append(vm1_cset)
         
-        client0_cset = CSetConfig([13,15,17,19,21], "0-1", "client0")
-        self.c_cset_configs.append(client0_cset)
-        client1_cset = CSetConfig([23,25,27,29,31], "0-1", "client1")
-        self.c_cset_configs.append(client1_cset)
+        vm0_cset = CSetConfig([3,4,5,6,7,8,9,10,11,12], "0-1", "client0", exclusive=True)
+        self.c_cset_configs.append(vm0_cset)
+        vm1_cset = CSetConfig([13,14,15,16,17,18,19,20,21,22], "0-1", "client1", exclusive=True)
+        self.c_cset_configs.append(vm1_cset)
 
         # Server Machine
         self.sstack = 'bare-tas'
@@ -87,7 +87,7 @@ class Config:
                 project_dir=self.defaults.default_otas_dir_bare,
                 ip=self.c_machine_config.ip,
                 cset="tas_client",
-                n_cores=5)
+                n_cores=6)
         tas_config.args = tas_config.args
         self.c_tas_configs.append(tas_config)
 

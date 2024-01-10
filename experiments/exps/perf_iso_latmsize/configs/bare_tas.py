@@ -87,7 +87,7 @@ class Config:
                 project_dir=self.defaults.default_otas_dir_bare,
                 ip=self.c_machine_config.ip,
                 cset="tas_client",
-                n_cores=5)
+                n_cores=6)
         tas_config.args = tas_config.args
         self.c_tas_configs.append(tas_config)
 
