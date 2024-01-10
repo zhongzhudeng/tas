@@ -119,10 +119,13 @@ class TasConfig:
             cset="tas",
             cores=[1,3,5,7,9,11,13,15,17,19,21],
             cc="timely", 
-            cc_timely_min_rtt="10",
-            cc_timely_tlow="30", cc_timely_thigh="1000",
-            cc_timely_minrate="10000", cc_timely_step="10000",
-            cc_const_rate=0):
+            cc_timely_min_rtt=10,
+            cc_timely_tlow=30, cc_timely_thigh=3000,
+            cc_timely_minrate=10000, cc_timely_step=10000,
+            cc_const_rate=0,
+            bu_max_budget=67000000,
+            bu_boost=0.94,
+            bu_update_freq=100):
         self.name = "server" if machine_config. is_server else "client"
         
         self.project_dir = project_dir
@@ -143,7 +146,12 @@ class TasConfig:
         self.args = '--ip-addr={}/24 --fp-cores-max={}'.format(ip, n_cores) + \
             ' --fp-no-autoscale --fp-no-ints' + \
             ' --cc={}'.format(cc) + \
-            ' --dpdk-extra="-a{}"'.format(pci)   
+            ' --dpdk-extra="-a{}"'.format(pci)
+
+        if project_dir == Defaults().default_vtas_dir_bare:
+            self.args = self.args + \
+                    ' --bu-max-budget={} --bu-boost={} --bu-update-freq={}' \
+                    .format(bu_max_budget, bu_boost, bu_update_freq)
         
         self.cset = cset
         self.cores = np.array(cores)[range(0, n_cores + 1)]
