@@ -95,7 +95,7 @@ def parse_data(parsed_md):
   return data
 
 def save_dat_file(data):
-  header = "cores virt-tas-victim-avg virt-tas-victim-std virt-tas-aggr-avg virt-tas-aggr-std\n"
+  header = "cores local-avg local-std global-avg global-std\n"
   cores_list = list(data.keys())
   cores_list = list(map(str, sorted(map(float, cores_list))))
 
