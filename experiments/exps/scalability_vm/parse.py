@@ -153,11 +153,12 @@ def save_dat_file(data, fname):
   header = "n_vms " + \
       "virt-tas-avg ovs-tas-avg ovs-linux-avg " + \
       "virt-tas-std ovs-tas-std ovs-linux-std\n"
+
   f.write(header)
   for dp in data:
     f.write("{} {} {} {} {} {} {}\n".format(
       dp["n_vms"],
-      dp["virt-tas"]["tp"], dp["ovs-tas"]["tp"], dp["ovs-linux"]["tp"],
+      dp["virt-tas"]["tp"], dp["ovs-tas"]["tp"], dp["ovs-linux"]["tp"], 
       dp["virt-tas"]["std"], dp["ovs-tas"]["std"], dp["ovs-linux"]["std"]))
         
 def main():

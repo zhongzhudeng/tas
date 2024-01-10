@@ -17,18 +17,12 @@ class Config:
 
         # Configure Csets
         tas_cores = [1,3,5,7,9]
-        ovs_cores = [2]
-        skip_cores = ovs_cores + tas_cores
 
         self.s_cset_configs = []
         self.c_cset_configs = []
         tas_cset = CSetConfig(tas_cores, "0-1", "tas", exclusive=False)
         self.s_cset_configs.append(tas_cset)
         self.c_cset_configs.append(tas_cset)
-
-        vm_cset = create_vm_csets(n_vms, vm_cores, skip_cores=skip_cores, exclusive=False)
-        self.c_cset_configs = self.c_cset_configs + vm_cset
-        self.s_cset_configs = self.s_cset_configs + vm_cset
 
         # Server Machine
         self.sstack = 'virt-tas'
@@ -51,6 +45,8 @@ class Config:
                                machine_config=self.s_machine_config,
                                project_dir=self.defaults.default_vtas_dir_bare,
                                ip=self.s_machine_config.ip,
+                               bu_boost=62,
+                               bu_update_freq=100,
                                n_cores=4, cset="tas")
         tas_config.args = tas_config.args
         self.s_tas_configs.append(tas_config)
@@ -66,7 +62,7 @@ class Config:
                                  tas_dir_virt=self.defaults.default_vtas_dir_virt,
                                  idx=idx,
                                  n_cores=vm_cores,
-                                 cset="vm{}".format(idx),
+                                 cset=None,
                                  memory=1)
             self.s_vm_configs.append(vm_config)
 
@@ -102,7 +98,9 @@ class Config:
                                machine_config=self.c_machine_config,
                                project_dir=self.defaults.default_vtas_dir_bare,
                                ip=self.c_machine_config.ip,
-                               n_cores=4)
+                               bu_boost=62,
+                               bu_update_freq=100,
+                               n_cores=4, cset="tas")
         tas_config.args = tas_config.args
         self.c_tas_configs.append(tas_config)
 
@@ -117,7 +115,7 @@ class Config:
                                  tas_dir_virt=self.defaults.default_vtas_dir_virt,
                                  idx=idx,
                                  n_cores=vm_cores,
-                                 cset="vm{}".format(idx),
+                                 cset=None,
                                  memory=1)
             self.c_vm_configs.append(vm_config)
 

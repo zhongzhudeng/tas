@@ -13,15 +13,11 @@ class Config:
         vm_cores = 2
         
         # Configure Csets
-        pmd_mask = "0x555"
+        pmd_mask = "0x1554"
         ovs_cores = [2,4,6,8,10,12]
 
         self.s_cset_configs = []
         self.c_cset_configs = []
-
-        vm_cset = create_vm_csets(n_vms, vm_cores, skip_cores=ovs_cores, exclusive=False)
-        self.c_cset_configs = self.c_cset_configs + vm_cset
-        self.s_cset_configs = self.s_cset_configs + vm_cset
 
         # Server Machine
         self.sstack = 'ovs-tas'
@@ -46,7 +42,7 @@ class Config:
                         tas_dir_virt=self.defaults.default_vtas_dir_virt,
                         idx=idx,
                         n_cores=vm_cores,
-                        cset="vm{}".format(idx),
+                        cset=None,
                         memory=3,
                         n_queues=1)
                 tas_config = TasConfig(pane=self.defaults.s_tas_pane,
@@ -91,7 +87,7 @@ class Config:
                         tas_dir_virt=self.defaults.default_vtas_dir_virt,
                         idx=idx,
                         n_cores=vm_cores,
-                        cset="vm{}".format(idx),
+                        cset=None,
                         memory=3,
                         n_queues=1)
                 tas_config = TasConfig(pane=self.defaults.c_tas_pane,

@@ -12,15 +12,11 @@ class Config:
         vm_cores = 2
         
         # Configure Csets
-        pmd_mask = "0x555"
-        ovs_cores = [0,2,4,6,8,10]
+        pmd_mask = "0x1554"
+        ovs_cores = [2,4,6,8,10,12,14]
 
         self.s_cset_configs = []
         self.c_cset_configs = []
-
-        vm_cset = create_vm_csets(n_vms, vm_cores, skip_cores=ovs_cores, exclusive=False)
-        self.c_cset_configs = self.c_cset_configs + vm_cset
-        self.s_cset_configs = self.s_cset_configs + vm_cset
 
         # Server Machine
         self.sstack = 'ovs-linux'
@@ -45,9 +41,9 @@ class Config:
                         tas_dir_virt=self.defaults.default_vtas_dir_virt,
                         idx=idx,
                         n_cores=vm_cores,
-                        cset="vm{}".format(idx),
-                        memory=1,
-                        n_queues=len(ovs_cores))
+                        cset=None,
+                        memory=2,
+                        n_queues=1)
                 self.s_vm_configs.append(vm_config)
 
                 server_config = ServerConfig(pane=self.defaults.s_server_pane,
@@ -80,9 +76,9 @@ class Config:
                         tas_dir_virt=self.defaults.default_vtas_dir_virt,
                         idx=idx,
                         n_cores=vm_cores,
-                        cset="vm{}".format(idx),
-                        memory=1,
-                        n_queues=len(ovs_cores))
+                        cset=None,
+                        memory=2,
+                        n_queues=1)
 
                 self.c_vm_configs.append(vm_config)
 
