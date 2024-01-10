@@ -145,16 +145,16 @@ int nicif_init(void)
 
 unsigned nicif_poll(void)
 {
-  unsigned i, ret = 0, nonsuc = 0;
+  unsigned i, ret = 0; /*, nonsuc = 0*/
   int x;
 
   for (i = 0; i < 512; i++)
   {
     x = rxq_poll();
-    if (x == -1 && ++nonsuc > 2 * fn_cores)
-      break;
-    else if (x != -1)
-      nonsuc = 0;
+    // if (x == -1 && ++nonsuc > 2 * fn_cores)
+    //   break;
+    // else if (x != -1)
+    //   nonsuc = 0;
 
     ret += (x == -1 ? 0 : 1);
   }
@@ -172,8 +172,8 @@ unsigned ovs_poll(void)
     x = ovsrxq_poll();
     ret += (x == -1 ? 0 : 1);
     
-    if (x == -1)
-      break;
+    // if (x == -1)
+    //   break;
   }
 
   for (i = 0; i < 512; i++)
@@ -181,8 +181,8 @@ unsigned ovs_poll(void)
     x = ovstxq_poll();
     ret += (x == -1 ? 0 : 1);
   
-    if (x == -1)
-      break;
+    // if (x == -1)
+    //   break;
   }
 
   return ret;
