@@ -486,6 +486,30 @@ int nicif_connection_setrate(uint32_t f_id, uint32_t rate)
   return 0;
 }
 
+/** Packet to signal rx window is open probably got 
+    dropped so retransmit one packet. */
+int nicif_connection_winretransmit(uint32_t f_id, uint16_t flow_group)
+{
+  volatile struct flextcp_pl_ktx *ktx;
+  struct nic_buffer *buf;
+  uint32_t tail;
+  uint16_t core = fp_state->flow_group_steering[flow_group];
+
+  if ((ktx = ktx_try_alloc(core, &buf, &tail)) == NULL)
+  {
+    return -1;
+  }
+  txq_tail[core] = tail;
+
+  ktx->msg.connretran.flow_id = f_id;
+  MEM_BARRIER();
+  ktx->type = FLEXTCP_PL_KTX_WINRETRAN;
+
+  notify_fastpath_core(core);
+
+  return 0;
+}
+
 /** Mark flow for retransmit after timeout. */
 int nicif_connection_retransmit(uint32_t f_id, uint16_t flow_group)
 {

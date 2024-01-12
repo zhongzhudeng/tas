@@ -274,6 +274,17 @@ int nicif_connection_stats(uint32_t f_id,
 int nicif_connection_setrate(uint32_t f_id, uint32_t rate);
 
 /**
+ * Trigger tx a sigle segment because the packet that
+ * signals that the rx window is open probably got dropepd.
+ *
+ * @param f_id ID of flow
+ * @param flow_group FlexNIC flow group
+ *
+ * @return 0 on success, <0 else
+ */
+int nicif_connection_winretransmit(uint32_t f_id, uint16_t flow_group);
+
+/**
  * Mark flow for retransmit after timeout.
  *
  * @param f_id ID of flow

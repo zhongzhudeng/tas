@@ -301,7 +301,7 @@ static inline void issue_retransmits(struct connection *c,
     } else if (c->cnt_win_updt_pending >= config.cc_rexmit_ints &&
         (cur_ts - c->ts_win_updt_pending) >= 2 * rtt)
     {
-      if (nicif_connection_retransmit(c->flow_id, c->flow_group) == 0) {
+      if (nicif_connection_winretransmit(c->flow_id, c->flow_group) == 0) {
         c->cnt_win_updt_pending = 0;
         kstats.kernel_rexmit++;
         c->cc_rexmits++;
@@ -310,6 +310,7 @@ static inline void issue_retransmits(struct connection *c,
   } else {
     c->cnt_tx_pending = 0;
     c->cnt_win_updt_pending = 0;
+    c->cc_last_tx_next_seq = stats->c_tx_next_seq;
   }
 }
 
