@@ -222,6 +222,7 @@ void cc_conn_init(struct connection *conn)
   conn->cc_last_ts = cur_ts;
   conn->cc_rtt = config.tcp_rtt_init;
   conn->cc_rexmits = 0;
+  conn->cc_last_tx_next_seq = 0;
 
   switch (config.cc_algorithm) {
     case CONFIG_CC_DCTCP_WIN:
@@ -280,17 +281,35 @@ static inline void issue_retransmits(struct connection *c,
   if (stats->txp && stats->c_ackb == 0) {
     if (c->cnt_tx_pending++ == 0) {
       c->ts_tx_pending = cur_ts;
+      c->ts_win_updt_pending = cur_ts;
     } else if (c->cnt_tx_pending >= config.cc_rexmit_ints &&
         (cur_ts - c->ts_tx_pending) >= 2 * rtt)
     {
       if (nicif_connection_retransmit(c->flow_id, c->flow_group) == 0) {
         c->cnt_tx_pending = 0;
+        c->cnt_win_updt_pending = 0;
+        kstats.kernel_rexmit++;
+        c->cc_rexmits++;
+      }
+    }
+  } else if ((stats->c_tx_next_seq == c->cc_last_tx_next_seq 
+      && stats->c_tx_avail > 0)) {
+    /* Count and timestamp for win_updt_pending also have to
+       be updated when we retransmit all packets pending */
+    if (c->cnt_win_updt_pending++ == 0) {
+      c->ts_win_updt_pending = cur_ts;
+    } else if (c->cnt_win_updt_pending >= config.cc_rexmit_ints &&
+        (cur_ts - c->ts_win_updt_pending) >= 2 * rtt)
+    {
+      if (nicif_connection_retransmit(c->flow_id, c->flow_group) == 0) {
+        c->cnt_win_updt_pending = 0;
         kstats.kernel_rexmit++;
         c->cc_rexmits++;
       }
     }
   } else {
     c->cnt_tx_pending = 0;
+    c->cnt_win_updt_pending = 0;
   }
 }
 

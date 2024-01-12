@@ -697,9 +697,8 @@ unlock:
   new_avail = tcp_txavail(fs, NULL);
   if (new_avail > old_avail) {
     /* update qman queue */
-    if (tas_qman_set(&ctx->qman, fs->vm_id, flow_id, fs->tx_rate, new_avail -
-          old_avail, TCP_MSS, QMAN_SET_RATE | QMAN_SET_MAXCHUNK
-          | QMAN_ADD_AVAIL) != 0)
+    if (tas_qman_set(&ctx->qman, fs->vm_id, flow_id, fs->tx_rate, new_avail,
+        TCP_MSS, QMAN_SET_RATE | QMAN_SET_MAXCHUNK | QMAN_SET_AVAIL) != 0)
     {
       fprintf(stderr, "fast_flows_packet: qman_set 1 failed, UNEXPECTED\n");
       abort();
@@ -756,6 +755,9 @@ int fast_flows_packet_gre(struct dataplane_context *ctx,
 #endif
 
   if (ctx->budgets[fs->vm_id].budget <= 0) {
+    if (fs->vm_id == 0) {
+      fprintf(stderr, "DROPPING PACKET FROM VM0 rxwnd=%d\n", f_beui16(p->tcp.wnd));
+    }
     return 0;
   }
 
@@ -1083,9 +1085,8 @@ unlock:
   new_avail = tcp_txavail(fs, NULL);
   if (new_avail > old_avail) {
     /* update qman queue */
-    if (tas_qman_set(&ctx->qman, fs->vm_id, flow_id, fs->tx_rate, new_avail -
-          old_avail, TCP_MSS, QMAN_SET_RATE | QMAN_SET_MAXCHUNK
-          | QMAN_ADD_AVAIL) != 0)
+    if (tas_qman_set(&ctx->qman, fs->vm_id, flow_id, fs->tx_rate, new_avail, 
+        TCP_MSS, QMAN_SET_RATE | QMAN_SET_MAXCHUNK | QMAN_SET_AVAIL) != 0)
     {
       fprintf(stderr, "fast_flows_packet_gre: qman_set 1 failed, UNEXPECTED\n");
       abort();
@@ -1207,9 +1208,8 @@ int fast_flows_bump(struct dataplane_context *ctx, uint32_t flow_id,
 
   /* update queue manager queue */
   if (old_avail < new_avail) {
-    if (tas_qman_set(&ctx->qman, fs->vm_id, flow_id, fs->tx_rate, new_avail -
-          old_avail, TCP_MSS, QMAN_SET_RATE | QMAN_SET_MAXCHUNK
-          | QMAN_ADD_AVAIL) != 0)
+    if (tas_qman_set(&ctx->qman, fs->vm_id, flow_id, fs->tx_rate, new_avail, 
+        TCP_MSS, QMAN_SET_RATE | QMAN_SET_MAXCHUNK | QMAN_SET_AVAIL) != 0)
     {
       fprintf(stderr, "flast_flows_bump: qman_set 1 failed, UNEXPECTED\n");
       abort();
@@ -1237,6 +1237,33 @@ int fast_flows_bump(struct dataplane_context *ctx, uint32_t flow_id,
 unlock:
   fs_unlock(fs);
   return ret;
+}
+
+/* retransmit only one packet to send a window update */
+void fast_flows_winretransmit(struct dataplane_context *ctx, uint32_t flow_id)
+{
+  uint32_t ts;
+  uint64_t cyc;
+  int n;
+  struct network_buf_handle **handles;
+  struct flextcp_pl_flowst *fs = &fp_state->flowst[flow_id];
+
+  n = bufcache_prealloc(ctx, 1, &handles);
+  cyc = rte_get_tsc_cycles();
+  ts = tas_qman_timestamp(cyc);
+
+  if (n > 0)
+  {
+    #if VIRTUOSO_GRE
+      flow_tx_segment_gre(ctx, handles[0], fs, fs->tx_next_seq, fs->rx_next_seq,
+          fs->rx_avail, 0, 0, fs->tx_next_ts, ts, 0);
+    #else
+      flow_tx_segment(ctx, nbh, fs, fs->tx_next_seq, fs->rx_next_seq,
+          fs->rx_avail, 0, 0, fs->tx_next_ts, ts, 0);
+    #endif
+  } else {
+    fprintf(stderr, "fast_flows_winretransmit: bufcache_prealloc failed\n");
+  }
 }
 
 /* start retransmitting */
@@ -1290,8 +1317,8 @@ void fast_flows_retransmit(struct dataplane_context *ctx, uint32_t flow_id)
 
   /* update queue manager */
   if (new_avail > old_avail) {
-    if (tas_qman_set(&ctx->qman, fs->vm_id, flow_id, fs->tx_rate, new_avail - old_avail,
-          TCP_MSS, QMAN_SET_RATE | QMAN_SET_MAXCHUNK | QMAN_ADD_AVAIL) != 0)
+    if (tas_qman_set(&ctx->qman, fs->vm_id, flow_id, fs->tx_rate, new_avail,
+          TCP_MSS, QMAN_SET_RATE | QMAN_SET_MAXCHUNK | QMAN_SET_AVAIL) != 0)
     {
       fprintf(stderr, "flast_flows_bump: qman_set 1 failed, UNEXPECTED\n");
       abort();

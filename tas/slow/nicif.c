@@ -456,6 +456,8 @@ int nicif_connection_stats(uint32_t f_id,
   p_stats->c_ecnb = fs->cnt_rx_ecn_bytes;
   p_stats->txp = fs->tx_sent != 0;
   p_stats->rtt = fs->rtt_est;
+  p_stats->c_tx_next_seq = fs->tx_next_seq;
+  p_stats->c_tx_avail = fs->tx_avail;
 
   return 0;
 }

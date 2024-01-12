@@ -96,8 +96,13 @@ void fast_flows_kernelxsums_gre(struct network_buf_handle *nbh,
 int fast_flows_bump(struct dataplane_context *ctx, uint32_t flow_id,
     uint16_t bump_seq, uint32_t rx_tail, uint32_t tx_head, uint8_t flags,
     struct network_buf_handle *nbh, uint32_t ts);
+void fast_flows_winretransmit(struct dataplane_context *ctx, uint32_t flow_id);
 void fast_flows_retransmit(struct dataplane_context *ctx, uint32_t flow_id);
 
+/* fastemu.h */
+uint8_t bufcache_prealloc(struct dataplane_context *ctx, uint16_t num,
+                                struct network_buf_handle ***handles);
+                                
 /*****************************************************************************/
 /* Helpers */
 

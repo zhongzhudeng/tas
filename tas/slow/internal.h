@@ -246,6 +246,10 @@ struct nicif_connection_stats {
   int txp;
   /** Current rtt estimate */
   uint32_t rtt;
+  /** Sequence number of next segment to be sent */
+  uint32_t c_tx_next_seq;
+  /** Number of bytes available to be sent */
+  uint32_t c_tx_avail;
 };
 
 /**
@@ -597,6 +601,8 @@ struct connection {
     uint32_t cc_last_ackb;
     /** Number of ACKd bytes with ECN marks */
     uint32_t cc_last_ecnb;
+    /** Sequence number last time control loop ran */
+    uint32_t cc_last_tx_next_seq;
 
     /** Congestion rate limit. */
     uint32_t cc_rate;
@@ -611,7 +617,11 @@ struct connection {
       /** Rate-based dctcp */
       struct connection_cc_dctcp_rate dctcp_rate;
     } cc;
-    /** #control intervals with data in tx buffer but no ACKs */
+    /** control intervals without acking window update */
+    uint32_t cnt_win_updt_pending;
+    /** Timestamp when window update first got stuck */
+    uint32_t ts_win_updt_pending;
+    /** control intervals with data in tx buffer but no ACKs */
     uint32_t cnt_tx_pending;
     /** Timestamp when flow was first not moving */
     uint32_t ts_tx_pending;

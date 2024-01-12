@@ -84,8 +84,6 @@ static void poll_scale(struct dataplane_context *ctx);
 static void polled_vm_init(struct polled_vm *app, uint16_t id);
 static void polled_ctx_init(struct polled_context *ctx, uint32_t id, uint32_t a_id);
 
-static inline uint8_t bufcache_prealloc(struct dataplane_context *ctx, uint16_t num,
-                                        struct network_buf_handle ***handles);
 static inline void bufcache_alloc(struct dataplane_context *ctx, uint16_t num);
 static inline void bufcache_free(struct dataplane_context *ctx,
                                  struct network_buf_handle *handle);
@@ -670,8 +668,8 @@ static unsigned poll_qman_fwd(struct dataplane_context *ctx, uint32_t ts)
   return ret;
 }
 
-static inline uint8_t bufcache_prealloc(struct dataplane_context *ctx, uint16_t num,
-                                        struct network_buf_handle ***handles)
+uint8_t bufcache_prealloc(struct dataplane_context *ctx, uint16_t num,
+                          struct network_buf_handle ***handles)
 {
   uint16_t grow, res, head, g, i;
   struct network_buf_handle *nbh;
