@@ -173,7 +173,6 @@ int slowpath_main(int threads_launched)
       {
         printf("stats: drops=%" PRIu64 " k_rexmit=%" PRIu64 " ecn=%" PRIu64 " acks=%" PRIu64"\n",
                kstats.drops, kstats.kernel_rexmit, kstats.ecn_marked, kstats.acks);
-        print_budget();
         fflush(stdout);
       }
       

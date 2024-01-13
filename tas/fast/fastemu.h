@@ -99,9 +99,10 @@ int fast_flows_bump(struct dataplane_context *ctx, uint32_t flow_id,
 void fast_flows_winretransmit(struct dataplane_context *ctx, uint32_t flow_id);
 void fast_flows_retransmit(struct dataplane_context *ctx, uint32_t flow_id);
 
-/* fastemu.h */
+/* fastemu.c */
 uint8_t bufcache_prealloc(struct dataplane_context *ctx, uint16_t num,
                                 struct network_buf_handle ***handles);
+void bufcache_alloc(struct dataplane_context *ctx, uint16_t num);
                                 
 /*****************************************************************************/
 /* Helpers */

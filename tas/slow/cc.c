@@ -38,7 +38,7 @@ static unsigned cc_poll_vm(int vmid, unsigned n,
     uint32_t cur_ts, uint32_t diff_ts);
 
 static inline void issue_retransmits(struct connection *c,
-    struct nicif_connection_stats *stats, uint32_t cur_ts);
+    struct nicif_connection_stats *stats, uint32_t cur_ts, int vmid);
 
 static inline void dctcp_win_init(struct connection *c);
 static inline void dctcp_win_update(struct connection *c,
@@ -203,7 +203,7 @@ static unsigned cc_poll_vm(int vmid, unsigned n,
         break;
     }
 
-    issue_retransmits(c, &stats, cur_ts);
+    issue_retransmits(c, &stats, cur_ts, vmid);
     nicif_connection_setrate(c->flow_id, c->cc_rate);
 
     c->cc_last_ts = cur_ts;
@@ -273,7 +273,7 @@ void cc_conn_remove(struct connection *conn)
 }
 
 static inline void issue_retransmits(struct connection *c,
-    struct nicif_connection_stats *stats, uint32_t cur_ts)
+    struct nicif_connection_stats *stats, uint32_t cur_ts, int vmid)
 {
   uint32_t rtt = (stats->rtt != 0 ? stats->rtt : config.tcp_rtt_init);
 
@@ -292,8 +292,8 @@ static inline void issue_retransmits(struct connection *c,
         c->cc_rexmits++;
       }
     }
-  } else if ((stats->c_tx_next_seq == c->cc_last_tx_next_seq 
-      && stats->c_tx_avail > 0)) {
+  } else if (stats->c_tx_next_seq == c->cc_last_tx_next_seq 
+      && stats->c_tx_avail > 0) {
     /* Count and timestamp for win_updt_pending also have to
        be updated when we retransmit all packets pending */
     if (c->cnt_win_updt_pending++ == 0) {

@@ -755,9 +755,6 @@ int fast_flows_packet_gre(struct dataplane_context *ctx,
 #endif
 
   if (ctx->budgets[fs->vm_id].budget <= 0) {
-    if (fs->vm_id == 0) {
-      fprintf(stderr, "DROPPING PACKET FROM VM0 rxwnd=%d\n", f_beui16(p->tcp.wnd));
-    }
     return 0;
   }
 
@@ -1248,12 +1245,14 @@ void fast_flows_winretransmit(struct dataplane_context *ctx, uint32_t flow_id)
   struct network_buf_handle **handles;
   struct flextcp_pl_flowst *fs = &fp_state->flowst[flow_id];
 
+  fs_lock(fs);  
   n = bufcache_prealloc(ctx, 1, &handles);
   cyc = rte_get_tsc_cycles();
   ts = tas_qman_timestamp(cyc);
 
   if (n > 0)
   {
+    bufcache_alloc(ctx, n);
     #if VIRTUOSO_GRE
       flow_tx_segment_gre(ctx, handles[0], fs, fs->tx_next_seq, fs->rx_next_seq,
           fs->rx_avail, 0, 0, fs->tx_next_ts, ts, 0);
@@ -1264,6 +1263,7 @@ void fast_flows_winretransmit(struct dataplane_context *ctx, uint32_t flow_id)
   } else {
     fprintf(stderr, "fast_flows_winretransmit: bufcache_prealloc failed\n");
   }
+  fs_unlock(fs);
 }
 
 /* start retransmitting */
