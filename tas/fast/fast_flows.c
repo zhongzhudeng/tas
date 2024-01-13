@@ -1271,7 +1271,6 @@ void fast_flows_winretransmit(struct dataplane_context *ctx, uint32_t flow_id)
   }
   fs_unlock(fs);
   e_cycs = util_rdtsc();
-
   __sync_fetch_and_sub(&ctx->budgets[fs->vm_id].budget, e_cycs - s_cycs);
 }
 
@@ -1280,7 +1279,9 @@ void fast_flows_retransmit(struct dataplane_context *ctx, uint32_t flow_id)
 {
   struct flextcp_pl_flowst *fs = &fp_state->flowst[flow_id];
   uint32_t old_avail, new_avail = -1;
+  uint64_t s_cycs, e_cycs;
 
+  s_cycs = util_rdtsc();
   fs_lock(fs);
 
 #ifdef FLEXNIC_TRACING
@@ -1336,6 +1337,8 @@ void fast_flows_retransmit(struct dataplane_context *ctx, uint32_t flow_id)
 
 out:
   fs_unlock(fs);
+  e_cycs = util_rdtsc();
+  __sync_fetch_and_sub(&ctx->budgets[fs->vm_id].budget, e_cycs - s_cycs);
   return;
 }
 

@@ -245,8 +245,6 @@ void dataplane_loop(struct dataplane_context *ctx)
     STATS_TS(rx);
     tx_flush(ctx);
 
-    n += poll_kernel(ctx, ts);
-
     n += poll_qman_fwd(ctx, ts);
 
     STATS_TSADD(ctx, cyc_rx, rx - start);
@@ -266,6 +264,8 @@ void dataplane_loop(struct dataplane_context *ctx)
    
     STATS_TS(qs);
     STATS_TSADD(ctx, cyc_qs, qs - qm);
+
+    n += poll_kernel(ctx, ts);
 
     /* flush transmit buffer */
     tx_flush(ctx);
