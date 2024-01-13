@@ -1241,12 +1241,16 @@ void fast_flows_winretransmit(struct dataplane_context *ctx, uint32_t flow_id)
 {
   uint32_t ts;
   uint64_t cyc;
-  int n;
+  int n, num;
   struct network_buf_handle **handles;
   struct flextcp_pl_flowst *fs = &fp_state->flowst[flow_id];
 
   fs_lock(fs);  
-  n = bufcache_prealloc(ctx, 1, &handles);
+  num = 1;
+  if (TXBUF_SIZE - ctx->tx_num < num)
+    num = 0;
+
+  n = bufcache_prealloc(ctx, num, &handles);
   cyc = rte_get_tsc_cycles();
   ts = tas_qman_timestamp(cyc);
 

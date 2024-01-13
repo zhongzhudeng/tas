@@ -265,9 +265,12 @@ void dataplane_loop(struct dataplane_context *ctx)
     STATS_TS(qs);
     STATS_TSADD(ctx, cyc_qs, qs - qm);
 
+    /* flush transmit buffer */
+    tx_flush(ctx);
+
     n += poll_kernel(ctx, ts);
 
-    /* flush transmit buffer */
+    /* flush transmit buffer in case we need to signal rx window opened*/
     tx_flush(ctx);
 
     if (ctx->id == 0)
