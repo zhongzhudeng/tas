@@ -1240,8 +1240,10 @@ unlock:
 void fast_flows_winretransmit(struct dataplane_context *ctx, uint32_t flow_id)
 {
   uint32_t ts;
-  uint64_t cyc;
+  uint64_t cyc, s_cycs, e_cycs;
   int n, num;
+
+  s_cycs = util_rdtsc();
   struct network_buf_handle **handles;
   struct flextcp_pl_flowst *fs = &fp_state->flowst[flow_id];
 
@@ -1268,6 +1270,9 @@ void fast_flows_winretransmit(struct dataplane_context *ctx, uint32_t flow_id)
     fprintf(stderr, "fast_flows_winretransmit: bufcache_prealloc failed\n");
   }
   fs_unlock(fs);
+  e_cycs = util_rdtsc();
+
+  __sync_fetch_and_sub(&ctx->budgets[fs->vm_id].budget, e_cycs - s_cycs);
 }
 
 /* start retransmitting */
