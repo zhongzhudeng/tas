@@ -495,7 +495,7 @@ int nicif_connection_winretransmit(uint32_t f_id, uint32_t vm_id, uint16_t flow_
   uint32_t tail;
   uint16_t core = fp_state->flow_group_steering[flow_group];
 
-  if (tas_get_budget(core, vm_id) <= 0)
+  if (tas_get_budget(vm_id, core) <= 0)
     return -1;
 
   if ((ktx = ktx_try_alloc(core, &buf, &tail)) == NULL)
