@@ -100,7 +100,7 @@ int fast_kernel_poll(struct dataplane_context *ctx,
     }
 
     fast_flows_winretransmit(ctx, flow_id, nbh, ts);
-    ret = 1;
+    ret = 0;
   } else {
     fprintf(stderr, "fast_appctx_poll: unknown type: %u\n", ktx->type);
     abort();
