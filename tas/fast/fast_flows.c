@@ -1237,38 +1237,25 @@ unlock:
 }
 
 /* retransmit only one packet to send a window update */
-void fast_flows_winretransmit(struct dataplane_context *ctx, uint32_t flow_id)
+void fast_flows_winretransmit(struct dataplane_context *ctx, uint32_t flow_id,
+    struct network_buf_handle *nbh, uint32_t ts)
 {
-  uint32_t ts;
-  uint64_t cyc, s_cycs, e_cycs;
-  int n, num;
+  uint64_t s_cycs, e_cycs;
 
   s_cycs = util_rdtsc();
-  struct network_buf_handle **handles;
   struct flextcp_pl_flowst *fs = &fp_state->flowst[flow_id];
 
   fs_lock(fs);  
-  num = 1;
-  if (TXBUF_SIZE - ctx->tx_num < num)
-    num = 0;
+  s_cycs = rte_get_tsc_cycles();
 
-  n = bufcache_prealloc(ctx, num, &handles);
-  cyc = rte_get_tsc_cycles();
-  ts = tas_qman_timestamp(cyc);
+  #if VIRTUOSO_GRE
+    flow_tx_segment_gre(ctx, nbh, fs, fs->tx_next_seq, fs->rx_next_seq,
+        fs->rx_avail, 0, 0, fs->tx_next_ts, ts, 0);
+  #else
+    flow_tx_segment(ctx, nbh, fs, fs->tx_next_seq, fs->rx_next_seq,
+        fs->rx_avail, 0, 0, fs->tx_next_ts, ts, 0);
+  #endif
 
-  if (n > 0)
-  {
-    bufcache_alloc(ctx, n);
-    #if VIRTUOSO_GRE
-      flow_tx_segment_gre(ctx, handles[0], fs, fs->tx_next_seq, fs->rx_next_seq,
-          fs->rx_avail, 0, 0, fs->tx_next_ts, ts, 0);
-    #else
-      flow_tx_segment(ctx, nbh, fs, fs->tx_next_seq, fs->rx_next_seq,
-          fs->rx_avail, 0, 0, fs->tx_next_ts, ts, 0);
-    #endif
-  } else {
-    fprintf(stderr, "fast_flows_winretransmit: bufcache_prealloc failed\n");
-  }
   fs_unlock(fs);
   e_cycs = util_rdtsc();
   __sync_fetch_and_sub(&ctx->budgets[fs->vm_id].budget, e_cycs - s_cycs);

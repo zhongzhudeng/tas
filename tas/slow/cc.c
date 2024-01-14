@@ -299,7 +299,7 @@ static inline void issue_retransmits(struct connection *c,
     if (c->cnt_win_updt_pending++ == 0) {
       c->ts_win_updt_pending = cur_ts;
     } else if (c->cnt_win_updt_pending >= config.cc_rexmit_ints &&
-        (cur_ts - c->ts_win_updt_pending) >= 3 * rtt)
+        (cur_ts - c->ts_win_updt_pending) >= 2 * rtt)
     {
       if (nicif_connection_winretransmit(c->flow_id, c->flow_group) == 0) {
         c->cnt_win_updt_pending = 0;
