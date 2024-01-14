@@ -307,6 +307,11 @@ uint64_t get_budget_delta(int vmid, int ctxid)
   return config.bu_max_budget - budget;
 }
 
+uint64_t tas_get_budget(int vmid, int ctxid)
+{
+  return __sync_fetch_and_add(&ctxs[ctxid]->budgets[vmid].budget, 0);
+}
+
 void boost_budget(int vmid, int ctxid, int64_t incr)
 {
   int64_t old_budget, new_budget, max_budget;

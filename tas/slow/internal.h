@@ -278,11 +278,12 @@ int nicif_connection_setrate(uint32_t f_id, uint32_t rate);
  * signals that the rx window is open probably got dropepd.
  *
  * @param f_id ID of flow
+ * @param vm_id ID of vm for flow
  * @param flow_group FlexNIC flow group
  *
  * @return 0 on success, <0 else
  */
-int nicif_connection_winretransmit(uint32_t f_id, uint16_t flow_group);
+int nicif_connection_winretransmit(uint32_t f_id, uint32_t vm_id, uint16_t flow_group);
 
 /**
  * Mark flow for retransmit after timeout.
@@ -952,3 +953,16 @@ unsigned kni_poll(void);
 /* Accept connection to app interface */
 int appif_connect_accept(int cfd, int cores_num, 
     int kernel_notifyfd, int shm_fd);
+
+/*****************************************************************************/
+/**
+ * @addtogroup tas-sp-tas
+ * @brief General stuff in tas.c
+ * @ingroup tas-sp
+ *
+ * This is implemented in tas.c
+ * @{ */
+
+
+/* Accept connection to app interface */
+uint64_t tas_get_budget(int vmid, int ctxid);
