@@ -965,5 +965,5 @@ int appif_connect_accept(int cfd, int cores_num,
  * @{ */
 
 
-/* Accept connection to app interface */
+/* Get reamining budget for a VM in specified core */
 uint64_t tas_get_budget(int vmid, int ctxid);

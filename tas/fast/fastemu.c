@@ -259,14 +259,16 @@ void dataplane_loop(struct dataplane_context *ctx)
    
     s_cycs = util_rdtsc();
     n += poll_queues(ctx, ts);
-    tx_flush(ctx);
     e_cycs = util_rdtsc();
     spend_budget(ctx, e_cycs - s_cycs);
   
     STATS_TS(qs);
     STATS_TSADD(ctx, cyc_qs, qs - qm);
   
+    s_cycs = util_rdtsc();
     n += poll_kernel(ctx, ts);
+    e_cycs = util_rdtsc();
+    spend_budget(ctx, e_cycs - s_cycs);
 
     /* flush transmit buffer */
     tx_flush(ctx);

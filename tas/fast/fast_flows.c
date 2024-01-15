@@ -754,13 +754,14 @@ int fast_flows_packet_gre(struct dataplane_context *ctx,
       f_beui32(p->tcp.ackno), TCPH_FLAGS(&p->tcp), payload_bytes);
 #endif
 
+  ctx->vm_counters[fs->vm_id] += payload_bytes;
+  ctx->counters_total += payload_bytes;
+
   if (ctx->budgets[fs->vm_id].budget <= 0) {
     return 0;
   }
-
+  
   fs_lock(fs);
-  ctx->vm_counters[fs->vm_id] += payload_bytes;
-  ctx->counters_total += payload_bytes;
 
 #ifdef FLEXNIC_TRACING
   struct flextcp_pl_trev_rxfs te_rxfs = {
@@ -1242,7 +1243,9 @@ void fast_flows_winretransmit(struct dataplane_context *ctx, uint32_t flow_id,
 {
   struct flextcp_pl_flowst *fs = &fp_state->flowst[flow_id];
 
-  fs_lock(fs);  
+  fs_lock(fs);
+  ctx->counters_total += 1;
+  ctx->vm_counters[fs->vm_id] += 1;
   #if VIRTUOSO_GRE
     flow_tx_segment_gre(ctx, nbh, fs, fs->tx_next_seq, fs->rx_next_seq,
         fs->rx_avail, 0, 0, fs->tx_next_ts, ts, 0);
@@ -1261,7 +1264,8 @@ void fast_flows_retransmit(struct dataplane_context *ctx, uint32_t flow_id)
   uint32_t old_avail, new_avail = -1;
 
   fs_lock(fs);
-
+  ctx->counters_total += 1;
+  ctx->vm_counters[fs->vm_id] += 1;
 #ifdef FLEXNIC_TRACING
     struct flextcp_pl_trev_rexmit te_rexmit = {
         .flow_id = flow_id,
