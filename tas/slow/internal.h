@@ -289,11 +289,12 @@ int nicif_connection_winretransmit(uint32_t f_id, uint32_t vm_id, uint16_t flow_
  * Mark flow for retransmit after timeout.
  *
  * @param f_id ID of flow
+ * @param vm_id ID of vm for flow
  * @param flow_group FlexNIC flow group
  *
  * @return 0 on success, <0 else
  */
-int nicif_connection_retransmit(uint32_t f_id, uint16_t core);
+int nicif_connection_retransmit(uint32_t f_id, uint32_t vm_id, uint16_t core);
 
 /**
  * Allocate transmit buffer for raw packet.

@@ -1240,14 +1240,9 @@ unlock:
 void fast_flows_winretransmit(struct dataplane_context *ctx, uint32_t flow_id,
     struct network_buf_handle *nbh, uint32_t ts)
 {
-  uint64_t s_cycs, e_cycs;
-
-  s_cycs = util_rdtsc();
   struct flextcp_pl_flowst *fs = &fp_state->flowst[flow_id];
 
   fs_lock(fs);  
-  s_cycs = rte_get_tsc_cycles();
-
   #if VIRTUOSO_GRE
     flow_tx_segment_gre(ctx, nbh, fs, fs->tx_next_seq, fs->rx_next_seq,
         fs->rx_avail, 0, 0, fs->tx_next_ts, ts, 0);
@@ -1257,8 +1252,6 @@ void fast_flows_winretransmit(struct dataplane_context *ctx, uint32_t flow_id,
   #endif
 
   fs_unlock(fs);
-  e_cycs = util_rdtsc();
-  __sync_fetch_and_sub(&ctx->budgets[fs->vm_id].budget, e_cycs - s_cycs);
 }
 
 /* start retransmitting */
