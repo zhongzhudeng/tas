@@ -499,9 +499,8 @@ int nicif_connection_winretransmit(uint32_t f_id, uint32_t vm_id, uint16_t flow_
     return -1;
 
   if ((ktx = ktx_try_alloc(core, &buf, &tail)) == NULL)
-  {
     return -1;
-  }
+
   txq_tail[core] = tail;
 
   ktx->msg.connretran.flow_id = f_id;
