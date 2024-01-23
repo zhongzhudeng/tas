@@ -376,13 +376,14 @@ int fast_flows_packet(struct dataplane_context *ctx,
       f_beui32(p->tcp.ackno), TCPH_FLAGS(&p->tcp), payload_bytes);
 #endif
 
+  ctx->vm_counters[fs->vm_id] += payload_bytes;
+  ctx->counters_total += payload_bytes;
+  
   if (ctx->budgets[fs->vm_id].budget <= 0) {
     return 0;
   }
 
   fs_lock(fs);
-  ctx->vm_counters[fs->vm_id] += payload_bytes;
-  ctx->counters_total += payload_bytes;
 
 #ifdef FLEXNIC_TRACING
   struct flextcp_pl_trev_rxfs te_rxfs = {
