@@ -906,6 +906,8 @@ static inline struct connection *conn_alloc(int vmid)
     return NULL;
   }
 
+  memset(conn, 0, sizeof(*conn));
+
   if (packetmem_alloc(config.tcp_rxbuf_len, &off_rx, &conn->rx_handle) != 0) {
     fprintf(stderr, "conn_alloc: packetmem_alloc rx failed\n");
     free(conn);
