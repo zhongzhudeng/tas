@@ -292,15 +292,15 @@ static inline void issue_retransmits(struct connection *c,
         c->cc_rexmits++;
       }
     }
-  } else if (stats->c_tx_next_seq == c->cc_last_tx_next_seq 
-      && stats->c_tx_avail > 0 && stats->c_ackb == 0) {
+  } else if (0) { /* Disable this for now */
+    /* (stats->c_tx_next_seq == c->cc_last_tx_next_seq 
+      && stats->c_tx_avail > 0 && stats->c_ackb == 0) { */
     /* Count and timestamp for win_updt_pending also have to
        be updated when we retransmit all packets pending */
     if (c->cnt_win_updt_pending++ == 0) {
       c->ts_win_updt_pending = cur_ts;
     } else if (c->cnt_win_updt_pending >= config.cc_rexmit_ints &&
-        (cur_ts - c->ts_win_updt_pending) >= 2 * rtt)
-    {
+        (cur_ts - c->ts_win_updt_pending) >= 4 * rtt) {
       if (nicif_connection_winretransmit(c->flow_id, vmid, c->flow_group) == 0) {
         c->cnt_win_updt_pending = 0;
         kstats.kernel_rexmit++;
