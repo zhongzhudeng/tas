@@ -116,7 +116,7 @@ static uint32_t ovstas_tx_tail;
 
 int nicif_init(void)
 {
-  rte_hash_crc_init_alg();
+  // rte_hash_crc_init_alg();
 
   /* wait for fastpath to be ready */
   while (!(tas_info->flags & FLEXNIC_FLAG_READY))
@@ -1200,8 +1200,8 @@ static inline void process_packet_gre(const void *buf,
     }
   }
 
-  if (to_kni)
-    kni_packet(buf, len);
+  // if (to_kni)
+  //   kni_packet(buf, len);
 }
 
 static inline void process_ovs_rx_upcall(const void *buf, uint16_t len, 
@@ -1210,8 +1210,8 @@ static inline void process_ovs_rx_upcall(const void *buf, uint16_t len,
   int to_kni;
   to_kni = !!gre_packet(buf, len, fn_core, flow_group);
 
-  if (to_kni)
-    kni_packet(buf, len);
+  // if (to_kni)
+  //   kni_packet(buf, len);
 }
 
 static inline void process_ovs_tx_upcall(volatile struct flextcp_pl_ote *ote, 

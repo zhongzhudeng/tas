@@ -54,19 +54,19 @@ uint8_t net_port_id = 0;
 
 static struct rte_eth_conf port_conf = {
     .rxmode = {
-      .mq_mode = ETH_MQ_RX_RSS,
+      .mq_mode = RTE_ETH_MQ_RX_RSS,
       .offloads = 0,
 #if RTE_VER_YEAR < 18
       .ignore_offload_bitfield = 1,
 #endif
     },
     .txmode = {
-      .mq_mode = ETH_MQ_RX_RSS,
+      .mq_mode = RTE_ETH_MQ_RX_RSS,
       .offloads = 0,
     },
     .rx_adv_conf = {
       .rss_conf = {
-        .rss_hf = ETH_RSS_NONFRAG_IPV4_TCP,
+        .rss_hf = RTE_ETH_RSS_NONFRAG_IPV4_TCP,
       },
     },
     .intr_conf = {
@@ -148,7 +148,7 @@ int network_init(unsigned n_threads)
   /* turn off rss */
   if (config.fp_rss == 0)
   {
-    port_conf.rxmode.mq_mode = ETH_MQ_RX_NONE;
+    port_conf.rxmode.mq_mode = RTE_ETH_MQ_RX_NONE;
   }
 
   /* mask unsupported RSS hash functions */
@@ -164,7 +164,7 @@ int network_init(unsigned n_threads)
   /* enable per port checksum offload if requested */
   if (config.fp_xsumoffload)
     port_conf.txmode.offloads =
-      DEV_TX_OFFLOAD_IPV4_CKSUM | DEV_TX_OFFLOAD_TCP_CKSUM;
+      RTE_ETH_TX_OFFLOAD_IPV4_CKSUM | RTE_ETH_TX_OFFLOAD_TCP_CKSUM;
 
   /* disable rx interrupts if requested */
   if (!config.fp_interrupts)
@@ -193,7 +193,7 @@ int network_init(unsigned n_threads)
   eth_devinfo.default_txconf.offloads = 0;
   if (config.fp_xsumoffload)
     eth_devinfo.default_txconf.offloads =
-      DEV_TX_OFFLOAD_IPV4_CKSUM | DEV_TX_OFFLOAD_TCP_CKSUM;
+      RTE_ETH_TX_OFFLOAD_IPV4_CKSUM | RTE_ETH_TX_OFFLOAD_TCP_CKSUM;
 
   memcpy(&tas_info->mac_address, &eth_addr, 6);
 
@@ -291,7 +291,7 @@ int network_thread_init(struct dataplane_context *ctx)
     /* enable vlan stripping if configured */
     if (config.fp_vlan_strip) {
       ret = rte_eth_dev_get_vlan_offload(net_port_id);
-      ret |= ETH_VLAN_STRIP_OFFLOAD;
+      ret |= RTE_ETH_VLAN_STRIP_OFFLOAD;
       if (rte_eth_dev_set_vlan_offload(net_port_id, ret)) {
         fprintf(stderr, "network_thread_init: vlan off set failed\n");
         goto error_tx_queue;
@@ -393,8 +393,8 @@ int network_scale_up(uint16_t old, uint16_t new)
   uint16_t outer, inner;
 
   /* clear mask */
-  for (k = 0; k < rss_reta_size; k += RTE_RETA_GROUP_SIZE) {
-    rss_reta[k / RTE_RETA_GROUP_SIZE].mask = 0;
+  for (k = 0; k < rss_reta_size; k += RTE_ETH_RETA_GROUP_SIZE) {
+    rss_reta[k / RTE_ETH_RETA_GROUP_SIZE].mask = 0;
   }
 
   k = 0;
@@ -403,8 +403,8 @@ int network_scale_up(uint16_t old, uint16_t new)
       c = core_max(old);
 
       for (; ; k = (k + 1) % rss_reta_size) {
-        outer = k / RTE_RETA_GROUP_SIZE;
-        inner = k % RTE_RETA_GROUP_SIZE;
+        outer = k / RTE_ETH_RETA_GROUP_SIZE;
+        inner = k % RTE_ETH_RETA_GROUP_SIZE;
         if (rss_reta[outer].reta[inner] == c) {
           rss_reta[outer].mask |= 1ULL << inner;
           rss_reta[outer].reta[inner] = j;
@@ -431,13 +431,13 @@ int network_scale_down(uint16_t old, uint16_t new)
   uint16_t i, o_c, n_c, outer, inner;
 
   /* clear mask */
-  for (i = 0; i < rss_reta_size; i += RTE_RETA_GROUP_SIZE) {
-    rss_reta[i / RTE_RETA_GROUP_SIZE].mask = 0;
+  for (i = 0; i < rss_reta_size; i += RTE_ETH_RETA_GROUP_SIZE) {
+    rss_reta[i / RTE_ETH_RETA_GROUP_SIZE].mask = 0;
   }
 
   for (i = 0; i < rss_reta_size; i++) {
-    outer = i / RTE_RETA_GROUP_SIZE;
-    inner = i % RTE_RETA_GROUP_SIZE;
+    outer = i / RTE_ETH_RETA_GROUP_SIZE;
+    inner = i % RTE_ETH_RETA_GROUP_SIZE;
 
     o_c = rss_reta[outer].reta[inner];
     if (o_c >= new) {
@@ -481,8 +481,8 @@ static int reta_setup()
     abort();
   }
 
-  rss_reta = rte_calloc("rss reta", ((rss_reta_size + RTE_RETA_GROUP_SIZE - 1) /
-        RTE_RETA_GROUP_SIZE), sizeof(*rss_reta), 0);
+  rss_reta = rte_calloc("rss reta", ((rss_reta_size + RTE_ETH_RETA_GROUP_SIZE - 1) /
+        RTE_ETH_RETA_GROUP_SIZE), sizeof(*rss_reta), 0);
   rss_core_buckets = rte_calloc("rss core buckets", fp_cores_max,
       sizeof(*rss_core_buckets), 0);
 
@@ -494,8 +494,8 @@ static int reta_setup()
   /* initialize reta */
   for (i = 0, c = 0; i < rss_reta_size; i++) {
     rss_core_buckets[c]++;
-    rss_reta[i / RTE_RETA_GROUP_SIZE].mask = -1ULL;
-    rss_reta[i / RTE_RETA_GROUP_SIZE].reta[i % RTE_RETA_GROUP_SIZE] = c;
+    rss_reta[i / RTE_ETH_RETA_GROUP_SIZE].mask = -1ULL;
+    rss_reta[i / RTE_ETH_RETA_GROUP_SIZE].reta[i % RTE_ETH_RETA_GROUP_SIZE] = c;
     fp_state->flow_group_steering[i] = c;
     c = (c + 1) % fp_cores_cur;
   }
@@ -602,7 +602,7 @@ static struct rte_flow * add_rss_inbound_flow_rule(int n_threads)
 
   /* Create queue action */
   struct rte_flow_action_rss rss = { .level = 2,
-    .types = ETH_RSS_NONFRAG_IPV4_TCP,
+    .types = RTE_ETH_RSS_NONFRAG_IPV4_TCP,
     .queue_num = n_threads,
     .queue = queue_idxs,
   };

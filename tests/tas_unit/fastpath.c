@@ -81,8 +81,8 @@ static void flow_init(uint32_t fid, uint32_t rxlen, uint32_t txlen, uint64_t opa
   fs->tx_base = (uintptr_t) txbuf;
   fs->rx_len = rxlen;
   fs->tx_len = txlen;
-  fs->local_ip = t_beui32(TEST_LIP);
-  fs->remote_ip = t_beui32(TEST_IP);
+  fs->in_local_ip = t_beui32(TEST_LIP);
+  fs->in_remote_ip = t_beui32(TEST_IP);
   fs->local_port = t_beui16(TEST_LPORT);
   fs->remote_port = t_beui16(TEST_PORT);
   fs->rx_avail = rxlen;

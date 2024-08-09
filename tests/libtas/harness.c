@@ -199,7 +199,7 @@ int harness_ain_push_connopened(size_t ctxid, uint64_t opaque, uint32_t rx_len,
   aico->seq_rx = 2;
   aico->seq_tx = 2;
   aico->flow_id = flow_id;
-  aico->local_ip = local_ip;
+  aico->in_local_ip = local_ip;
   aico->local_port = local_port;
   aico->fn_core = core;
 

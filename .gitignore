@@ -19,7 +19,9 @@ tests/usocket_connect
 tests/usocket_accrx
 tests/usocket_conntx
 tests/usocket_conntx_large
+tests/usocket_epoll_eof
 tests/usocket_move
+tests/usocket_shutdown
 tests/libtas/tas_ll
 tests/libtas/tas_sockets
 tests/tas_unit/fastpath
@@ -39,3 +41,4 @@ Makefile.local
 virt-manager
 out/
 *.dat
+build/
