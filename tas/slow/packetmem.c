@@ -37,35 +37,38 @@ struct packetmem_handle {
 
 static inline struct packetmem_handle *ph_alloc(void);
 static inline void ph_free(struct packetmem_handle *ph);
-static inline void merge_items(struct packetmem_handle *ph_prev);
+static inline void merge_items(struct packetmem_handle *ph_prev, int vmid);
 
-static struct packetmem_handle *freelist;
+static struct packetmem_handle *freelist[FLEXNIC_PL_VMST_NUM + 1];
 
 int packetmem_init(void)
 {
   struct packetmem_handle *ph;
 
-  if ((ph = ph_alloc()) == NULL) {
-    fprintf(stderr, "packetmem_init: ph_alloc failed\n");
-    return -1;
-  }
+  for (int i = 0; i < FLEXNIC_PL_VMST_NUM + 1; i++)
+  {
+    if ((ph = ph_alloc()) == NULL) {
+      fprintf(stderr, "packetmem_init: ph_alloc vm=%d failed\n", i);
+      return -1;
+    }
 
-  ph->base = config.data_mem_off;
-  ph->len = tas_info->dma_mem_size - config.data_mem_off;
-  ph->next = NULL;
-  freelist = ph;
+    ph->base = config.data_mem_off;
+    ph->len = tas_info->dma_mem_size - config.data_mem_off;
+    ph->next = NULL;
+    freelist[i] = ph;
+  }
 
   return 0;
 }
 
 int packetmem_alloc(size_t length, uintptr_t *off,
-    struct packetmem_handle **handle)
+    struct packetmem_handle **handle, int vmid)
 {
   struct packetmem_handle *ph, *ph_prev, *ph_new;
 
   /* look for first fit */
   ph_prev = NULL;
-  ph = freelist;
+  ph = freelist[vmid];
   while (ph != NULL && ph->len < length) {
     ph_prev = ph;
     ph = ph->next;
@@ -73,6 +76,7 @@ int packetmem_alloc(size_t length, uintptr_t *off,
 
   /* didn't find a fit */
   if (ph == NULL) {
+    fprintf(stderr, "didn't find a fit\n");
     return -1;
   }
 
@@ -81,7 +85,7 @@ int packetmem_alloc(size_t length, uintptr_t *off,
 
     /* pointer to previous next pointer for removal */
     if (ph_prev == NULL) {
-      freelist = ph->next;
+      freelist[vmid] = ph->next;
     } else {
       ph_prev->next = ph->next;
     }
@@ -110,13 +114,13 @@ int packetmem_alloc(size_t length, uintptr_t *off,
   return 0;
 }
 
-void packetmem_free(struct packetmem_handle *handle)
+void packetmem_free(struct packetmem_handle *handle, int vmid)
 {
   struct packetmem_handle *ph, *ph_prev;
 
   /* look for first successor */
   ph_prev = NULL;
-  ph = freelist;
+  ph = freelist[vmid];
   while (ph != NULL && ph->next != NULL && ph->next->base < handle->base) {
     ph_prev = ph;
     ph = ph->next;
@@ -124,21 +128,21 @@ void packetmem_free(struct packetmem_handle *handle)
 
   /* add to list */
   if (ph_prev == NULL) {
-    handle->next = freelist;
-    freelist = handle;
+    handle->next = freelist[vmid];
+    freelist[vmid] = handle;
   } else {
     handle->next = ph_prev->next;
     ph_prev->next = handle;
   }
 
   /* merge items if necessary */
-  merge_items(ph_prev);
+  merge_items(ph_prev, vmid);
 }
 
 /** Merge handles around newly inserted item (pointer to predecessor or NULL
  * passed).
  */
-static inline void merge_items(struct packetmem_handle *ph_prev)
+static inline void merge_items(struct packetmem_handle *ph_prev, int vmid)
 {
   struct packetmem_handle *ph, *ph_next;
 
@@ -153,7 +157,7 @@ static inline void merge_items(struct packetmem_handle *ph_prev)
       ph = ph_prev;
     }
   } else {
-    ph = freelist;
+    ph = freelist[vmid];
   }
 
   /* try to merge with successor if there is one */

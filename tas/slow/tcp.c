@@ -120,10 +120,10 @@ static inline int parse_options_gre(const struct pkt_gre *p, uint16_t len,
     struct tcp_opts *opts);
 
 static int tcp_open_resolve_routing(struct connection *conn);
-static inline int send_ovs_fake_packet(uint32_t in_remote_ip, 
-    uint16_t remote_port, uint16_t local_port, 
+static inline int send_ovs_fake_packet(uint32_t in_remote_ip,
+    uint16_t remote_port, uint16_t local_port,
     uint16_t vmid, struct connection *conn,
-    uint16_t flags, int ts_opt, 
+    uint16_t flags, int ts_opt,
     uint32_t ts_echo, uint16_t mss_opt);
 
 static uintptr_t ports[PORT_MAX + 1];
@@ -155,7 +155,7 @@ void tcp_poll(void)
     if (conn->status == CONN_OVS_COMP) {
       if ((ret = tcp_open_resolve_routing(conn)) < 0) {
         conn_free(conn);
-      } 
+      }
     } else if (conn->status == CONN_ARP_PENDING) {
       if ((ret = conn->comp.status) != 0 || (ret = conn_arp_done(conn)) != 0) {
         conn_failed(conn, ret);
@@ -172,7 +172,7 @@ void tcp_poll(void)
   }
 }
 
-int tcp_open(struct app_context *ctx, 
+int tcp_open(struct app_context *ctx,
     uint64_t opaque,uint32_t remote_ip,
     uint16_t remote_port, uint32_t db_id, struct connection **pconn)
 {
@@ -790,7 +790,7 @@ static int conn_syn_sent_packet(struct connection *c, const struct pkt_tcp *p,
   return 0;
 }
 
-static int conn_syn_sent_packet_gre(struct connection *c, 
+static int conn_syn_sent_packet_gre(struct connection *c,
     const struct pkt_gre *p, const struct tcp_opts *opts)
 {
   int vmid = c->ctx->app->vm_id;
@@ -827,7 +827,7 @@ static int conn_syn_sent_packet_gre(struct connection *c,
   c->comp.status = 0;
 
   if (nicif_connection_add_gre(c->db_id, c->ctx->app->vm_id, c->ctx->app->id,
-        c->tunnel_id, c->remote_mac, 
+        c->tunnel_id, c->remote_mac,
         c->out_local_ip, c->out_remote_ip,
         c->in_local_ip, c->local_port,
         c->in_remote_ip, c->remote_port, c->rx_buf - (uint8_t *) vm_shm[vmid],
@@ -908,15 +908,15 @@ static inline struct connection *conn_alloc(int vmid)
 
   memset(conn, 0, sizeof(*conn));
 
-  if (packetmem_alloc(config.tcp_rxbuf_len, &off_rx, &conn->rx_handle) != 0) {
+  if (packetmem_alloc(config.tcp_rxbuf_len, &off_rx, &conn->rx_handle, vmid) != 0) {
     fprintf(stderr, "conn_alloc: packetmem_alloc rx failed\n");
     free(conn);
     return NULL;
   }
 
-  if (packetmem_alloc(config.tcp_txbuf_len, &off_tx, &conn->tx_handle) != 0) {
+  if (packetmem_alloc(config.tcp_txbuf_len, &off_tx, &conn->tx_handle, vmid) != 0) {
     fprintf(stderr, "conn_alloc: packetmem_alloc tx failed\n");
-    packetmem_free(conn->rx_handle);
+    packetmem_free(conn->rx_handle, vmid);
     free(conn);
     return NULL;
   }
@@ -932,8 +932,8 @@ static inline struct connection *conn_alloc(int vmid)
 
 static inline void conn_free(struct connection *conn)
 {
-  packetmem_free(conn->tx_handle);
-  packetmem_free(conn->rx_handle);
+  packetmem_free(conn->tx_handle, conn->ctx->app->vm_id);
+  packetmem_free(conn->rx_handle, conn->ctx->app->vm_id);
   free(conn);
 }
 
@@ -1017,7 +1017,7 @@ static struct connection *conn_lookup_gre(const struct pkt_gre *p)
   uint32_t h;
   struct connection *c;
 
-  h = conn_hash_gre(f_beui32(p->gre.key), 
+  h = conn_hash_gre(f_beui32(p->gre.key),
       f_beui16(p->tcp.dest), f_beui16(p->tcp.src))
       % TCP_HTSIZE;
 
@@ -1075,8 +1075,8 @@ static void conn_close_timeout(struct connection *c)
   conn_unregister(c);
 
   /* free connection data buffers */
-  packetmem_free(c->tx_handle);
-  packetmem_free(c->rx_handle);
+  packetmem_free(c->tx_handle, c->ctx->app->vm_id);
+  packetmem_free(c->rx_handle, c->ctx->app->vm_id);
 
   /* free connection id */
   nicif_connection_free(c->flow_id);
@@ -1143,7 +1143,7 @@ static struct listener *listener_lookup_gre(const struct pkt_gre *p)
     /* multiple listener sockets, calculate hash */
     lm = (struct listen_multi *) (ports[local_port] & ~PORT_TYPE_MASK);
 
-    init_hash = hash_64_to_32(((uint64_t) f_beui32(p->in_ip.src) << 32) | 
+    init_hash = hash_64_to_32(((uint64_t) f_beui32(p->in_ip.src) << 32) |
         f_beui32(p->gre.key));
     hash = hash_64_to_32(((uint64_t) init_hash << 32) |
         ((uint32_t) f_beui16(p->tcp.src) << 16) | local_port);
@@ -1430,7 +1430,7 @@ static void listener_accept_gre(struct listener *l)
   vmid = c->ctx->app->vm_id;
 
   if (nicif_connection_add_gre(c->db_id, c->ctx->app->vm_id, c->ctx->app->id,
-        c->tunnel_id, c->remote_mac, 
+        c->tunnel_id, c->remote_mac,
         c->out_local_ip, c->out_remote_ip,
         c->in_local_ip, c->local_port,
         c->in_remote_ip, c->remote_port, c->rx_buf - (uint8_t *) vm_shm[vmid],
@@ -1533,13 +1533,13 @@ static inline int send_control_raw(uint64_t remote_mac, uint32_t remote_ip,
   /* calculate header checksums */
   p->ip.chksum = rte_ipv4_cksum((void *) &p->ip);
   p->tcp.chksum = rte_ipv4_udptcp_cksum((void *) &p->ip, (void *) &p->tcp);
-  
+
   /* send packet */
   nicif_tx_send(new_tail, 0);
   return 0;
 }
 
-static inline int send_control_raw_gre(uint64_t remote_mac, 
+static inline int send_control_raw_gre(uint64_t remote_mac,
     uint32_t tunnel_id, uint32_t out_remote_ip,
     uint32_t in_local_ip, uint32_t in_remote_ip,
     uint16_t remote_port, uint16_t local_port, uint32_t local_seq,
@@ -1633,7 +1633,7 @@ static inline int send_control_raw_gre(uint64_t remote_mac,
   p->in_ip.chksum = rte_ipv4_cksum((void *) &p->in_ip);
   p->out_ip.chksum = rte_ipv4_cksum((void *) &p->out_ip);
   p->tcp.chksum = rte_ipv4_udptcp_cksum((void *) &p->in_ip, (void *) &p->tcp);
-  
+
   /* send packet */
   nicif_tx_send(new_tail, 0);
   return 0;
@@ -1642,7 +1642,7 @@ static inline int send_control_raw_gre(uint64_t remote_mac,
 static inline int send_control(const struct connection *conn, uint16_t flags,
     int ts_opt, uint32_t ts_echo, uint16_t mss_opt)
 {
-  return send_control_raw(conn->remote_mac, conn->out_remote_ip, 
+  return send_control_raw(conn->remote_mac, conn->out_remote_ip,
       conn->remote_port, conn->local_port, conn->local_seq, conn->remote_seq,
       flags, ts_opt, ts_echo, mss_opt);
 }
@@ -1650,7 +1650,7 @@ static inline int send_control(const struct connection *conn, uint16_t flags,
 static inline int send_control_gre(const struct connection *conn, uint16_t flags,
     int ts_opt, uint32_t ts_echo, uint16_t mss_opt)
 {
-  return send_control_raw_gre(conn->remote_mac, 
+  return send_control_raw_gre(conn->remote_mac,
       conn->tunnel_id, conn->out_remote_ip,
       conn->in_local_ip, conn->in_remote_ip,
       conn->remote_port,
@@ -1689,10 +1689,10 @@ static inline int send_reset_gre(const struct pkt_gre *p,
   }
 
   memcpy(&remote_mac, &p->eth.src, ETH_ADDR_LEN);
-  return send_control_raw_gre(remote_mac, 
+  return send_control_raw_gre(remote_mac,
       f_beui32(p->gre.key), f_beui32(p->out_ip.src),
       f_beui32(p->in_ip.dest), f_beui32(p->out_ip.dest),
-      f_beui16(p->tcp.src), f_beui16(p->tcp.dest), 
+      f_beui16(p->tcp.src), f_beui16(p->tcp.dest),
       f_beui32(p->tcp.ackno), f_beui32(p->tcp.seqno) + 1,
       TAS_TCP_RST | TAS_TCP_ACK, ts_opt, ts_val, 0);
 }
@@ -1809,10 +1809,10 @@ static inline int parse_options_gre(const struct pkt_gre *p, uint16_t len,
    OvS uses this fake packet to match the relevant
    information and return us the proper tunnel to be
    used. */
-static inline int send_ovs_fake_packet(uint32_t in_remote_ip, 
-    uint16_t remote_port, uint16_t local_port, 
+static inline int send_ovs_fake_packet(uint32_t in_remote_ip,
+    uint16_t remote_port, uint16_t local_port,
     uint16_t vmid, struct connection *conn,
-    uint16_t flags, int ts_opt, 
+    uint16_t flags, int ts_opt,
     uint32_t ts_echo, uint16_t mss_opt)
 {
   uint32_t new_tail;

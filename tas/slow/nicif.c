@@ -58,9 +58,9 @@ static inline void process_packet(const void *buf, uint16_t len,
     uint32_t fn_core, uint16_t flow_group);
 static inline void process_packet_gre(const void *buf,
     volatile struct flextcp_pl_krx *krx);
-static inline void process_ovs_rx_upcall(const void *buf, uint16_t len, 
+static inline void process_ovs_rx_upcall(const void *buf, uint16_t len,
     uint32_t fn_core, uint16_t flow_group);
-static inline void process_ovs_tx_upcall(volatile struct flextcp_pl_ote *ote, 
+static inline void process_ovs_tx_upcall(volatile struct flextcp_pl_ote *ote,
     struct connection *conn);
 static inline volatile struct flextcp_pl_ktx *ktx_try_alloc(uint32_t core,
     struct nic_buffer **buf, uint32_t *new_tail);
@@ -171,7 +171,7 @@ unsigned ovs_poll(void)
   {
     x = ovsrxq_poll();
     ret += (x == -1 ? 0 : 1);
-    
+
     // if (x == -1)
     //   break;
   }
@@ -180,7 +180,7 @@ unsigned ovs_poll(void)
   {
     x = ovstxq_poll();
     ret += (x == -1 ? 0 : 1);
-  
+
     // if (x == -1)
     //   break;
   }
@@ -240,9 +240,9 @@ int nicif_appctx_add(uint16_t vmid, uint16_t appid, uint32_t db,
 /** Register flow */
 int nicif_connection_add(uint32_t db, uint16_t vm_id, uint16_t app_id,
     uint64_t mac_remote, uint32_t ip_local, uint16_t port_local,
-    uint32_t ip_remote, uint16_t port_remote, uint64_t rx_base, uint32_t rx_len, 
-    uint64_t tx_base, uint32_t tx_len, uint32_t remote_seq, uint32_t local_seq, 
-    uint64_t app_opaque, uint32_t flags, uint32_t rate, uint32_t fn_core, 
+    uint32_t ip_remote, uint16_t port_remote, uint64_t rx_base, uint32_t rx_len,
+    uint64_t tx_base, uint32_t tx_len, uint32_t remote_seq, uint32_t local_seq,
+    uint64_t app_opaque, uint32_t flags, uint32_t rate, uint32_t fn_core,
     uint16_t flow_group, uint32_t *pf_id)
 {
   struct flextcp_pl_flowst *fs;
@@ -317,7 +317,7 @@ int nicif_connection_add(uint32_t db, uint16_t vm_id, uint16_t app_id,
 
 /** Register flow */
 int nicif_connection_add_gre(uint32_t db, uint16_t vm_id, uint16_t app_id,
-                         uint32_t tunnel_id, uint64_t mac_remote, 
+                         uint32_t tunnel_id, uint64_t mac_remote,
                          uint32_t out_ip_local, uint32_t out_ip_remote,
                          uint32_t in_ip_local, uint16_t port_local,
                          uint32_t in_ip_remote, uint16_t port_remote, uint64_t rx_base, uint32_t rx_len,
@@ -486,7 +486,7 @@ int nicif_connection_setrate(uint32_t f_id, uint32_t rate)
   return 0;
 }
 
-/** Packet to signal rx window is open probably got 
+/** Packet to signal rx window is open probably got
     dropped so retransmit one packet. */
 int nicif_connection_winretransmit(uint32_t f_id, uint32_t vm_id, uint16_t flow_group)
 {
@@ -646,7 +646,7 @@ static int adminq_init_core(uint16_t core)
   }
 
   sz_bufs = ((config.nic_rx_len + config.nic_tx_len) * PKTBUF_SIZE + 0xfff) & ~0xfffULL;
-  if (packetmem_alloc(sz_bufs, &off_bufs, &pm_bufs) != 0)
+  if (packetmem_alloc(sz_bufs, &off_bufs, &pm_bufs, SP_MEM_ID) != 0)
   {
     fprintf(stderr, "adminq_init: packetmem_alloc bufs failed\n");
     free(txq_bufs[core]);
@@ -655,20 +655,20 @@ static int adminq_init_core(uint16_t core)
   }
 
   sz_rx = config.nic_rx_len * sizeof(struct flextcp_pl_krx);
-  if (packetmem_alloc(sz_rx, &off_rx, &pm_rx) != 0)
+  if (packetmem_alloc(sz_rx, &off_rx, &pm_rx, SP_MEM_ID) != 0)
   {
     fprintf(stderr, "adminq_init: packetmem_alloc tx failed\n");
-    packetmem_free(pm_bufs);
+    packetmem_free(pm_bufs, SP_MEM_ID);
     free(txq_bufs[core]);
     free(rxq_bufs[core]);
     return -1;
   }
   sz_tx = config.nic_tx_len * sizeof(struct flextcp_pl_ktx);
-  if (packetmem_alloc(sz_tx, &off_tx, &pm_tx) != 0)
+  if (packetmem_alloc(sz_tx, &off_tx, &pm_tx, SP_MEM_ID) != 0)
   {
     fprintf(stderr, "adminq_init: packetmem_alloc tx failed\n");
-    packetmem_free(pm_rx);
-    packetmem_free(pm_bufs);
+    packetmem_free(pm_rx, SP_MEM_ID);
+    packetmem_free(pm_bufs, SP_MEM_ID);
     free(txq_bufs[core]);
     free(rxq_bufs[core]);
     return -1;
@@ -705,24 +705,24 @@ static int adminq_init_core(uint16_t core)
 
 static int adminq_init_ovs()
 {
-  struct packetmem_handle *pm_bufs, 
-      *pm_tasovs_rx, *pm_tasovs_tx, 
+  struct packetmem_handle *pm_bufs,
+      *pm_tasovs_rx, *pm_tasovs_tx,
       *pm_ovstas_rx, *pm_ovstas_tx;
-  uintptr_t off_bufs, 
-      off_tasovs_rx, off_tasovs_tx, 
+  uintptr_t off_bufs,
+      off_tasovs_rx, off_tasovs_tx,
       off_ovstas_rx, off_ovstas_tx;
-  size_t i, sz_bufs, 
-      sz_tasovs_rx, sz_tasovs_tx, 
+  size_t i, sz_bufs,
+      sz_tasovs_rx, sz_tasovs_tx,
       sz_ovstas_rx, sz_ovstas_tx;
 
-  if ((tasovs_rx_bufs = calloc(config.nic_rx_len, 
+  if ((tasovs_rx_bufs = calloc(config.nic_rx_len,
       sizeof(*tasovs_rx_bufs))) == NULL)
   {
     fprintf(stderr, "adminq_init_ovs: calloc tasovs_rx bufs failed\n");
     return -1;
   }
 
-  if ((tasovs_tx_bufs = calloc(config.nic_tx_len, 
+  if ((tasovs_tx_bufs = calloc(config.nic_tx_len,
       sizeof(*tasovs_tx_bufs))) == NULL)
   {
     fprintf(stderr, "adminq_init_ovs: calloc tasovs_tx bufs failed\n");
@@ -751,7 +751,7 @@ static int adminq_init_ovs()
 
   sz_bufs = (2 * (config.nic_rx_len + config.nic_tx_len) * PKTBUF_SIZE
       + 0xfff) & ~0xfffULL;
-  if (packetmem_alloc(sz_bufs, &off_bufs, &pm_bufs) != 0)
+  if (packetmem_alloc(sz_bufs, &off_bufs, &pm_bufs, SP_MEM_ID) != 0)
   {
     fprintf(stderr, "adminq_init_ovs: packetmem_alloc bufs failed\n");
     free(tasovs_rx_bufs);
@@ -762,11 +762,11 @@ static int adminq_init_ovs()
   }
 
   sz_tasovs_rx = config.nic_rx_len * sizeof(struct flextcp_pl_toe);
-  if (packetmem_alloc(sz_tasovs_rx , &off_tasovs_rx, &pm_tasovs_rx) != 0)
+  if (packetmem_alloc(sz_tasovs_rx , &off_tasovs_rx, &pm_tasovs_rx, SP_MEM_ID) != 0)
   {
     fprintf(stderr, "adminq_init_ovs: "
         "packetmem_alloc tasovs_rx queue failed\n");
-    packetmem_free(pm_bufs);
+    packetmem_free(pm_bufs, SP_MEM_ID);
     free(tasovs_rx_bufs);
     free(tasovs_tx_bufs);
     free(ovstas_rx_bufs);
@@ -775,12 +775,12 @@ static int adminq_init_ovs()
   }
 
   sz_tasovs_tx = config.nic_tx_len * sizeof(struct flextcp_pl_toe);
-  if (packetmem_alloc(sz_tasovs_tx , &off_tasovs_tx, &pm_tasovs_tx) != 0)
+  if (packetmem_alloc(sz_tasovs_tx , &off_tasovs_tx, &pm_tasovs_tx, SP_MEM_ID) != 0)
   {
     fprintf(stderr, "adminq_init_ovs: "
         "packetmem_alloc tasovs_tx queue failed\n");
-    packetmem_free(pm_bufs);
-    packetmem_free(pm_tasovs_rx);
+    packetmem_free(pm_bufs, SP_MEM_ID);
+    packetmem_free(pm_tasovs_rx, SP_MEM_ID);
     free(tasovs_rx_bufs);
     free(tasovs_tx_bufs);
     free(ovstas_rx_bufs);
@@ -789,13 +789,13 @@ static int adminq_init_ovs()
   }
 
   sz_ovstas_rx = config.nic_rx_len * sizeof(struct flextcp_pl_ote);
-  if (packetmem_alloc(sz_ovstas_rx , &off_ovstas_rx, &pm_ovstas_rx) != 0)
+  if (packetmem_alloc(sz_ovstas_rx , &off_ovstas_rx, &pm_ovstas_rx, SP_MEM_ID) != 0)
   {
     fprintf(stderr, "adminq_init_ovs: "
         "packetmem_alloc ovstas_rx queue failed\n");
-    packetmem_free(pm_bufs);
-    packetmem_free(pm_tasovs_rx);
-    packetmem_free(pm_tasovs_tx);
+    packetmem_free(pm_bufs, SP_MEM_ID);
+    packetmem_free(pm_tasovs_rx, SP_MEM_ID);
+    packetmem_free(pm_tasovs_tx, SP_MEM_ID);
     free(tasovs_rx_bufs);
     free(ovstas_rx_bufs);
     free(tasovs_rx_bufs);
@@ -806,14 +806,14 @@ static int adminq_init_ovs()
   }
 
   sz_ovstas_tx = config.nic_tx_len * sizeof(struct flextcp_pl_ote);
-  if (packetmem_alloc(sz_ovstas_tx , &off_ovstas_tx, &pm_ovstas_tx) != 0)
+  if (packetmem_alloc(sz_ovstas_tx , &off_ovstas_tx, &pm_ovstas_tx, SP_MEM_ID) != 0)
   {
     fprintf(stderr, "adminq_init_ovs: "
         "packetmem_alloc ovstas_tx queue failed\n");
-    packetmem_free(pm_bufs);
-    packetmem_free(pm_tasovs_rx);
-    packetmem_free(pm_tasovs_tx);
-    packetmem_free(pm_ovstas_rx);
+    packetmem_free(pm_bufs, SP_MEM_ID);
+    packetmem_free(pm_tasovs_rx, SP_MEM_ID);
+    packetmem_free(pm_tasovs_tx, SP_MEM_ID);
+    packetmem_free(pm_ovstas_rx, SP_MEM_ID);
     free(tasovs_rx_bufs);
     free(ovstas_rx_bufs);
     free(tasovs_rx_bufs);
@@ -971,13 +971,13 @@ static inline int ovsrxq_poll(void)
   switch (type)
   {
   case FLEXTCP_PL_OTE_VALID:
-    process_ovs_rx_upcall(buf->buf, ote->msg.packet.len, 
+    process_ovs_rx_upcall(buf->buf, ote->msg.packet.len,
         ote->msg.packet.fn_core,
         ote->msg.packet.flow_group);
     break;
 
   default:
-    fprintf(stderr, "ovsrxq_poll: unknown ovs queue type 0x%x old %x len %x\n", 
+    fprintf(stderr, "ovsrxq_poll: unknown ovs queue type 0x%x old %x len %x\n",
         type, old_tail, rxq_len);
   }
 
@@ -994,7 +994,7 @@ static inline int ovstxq_poll(void)
   uint8_t type;
   int ret = 0;
   struct connection *conn;
-  
+
   old_tail = tail = ovstas_tx_tail;
   ote = &ovstas_tx_base[tail];
 
@@ -1026,7 +1026,7 @@ static inline int ovstxq_poll(void)
     break;
 
   default:
-    fprintf(stderr, "ovstxq_poll: unknown ovs queue type 0x%x old %x len %x\n", 
+    fprintf(stderr, "ovstxq_poll: unknown ovs queue type 0x%x old %x len %x\n",
         type, old_tail, txq_len);
   }
 
@@ -1072,7 +1072,7 @@ int ovs_rx_upcall(volatile struct flextcp_pl_krx *krx)
 }
 
 /* Sends a fake packet for OvS to process and gets control path information */
-int ovs_tx_upcall(struct pkt_gre *p, uint16_t vmid, 
+int ovs_tx_upcall(struct pkt_gre *p, uint16_t vmid,
     uint16_t len, struct connection *conn)
 {
   volatile struct flextcp_pl_ovsctx *tasovs = &fp_state->tasovs;
@@ -1144,7 +1144,7 @@ static inline void process_packet(const void *buf, uint16_t len,
 
 }
 
-static inline void process_packet_gre(const void *buf, 
+static inline void process_packet_gre(const void *buf,
     volatile struct flextcp_pl_krx *krx)
 {
   uint16_t len = krx->msg.packet.len;
@@ -1188,14 +1188,14 @@ static inline void process_packet_gre(const void *buf,
     }
     else if (out_ip->proto == IP_PROTO_GRE)
     {
-      if (len < sizeof(*eth) + sizeof(*out_ip) + 
+      if (len < sizeof(*eth) + sizeof(*out_ip) +
           sizeof(*gre) + sizeof(*in_ip) + sizeof(*tcp))
       {
         fprintf(stderr, "process_packet_gre: short tcp packet\n");
         return;
       }
 
-      /* Send packet to OvS and get control plane info */ 
+      /* Send packet to OvS and get control plane info */
       ovs_rx_upcall(krx);
     }
   }
@@ -1204,9 +1204,9 @@ static inline void process_packet_gre(const void *buf,
     kni_packet(buf, len);
 }
 
-static inline void process_ovs_rx_upcall(const void *buf, uint16_t len, 
+static inline void process_ovs_rx_upcall(const void *buf, uint16_t len,
     uint32_t fn_core, uint16_t flow_group)
-{   
+{
   int to_kni;
   to_kni = !!gre_packet(buf, len, fn_core, flow_group);
 
@@ -1214,7 +1214,7 @@ static inline void process_ovs_rx_upcall(const void *buf, uint16_t len,
     kni_packet(buf, len);
 }
 
-static inline void process_ovs_tx_upcall(volatile struct flextcp_pl_ote *ote, 
+static inline void process_ovs_tx_upcall(volatile struct flextcp_pl_ote *ote,
   struct connection *conn)
 {
   conn->tunnel_id = ote->key;
@@ -1223,7 +1223,7 @@ static inline void process_ovs_tx_upcall(volatile struct flextcp_pl_ote *ote,
   conn->in_remote_ip = ote->in_remote_ip;
   conn->in_local_ip = ote->in_local_ip;
   conn->status = CONN_OVS_COMP;
-  
+
   /* Alert tcp_poll to process CONN_OVS_PENDING */
   nbqueue_enq(conn->comp.q, &conn->comp.el);
 }

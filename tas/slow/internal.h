@@ -104,7 +104,7 @@ unsigned ovs_poll(void);
 /** Makes an ovs upcall for a received packet */
 int ovs_rx_upcall(volatile struct flextcp_pl_krx *krx);
 /** Makes an ovs upcall for a packet to be sent */
-int ovs_tx_upcall(struct pkt_gre *p, uint16_t vmid, 
+int ovs_tx_upcall(struct pkt_gre *p, uint16_t vmid,
     uint16_t len, struct connection *conn);
 
 /**
@@ -120,7 +120,7 @@ int ovs_tx_upcall(struct pkt_gre *p, uint16_t vmid,
  *
  * @return 0 on success, <0 else
  */
-int nicif_appctx_add(uint16_t vmid, uint16_t appid, uint32_t db, 
+int nicif_appctx_add(uint16_t vmid, uint16_t appid, uint32_t db,
     uint64_t *rxq_base, uint32_t rxq_len, uint64_t *txq_base,
     uint32_t txq_len, int evfd);
 
@@ -157,9 +157,9 @@ enum nicif_connection_flags {
  */
 int nicif_connection_add(uint32_t db, uint16_t vm_id, uint16_t app_id,
     uint64_t mac_remote, uint32_t ip_local, uint16_t port_local,
-    uint32_t ip_remote, uint16_t port_remote, uint64_t rx_base, uint32_t rx_len, 
-    uint64_t tx_base, uint32_t tx_len, uint32_t remote_seq, uint32_t local_seq, 
-    uint64_t app_opaque, uint32_t flags, uint32_t rate, uint32_t fn_core, 
+    uint32_t ip_remote, uint16_t port_remote, uint64_t rx_base, uint32_t rx_len,
+    uint64_t tx_base, uint32_t tx_len, uint32_t remote_seq, uint32_t local_seq,
+    uint64_t app_opaque, uint32_t flags, uint32_t rate, uint32_t fn_core,
     uint16_t flow_group, uint32_t *pf_id);
 
 /**
@@ -190,12 +190,12 @@ int nicif_connection_add(uint32_t db, uint16_t vm_id, uint16_t app_id,
  * @return 0 on success, <0 else
  */
 int nicif_connection_add_gre(uint32_t db, uint16_t vm_id, uint16_t app_id,
-    uint32_t tunnel_id, uint64_t mac_remote, 
+    uint32_t tunnel_id, uint64_t mac_remote,
     uint32_t out_ip_local, uint32_t out_ip_remote,
     uint32_t in_ip_local, uint16_t port_local,
-    uint32_t in_ip_remote, uint16_t port_remote, uint64_t rx_base, uint32_t rx_len, 
-    uint64_t tx_base, uint32_t tx_len, uint32_t remote_seq, uint32_t local_seq, 
-    uint64_t app_opaque, uint32_t flags, uint32_t rate, uint32_t fn_core, 
+    uint32_t in_ip_remote, uint16_t port_remote, uint64_t rx_base, uint32_t rx_len,
+    uint64_t tx_base, uint32_t tx_len, uint32_t remote_seq, uint32_t local_seq,
+    uint64_t app_opaque, uint32_t flags, uint32_t rate, uint32_t fn_core,
     uint16_t flow_group, uint32_t *pf_id);
 
 /**
@@ -356,20 +356,22 @@ int packetmem_init(void);
  *                stored
  * @param handle  Pointer to location where handle for memory region should be
  *                stored
+ * @param vmid    Id of the vm for the memory region to be allocated
  *
  * @return 0 on success, <0 else
  */
 int packetmem_alloc(size_t length, uintptr_t *off,
-    struct packetmem_handle **handle);
+    struct packetmem_handle **handle, int vmid);
 
 /**
  * Free packet memory region.
  *
  * @param handle  Handle for memory region to be freed
+ * @param vmid    Id of the vm that identified mem region to be freed
  *
  * @return 0 on success, <0 else
  */
-void packetmem_free(struct packetmem_handle *handle);
+void packetmem_free(struct packetmem_handle *handle, int vmid);
 
 /** @} */
 
@@ -424,7 +426,7 @@ void appif_listen_newconn(struct listener *l, uint32_t remote_ip,
  * @param remote_port    Remote port
  * @param tunnel_id      ID of the tunnel
  */
-void appif_listen_newconn_gre(struct listener *l, 
+void appif_listen_newconn_gre(struct listener *l,
     uint32_t out_remote_ip, uint32_t in_remote_ip,
     uint16_t remote_port, uint32_t tunnel_id);
 
@@ -726,7 +728,7 @@ void tcp_poll(void);
  *
  * @return 0 on success, <0 else
  */
-int tcp_open(struct app_context *ctx, 
+int tcp_open(struct app_context *ctx,
     uint64_t opaque, uint32_t remote_ip,
     uint16_t remote_port, uint32_t db_id, struct connection **conn);
 
@@ -911,7 +913,7 @@ int routing_init(void);
  *
  * @return 0 on success, < 0 on error, and > 0 for asynchronous return.
  */
-int routing_resolve(struct nicif_completion *comp, uint32_t ip, 
+int routing_resolve(struct nicif_completion *comp, uint32_t ip,
     uint64_t *mac);
 
 /** @} */
@@ -952,7 +954,7 @@ unsigned kni_poll(void);
 
 
 /* Accept connection to app interface */
-int appif_connect_accept(int cfd, int cores_num, 
+int appif_connect_accept(int cfd, int cores_num,
     int kernel_notifyfd, int shm_fd);
 
 /*****************************************************************************/

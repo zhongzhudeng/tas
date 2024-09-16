@@ -319,7 +319,7 @@ static int uxsocket_init_app_uxfd(int vmid, int *fd, int efd)
 
   memset(&saun, 0, sizeof(saun));
   saun.sun_family = AF_UNIX;
-  snprintf(saun.sun_path, sizeof(saun.sun_path), 
+  snprintf(saun.sun_path, sizeof(saun.sun_path),
       "%s_vm_%d", KERNEL_SOCKET_PATH, vmid);
 
   unlink(saun.sun_path);
@@ -482,7 +482,7 @@ static void uxsocket_accept_app(int vm_id)
 
   /* If this is an application running on a VM this is extra
      work because the proxy has already connected, but we keep
-     this redundant step so that we don't break compatibility 
+     this redundant step so that we don't break compatibility
      with regular applications */
   if (appif_connect_accept(cfd, tas_info->cores_num,
       kernel_notifyfd, vm_shm_fd[vm_id]) != 0) {
@@ -638,28 +638,28 @@ static void uxsocket_receive(struct application *app)
   kout_qsize = config.app_kout_len;
 
   /* allocate packet memory for kernel queues */
-  if (packetmem_alloc(kin_qsize, &off_in, &pm_in) != 0) {
+  if (packetmem_alloc(kin_qsize, &off_in, &pm_in, SP_MEM_ID) != 0) {
     fprintf(stderr, "uxsocket_receive: packetmem_alloc in failed\n");
     goto error_pktmem_in;
   }
-  if (packetmem_alloc(kout_qsize, &off_out, &pm_out) != 0) {
+  if (packetmem_alloc(kout_qsize, &off_out, &pm_out, SP_MEM_ID) != 0) {
     fprintf(stderr, "uxsocket_receive: packetmem_alloc out failed\n");
     goto error_pktmem_out;
   }
 
   /* allocate packet memory for flexnic queues */
   for (i = 0; i < tas_info->cores_num; i++) {
-    if (packetmem_alloc(app->req.rxq_len, &off_rxq, &ctx->handles[i].rxq)
-        != 0)
+    if (packetmem_alloc(app->req.rxq_len, &off_rxq,
+        &ctx->handles[i].rxq, app->vm_id) != 0)
     {
       fprintf(stderr, "uxsocket_receive: packetmem_alloc rxq failed\n");
       goto error_pktmem;
     }
-    if (packetmem_alloc(app->req.txq_len, &off_txq, &ctx->handles[i].txq)
-        != 0)
+    if (packetmem_alloc(app->req.txq_len, &off_txq,
+        &ctx->handles[i].txq, app->vm_id) != 0)
     {
       fprintf(stderr, "uxsocket_receive: packetmem_alloc txq failed\n");
-      packetmem_free(ctx->handles[i].rxq);
+      packetmem_free(ctx->handles[i].rxq, app->vm_id);
       goto error_pktmem;
     }
     memset((uint8_t *) vm_shm[app->vm_id] + off_rxq, 0, app->req.rxq_len);
@@ -746,9 +746,9 @@ static void uxsocket_receive(struct application *app)
 error_dballoc:
   /* TODO: for () packetmem_free(ctx->txq_handle) */
 error_pktmem:
-  packetmem_free(pm_out);
+  packetmem_free(pm_out, app->vm_id);
 error_pktmem_out:
-  packetmem_free(pm_in);
+  packetmem_free(pm_in, app->vm_id);
 error_pktmem_in:
   free(ctx);
 error_ctxmalloc:
@@ -799,7 +799,7 @@ static void uxsocket_notify_app(struct application *app)
 
   ev.events = EPOLLIN | EPOLLRDHUP | EPOLLERR;
   ev.data.ptr = aev;
-  
+
   /* TODO: free previous appif_event struct before modifying */
   if (epoll_ctl(epfd, EPOLL_CTL_MOD, app->fd, &ev) != 0) {
     /* not sure how to  handle this */
