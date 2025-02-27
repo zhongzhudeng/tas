@@ -416,6 +416,7 @@ int flextcp_connection_move(struct flextcp_context *ctx,
   kin->data.conn_move.in_remote_ip = conn->in_remote_ip;
   kin->data.conn_move.local_port = conn->local_port;
   kin->data.conn_move.remote_port = conn->remote_port;
+  kin->data.conn_move.tunnel_id = conn->tunnel_id;
   kin->data.conn_move.db_id = ctx->db_id;
   kin->data.conn_move.opaque = OPAQUE(conn);
   MEM_BARRIER();
