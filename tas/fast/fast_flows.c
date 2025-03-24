@@ -378,7 +378,7 @@ int fast_flows_packet(struct dataplane_context *ctx,
 
   ctx->vm_counters[fs->vm_id] += payload_bytes;
   ctx->counters_total += payload_bytes;
-  
+
   if (ctx->budgets[fs->vm_id].budget <= 0) {
     return 0;
   }
@@ -494,7 +494,7 @@ int fast_flows_packet(struct dataplane_context *ctx,
     }
   }
 
-#ifdef FLEXNIC_PL_OOO_RECV  
+#ifdef FLEXNIC_PL_OOO_RECV
   /* check if we should drop this segment */
   if (UNLIKELY(tcp_trim_rxbuf(fs, seq, payload_bytes, &trim_start, &trim_end) != 0)) {
     /* packet is completely outside of unused receive buffer */
@@ -761,7 +761,7 @@ int fast_flows_packet_gre(struct dataplane_context *ctx,
   if (ctx->budgets[fs->vm_id].budget <= 0) {
     return 0;
   }
-  
+
   fs_lock(fs);
 
 #ifdef FLEXNIC_TRACING
@@ -792,7 +792,7 @@ int fast_flows_packet_gre(struct dataplane_context *ctx,
 #endif
 
 #ifdef PL_DEBUG_ARX
-  fprintf(stderr, "FLOW tunnel=%x" 
+  fprintf(stderr, "FLOW tunnel=%x"
       " local=%08x:%05u remote=%08x:%05u  ST: op=%"PRIx64
       " rx_pos=%x rx_next_seq=%u rx_avail=%x  tx_pos=%x tx_next_seq=%u"
       " tx_sent=%u\n",
@@ -877,7 +877,7 @@ int fast_flows_packet_gre(struct dataplane_context *ctx,
     }
   }
 
-#ifdef FLEXNIC_PL_OOO_RECV  
+#ifdef FLEXNIC_PL_OOO_RECV
   /* check if we should drop this segment */
   if (UNLIKELY(tcp_trim_rxbuf(fs, seq, payload_bytes, &trim_start, &trim_end) != 0)) {
     /* packet is completely outside of unused receive buffer */
@@ -1084,7 +1084,7 @@ unlock:
   new_avail = tcp_txavail(fs, NULL);
   if (new_avail > old_avail) {
     /* update qman queue */
-    if (tas_qman_set(&ctx->qman, fs->vm_id, flow_id, fs->tx_rate, new_avail, 
+    if (tas_qman_set(&ctx->qman, fs->vm_id, flow_id, fs->tx_rate, new_avail,
         TCP_MSS, QMAN_SET_RATE | QMAN_SET_MAXCHUNK | QMAN_SET_AVAIL) != 0)
     {
       fprintf(stderr, "fast_flows_packet_gre: qman_set 1 failed, UNEXPECTED\n");
@@ -1207,7 +1207,7 @@ int fast_flows_bump(struct dataplane_context *ctx, uint32_t flow_id,
 
   /* update queue manager queue */
   if (old_avail < new_avail) {
-    if (tas_qman_set(&ctx->qman, fs->vm_id, flow_id, fs->tx_rate, new_avail, 
+    if (tas_qman_set(&ctx->qman, fs->vm_id, flow_id, fs->tx_rate, new_avail,
         TCP_MSS, QMAN_SET_RATE | QMAN_SET_MAXCHUNK | QMAN_SET_AVAIL) != 0)
     {
       fprintf(stderr, "flast_flows_bump: qman_set 1 failed, UNEXPECTED\n");
@@ -1427,7 +1427,7 @@ static void flow_tx_segment(struct dataplane_context *ctx,
   }
 
   /* checksums */
-  tcp_checksums(nbh, p, fs->out_local_ip, 
+  tcp_checksums(nbh, p, fs->out_local_ip,
       fs->out_remote_ip, hdrs_len - offsetof(struct
       pkt_tcp, tcp) + payload);
 
@@ -1471,7 +1471,7 @@ static void flow_tx_segment_gre(struct dataplane_context *ctx,
 
   IPH_VHL_SET(&p->out_ip, 4, 5);
   p->out_ip._tos = 0;
-  p->out_ip.len = t_beui16(hdrs_len - 
+  p->out_ip.len = t_beui16(hdrs_len -
       offsetof(struct pkt_gre, out_ip) + payload);
   p->out_ip.id = t_beui16(3); /* TODO: not sure why we have 3 here */
   p->out_ip.offset = t_beui16(0);
@@ -1492,7 +1492,7 @@ static void flow_tx_segment_gre(struct dataplane_context *ctx,
 
   IPH_VHL_SET(&p->in_ip, 4, 5);
   p->in_ip._tos = 0;
-  p->in_ip.len = t_beui16(hdrs_len - 
+  p->in_ip.len = t_beui16(hdrs_len -
       offsetof(struct pkt_gre, in_ip) + payload);
   p->in_ip.id = t_beui16(3); /* TODO: not sure why we have 3 here */
   p->in_ip.offset = t_beui16(0);
@@ -1763,7 +1763,7 @@ static inline void gre_checksums(struct network_buf_handle *nbh,
     p->tcp.chksum = 0;
     p->in_ip.chksum = rte_ipv4_cksum((void *) &p->in_ip);
     p->out_ip.chksum = rte_ipv4_cksum((void *) &p->out_ip);
-    p->tcp.chksum = rte_ipv4_udptcp_cksum((void *) &p->in_ip, 
+    p->tcp.chksum = rte_ipv4_udptcp_cksum((void *) &p->in_ip,
         (void *) &p->tcp);
   }
 }
@@ -1904,7 +1904,7 @@ void fast_flows_packet_fss_gre(struct dataplane_context *ctx,
    * (usually 1 per packet, except in case of collisions) */
   for (i = 0; i < n; i++) {
     h = hashes[i];
-    
+
     for (j = 0; j < FLEXNIC_PL_FLOWHT_NBSZ; j++) {
       k = (h + j) % FLEXNIC_PL_FLOWHT_ENTRIES;
       e = &fp_state->flowht[k];
