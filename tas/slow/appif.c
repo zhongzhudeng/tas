@@ -516,6 +516,7 @@ static void uxsocket_accept_app(int vm_id)
   /* add to epoll */
   app->fd = cfd;
   app->contexts = NULL;
+  app->forked_ctxs = NULL;
   app->need_reg_ctx = NULL;
   app->closed = false;
   app->conns = NULL;
@@ -578,6 +579,7 @@ static void uxsocket_error(struct application *app)
 static void uxsocket_receive(struct application *app)
 {
   ssize_t rx;
+  struct forked_context *f_ctx;
   struct app_context *ctx;
   struct packetmem_handle *pm_in, *pm_out;
   uintptr_t off_in, off_out, off_rxq, off_txq;
@@ -698,6 +700,14 @@ static void uxsocket_receive(struct application *app)
   MEM_BARRIER();
   app->contexts = ctx;
 
+  if (app->forked_ctxs == NULL)
+  {
+    f_ctx = malloc(sizeof(struct forked_context));
+    f_ctx->ctx = ctx;
+    f_ctx->next = NULL;
+    app->forked_ctxs = f_ctx;
+  }
+
   /* initialize response */
   app->resp->app_out_off = off_in;
   app->resp->app_out_len = kin_qsize;
@@ -706,6 +716,8 @@ static void uxsocket_receive(struct application *app)
   app->resp->flexnic_db_id = ctx->doorbell->id;
   app->resp->flexnic_qs_num = tas_info->cores_num;
   app->resp->status = 0;
+  fprintf(stderr, "Creating new context: db_id=%d\n", ctx->doorbell->id);
+
 
   if ((aev = malloc(sizeof(struct appif_event))) == NULL)
   {

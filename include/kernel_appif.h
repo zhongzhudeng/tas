@@ -65,10 +65,12 @@ enum kernel_appout_type {
   KERNEL_APPOUT_CONN_OPEN,
   KERNEL_APPOUT_CONN_CLOSE,
   KERNEL_APPOUT_CONN_MOVE,
+  KERNEL_APPOUT_LISTEN_MOVE,
   KERNEL_APPOUT_LISTEN_OPEN,
   KERNEL_APPOUT_LISTEN_CLOSE,
   KERNEL_APPOUT_ACCEPT_CONN,
   KERNEL_APPOUT_REQ_SCALE,
+  KERNEL_APPOUT_FORK,
 };
 
 /** Open a new connection */
@@ -106,6 +108,13 @@ struct kernel_appout_conn_move {
   uint16_t db_id;
 } __attribute__((packed));
 
+
+struct kernel_appout_listen_move {
+  uint64_t opaque;
+  uint16_t local_port;
+  uint16_t db_id;
+} __attribute__((packed));
+
 #define KERNEL_APPOUT_LISTEN_REUSEPORT 0x1
 /** Open listener */
 struct kernel_appout_listen_open {
@@ -128,6 +137,12 @@ struct kernel_appout_accept_conn {
   uint16_t local_port;
 } __attribute__((packed));
 
+/** Handle a fork of the process */
+struct kernel_appout_fork {
+  uint64_t pid;
+  uint64_t parent_pid;
+} __attribute__((packed));
+
 /** Request scale to specified number of cores */
 struct kernel_appout_req_scale {
   uint32_t num_cores;
@@ -142,7 +157,10 @@ struct kernel_appout {
 
     struct kernel_appout_listen_open  listen_open;
     struct kernel_appout_listen_close listen_close;
+    struct kernel_appout_listen_move  listen_move;
     struct kernel_appout_accept_conn  accept_conn;
+
+    struct kernel_appout_fork         fork;
 
     struct kernel_appout_req_scale    req_scale;
 
@@ -163,6 +181,7 @@ enum kernel_appin_type {
   KERNEL_APPIN_STATUS_CONN_MOVE,
   KERNEL_APPIN_STATUS_LISTEN_OPEN,
   KERNEL_APPIN_STATUS_LISTEN_CLOSE,
+  KERNEL_APPIN_STATUS_LISTEN_MOVE,
   KERNEL_APPIN_STATUS_REQ_SCALE,
   KERNEL_APPIN_CONN_OPENED,
   KERNEL_APPIN_LISTEN_NEWCONN,

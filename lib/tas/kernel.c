@@ -64,7 +64,7 @@ int flextcp_kernel_connect(int *shmfd, int groupid)
   /* prepare socket address */
   memset(&saun, 0, sizeof(saun));
   saun.sun_family = AF_UNIX;
-  snprintf(saun.sun_path, sizeof(saun.sun_path), 
+  snprintf(saun.sun_path, sizeof(saun.sun_path),
       "%s_vm_%d", KERNEL_SOCKET_PATH, groupid);
 
   if ((fd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) == -1) {
@@ -100,7 +100,7 @@ int flextcp_kernel_connect(int *shmfd, int groupid)
     fprintf(stderr, "flextcp_kernel_connect: failed to receive notify fd.\n");
     return -1;
   }
-  
+
   if (flextcp_kernel_get_shmfd(fd, shmfd) != 0)
   {
     fprintf(stderr, "flextcp_kernel_connect: failed to receive shm fd.\n");
@@ -140,7 +140,7 @@ int flextcp_kernel_connect(int *shmfd, int groupid)
       flexnic_evfd[off++] = pfd[i];
     }
   }
-  
+
   ksock_fd = fd;
   return 0;
 }
@@ -186,8 +186,8 @@ int flextcp_kernel_newctx(struct flextcp_context *ctx,
   assert(sz == sizeof(req));
 
   /* receive response on kernel socket */
-  resp = (presp == NULL) ? 
-    (struct kernel_uxsock_response *) resp_buf : 
+  resp = (presp == NULL) ?
+    (struct kernel_uxsock_response *) resp_buf :
     (struct kernel_uxsock_response *) presp;
   off = 0;
   while (off < sizeof(*resp)) {
@@ -253,6 +253,32 @@ int flextcp_kernel_newctx(struct flextcp_context *ctx,
     ctx->queues[i].txq_avail = ctx->txq_len;
     ctx->queues[i].last_ts = 0;
   }
+
+  return 0;
+}
+
+int flextcp_kernel_fork(struct flextcp_context *ctx, uint64_t pid, uint64_t parent_pid)
+{
+  uint32_t pos = ctx->kin_head;
+  struct kernel_appout *kin = ctx->kin_base;
+
+  kin += pos;
+
+  if (kin->type != KERNEL_APPOUT_INVALID) {
+    return -1;
+  }
+
+  kin->data.fork.pid = pid;
+  kin->data.fork.parent_pid = parent_pid;
+  MEM_BARRIER();
+  kin->type = KERNEL_APPOUT_FORK;
+  flextcp_kernel_kick();
+
+  pos = pos + 1;
+  if (pos >= ctx->kin_len) {
+    pos = 0;
+  }
+  ctx->kin_head = pos;
 
   return 0;
 }
@@ -341,7 +367,7 @@ int flextcp_kernel_get_shmfd(int cfd, int *shmfd)
     .iov_base = &b,
     .iov_len = sizeof(b),
   };
-  
+
   union {
     char buf[CMSG_SPACE(sizeof(int) * 1)];
     struct cmsghdr align;
@@ -372,6 +398,6 @@ int flextcp_kernel_get_shmfd(int cfd, int *shmfd)
   }
 
   *shmfd = *pfd;
-  
+
   return 0;
 }

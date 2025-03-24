@@ -90,6 +90,7 @@ int tas_epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)
   uint32_t em;
   int linux_fd = 0;
 
+  struct flextcp_context *ctx = flextcp_sockctx_get();
   EPOLL_DEBUG("flextcp_epoll_ctl(%d, %d, %d, {events=%x})\n", epfd, op,
       fd, (event != NULL ? event->events : -1));
 
@@ -123,6 +124,7 @@ int tas_epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)
   if (op == EPOLL_CTL_ADD || op == EPOLL_CTL_MOD) {
     em = EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLRDHUP;
     event->events &= (~EPOLLET);	// XXX: Mask edge-triggered
+    event->events &= (~EPOLLEXCLUSIVE); // XXX: Mask epoll exclusive
     if ((event->events & (~em)) != 0) {
       fprintf(stderr, "flextcp epoll_ctl: unsupported events: %x\n",
           (event->events & (~em)));
@@ -166,6 +168,16 @@ int tas_epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)
       es->so_next = s->eps;
       s->eps->so_prev = es;
       s->eps = es;
+    }
+
+    /* Move this fd to the context that added it */
+    if (s->type == SOCK_LISTENER)
+    {
+      flextcp_listen_move(ctx, &s->data.listener.l);
+    }
+    else if (s->type == SOCK_CONNECTION)
+    {
+      flextcp_connection_move(ctx, &s->data.connection.c);
     }
 
     /* add to inactive queue */

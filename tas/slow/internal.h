@@ -658,6 +658,17 @@ struct connection {
   uint16_t flow_group;
 };
 
+/** App context element in listener list. When a
+ *  a process gets forked it gets added to the
+ *  listener list of forked contexts.
+ */
+ struct forked_context {
+  /** Application context for this fork */
+  struct app_context *ctx;
+  /** Link list pointer for forked contexts */
+  struct forked_context *next;
+};
+
 /** TCP listener  */
 struct listener {
   /**

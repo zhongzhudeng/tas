@@ -56,6 +56,8 @@ static inline void event_kappin_st_conn_move(
     struct kernel_appin_status *inev, struct flextcp_event *outev);
 static inline void event_kappin_st_listen_open(
     struct kernel_appin_status *inev, struct flextcp_event *outev);
+static inline void event_kappin_st_listen_move(
+      struct kernel_appin_status *inev, struct flextcp_event *outev);
 static inline void event_kappin_st_conn_closed(
     struct kernel_appin_status *inev, struct flextcp_event *outev);
 
@@ -75,14 +77,14 @@ static void txq_probe(struct flextcp_context *ctx, unsigned n) __attribute__((no
 
 int flextcp_init(int groupid)
 {
-  if ((flextcp_kernel_connect(&flexnic_shmfd, groupid)) < 0) 
+  if ((flextcp_kernel_connect(&flexnic_shmfd, groupid)) < 0)
   {
     fprintf(stderr, "flextcp_init: connecting to kernel failed\n");
     return -1;
   }
 
   if (flexnic_driver_connect(&flexnic_info, &flexnic_mem, flexnic_shmfd)
-      != 0) 
+      != 0)
   {
     fprintf(stderr, "flextcp_init: connecting to flexnic failed\n");
     return -1;
@@ -150,6 +152,8 @@ static int kernel_poll(struct flextcp_context *ctx, int num,
       event_kappin_st_listen_open(&kout->data.status, &events[i]);
     } else if (type == KERNEL_APPIN_STATUS_CONN_MOVE) {
       event_kappin_st_conn_move(&kout->data.status, &events[i]);
+    } else if (KERNEL_APPIN_STATUS_LISTEN_MOVE) {
+      event_kappin_st_listen_move(&kout->data.status, &events[i]);
     } else if (type == KERNEL_APPIN_STATUS_CONN_CLOSE) {
       event_kappin_st_conn_closed(&kout->data.status, &events[i]);
     } else {
@@ -684,6 +688,18 @@ static inline void event_kappin_st_conn_move(
   outev->event_type = FLEXTCP_EV_CONN_MOVED;
   outev->ev.conn_moved.status = inev->status;
   outev->ev.conn_moved.conn = conn;
+}
+
+static inline void event_kappin_st_listen_move(
+  struct kernel_appin_status *inev, struct flextcp_event *outev)
+{
+  struct flextcp_listener *l;
+
+  l = OPAQUE_PTR(inev->opaque);
+
+  outev->event_type = FLEXTCP_EV_LISTEN_MOVED;
+  outev->ev.listen_moved.status = inev->status;
+  outev->ev.listen_moved.l = l;
 }
 
 static inline void event_kappin_st_listen_open(

@@ -43,7 +43,11 @@ static int kin_conn_close(struct application *app, struct app_context *ctx,
     volatile struct kernel_appout *kin, volatile struct kernel_appin *kout);
 static int kin_listen_open(struct application *app, struct app_context *ctx,
     volatile struct kernel_appout *kin, volatile struct kernel_appin *kout);
+static int kin_listen_move(struct application *app, struct app_context *ctx,
+    volatile struct kernel_appout *kin, volatile struct kernel_appin *kout);
 static int kin_accept_conn(struct application *app, struct app_context *ctx,
+    volatile struct kernel_appout *kin, volatile struct kernel_appin *kout);
+static int kin_fork(struct application *app, struct app_context *ctx,
     volatile struct kernel_appout *kin, volatile struct kernel_appin *kout);
 static int kin_req_scale(struct application *app, struct app_context *ctx,
     volatile struct kernel_appout *kin, volatile struct kernel_appin *kout);
@@ -187,7 +191,7 @@ void appif_listen_newconn(struct listener *l, uint32_t remote_ip,
 
 }
 
-void appif_listen_newconn_gre(struct listener *l, 
+void appif_listen_newconn_gre(struct listener *l,
     uint32_t out_remote_ip, uint32_t in_remote_ip,
     uint16_t remote_port, uint32_t tunnel_id)
 {
@@ -221,53 +225,63 @@ void appif_listen_newconn_gre(struct listener *l,
 
 void appif_accept_conn(struct connection *c, int status)
 {
+  struct forked_context *f_ctx;
   struct app_context *ctx = c->ctx;
   struct application *app = ctx->app;
-  volatile struct kernel_appin *kout = ctx->kout_base;
-  uint32_t kout_pos = ctx->kout_pos;
 
-  kout += kout_pos;
+  for (f_ctx = app->forked_ctxs; f_ctx != NULL; f_ctx = f_ctx->next)
+  {
+    ctx = f_ctx->ctx;
 
-  /* make sure we have room for a response */
-  if (kout->type != KERNEL_APPIN_INVALID) {
-    fprintf(stderr, "appif_accept_conn: No space in kout queue (TODO)\n");
-    return;
+    volatile struct kernel_appin *kout = ctx->kout_base;
+    uint32_t kout_pos = ctx->kout_pos;
+
+    kout += kout_pos;
+
+    /* make sure we have room for a response */
+    if (kout->type != KERNEL_APPIN_INVALID) {
+      fprintf(stderr, "appif_accept_conn: No space in kout queue (TODO)\n");
+      return;
+    }
+
+    kout->data.accept_connection.opaque = c->opaque;
+    kout->data.accept_connection.status = status;
+    if (status == 0) {
+      kout->data.accept_connection.rx_off = c->rx_buf - (uint8_t *) vm_shm[app->vm_id];
+      kout->data.accept_connection.tx_off = c->tx_buf - (uint8_t *) vm_shm[app->vm_id];
+      kout->data.accept_connection.rx_len = c->rx_len;
+      kout->data.accept_connection.tx_len = c->tx_len;
+
+      kout->data.accept_connection.seq_rx = c->remote_seq;
+      kout->data.accept_connection.seq_tx = c->local_seq;
+      kout->data.accept_connection.tunnel_id = c->tunnel_id;
+      kout->data.accept_connection.out_local_ip = config.ip;
+      kout->data.accept_connection.out_remote_ip = c->out_remote_ip;
+      kout->data.accept_connection.in_local_ip = c->in_local_ip;
+      kout->data.accept_connection.in_remote_ip = c->in_remote_ip;
+      kout->data.accept_connection.remote_port = c->remote_port;
+      kout->data.accept_connection.flow_id = c->flow_id;
+      kout->data.accept_connection.fn_core = c->fn_core;
+
+      c->app_next = app->conns;
+      app->conns = c;
+    } else {
+      tcp_destroy(c);
+    }
+
+    MEM_BARRIER();
+    kout->type = KERNEL_APPIN_ACCEPTED_CONN;
+    appif_ctx_kick(ctx);
+
+    kout_pos++;
+    if (kout_pos >= ctx->kout_len) {
+      kout_pos = 0;
+    }
+    ctx->kout_pos = kout_pos;
   }
 
-  kout->data.accept_connection.opaque = c->opaque;
-  kout->data.accept_connection.status = status;
-  if (status == 0) {
-    kout->data.accept_connection.rx_off = c->rx_buf - (uint8_t *) vm_shm[app->vm_id];
-    kout->data.accept_connection.tx_off = c->tx_buf - (uint8_t *) vm_shm[app->vm_id];
-    kout->data.accept_connection.rx_len = c->rx_len;
-    kout->data.accept_connection.tx_len = c->tx_len;
-
-    kout->data.accept_connection.seq_rx = c->remote_seq;
-    kout->data.accept_connection.seq_tx = c->local_seq;
-    kout->data.accept_connection.tunnel_id = c->tunnel_id;
-    kout->data.accept_connection.out_local_ip = config.ip;
-    kout->data.accept_connection.out_remote_ip = c->out_remote_ip;
-    kout->data.accept_connection.in_local_ip = c->in_local_ip;
-    kout->data.accept_connection.in_remote_ip = c->in_remote_ip;
-    kout->data.accept_connection.remote_port = c->remote_port;
-    kout->data.accept_connection.flow_id = c->flow_id;
-    kout->data.accept_connection.fn_core = c->fn_core;
-
-    c->app_next = app->conns;
-    app->conns = c;
-  } else {
-    tcp_destroy(c);
-  }
-
-  MEM_BARRIER();
-  kout->type = KERNEL_APPIN_ACCEPTED_CONN;
-  appif_ctx_kick(ctx);
-
-  kout_pos++;
-  if (kout_pos >= ctx->kout_len) {
-    kout_pos = 0;
-  }
-  ctx->kout_pos = kout_pos;
+  c->app_next = app->conns;
+  app->conns = c;
 }
 
 
@@ -301,6 +315,11 @@ unsigned appif_ctx_poll(struct application *app, struct app_context *ctx)
       kout_inc += kin_conn_open(app, ctx, kin, kout);
       break;
 
+    case KERNEL_APPOUT_LISTEN_MOVE:
+      /* connection move request */
+      kout_inc += kin_listen_move(app, ctx, kin, kout);
+      break;
+
     case KERNEL_APPOUT_CONN_MOVE:
       /* connection move request */
       kout_inc += kin_conn_move(app, ctx, kin, kout);
@@ -319,6 +338,11 @@ unsigned appif_ctx_poll(struct application *app, struct app_context *ctx)
     case KERNEL_APPOUT_ACCEPT_CONN:
       /* accept request */
       kout_inc += kin_accept_conn(app, ctx, kin, kout);
+      break;
+
+    case KERNEL_APPOUT_FORK:
+      /* handle application forking */
+      kout_inc += kin_fork(app, ctx, kin, kout);
       break;
 
     case KERNEL_APPOUT_REQ_SCALE:
@@ -380,6 +404,57 @@ error:
   appif_ctx_kick(ctx);
   return 1;
 }
+
+static int kin_listen_move(struct application *app, struct app_context *ctx,
+  volatile struct kernel_appout *kin, volatile struct kernel_appin *kout)
+{
+  struct listener *l;
+  struct app_context *new_ctx;
+
+  for (l = app->listeners; l != NULL; l = l->app_next) {
+    if (l->port == kin->data.listen_move.local_port &&
+        l->opaque == kin->data.listen_move.opaque)
+    {
+      break;
+    }
+  }
+
+  if (l == NULL) {
+    fprintf(stderr, "kin_listen_move: listener not found\n");
+    goto error;
+  }
+
+  for (new_ctx = app->contexts; new_ctx != NULL; new_ctx = new_ctx->next) {
+    if (new_ctx->doorbell->id == kin->data.listen_move.db_id) {
+      break;
+    }
+  }
+
+  if (new_ctx == NULL) {
+    fprintf(stderr, "kin_listen_move: destination context not found\n");
+    goto error;
+  }
+
+  l->ctx = new_ctx;
+  l->db_id = new_ctx->doorbell->id;
+  kout->data.status.opaque = kin->data.listen_move.opaque;
+  kout->data.status.status = 0;
+  MEM_BARRIER();
+  kout->type = KERNEL_APPIN_STATUS_LISTEN_MOVE;
+  appif_ctx_kick(ctx);
+
+  return 1;
+
+  error:
+  kout->data.status.opaque = kin->data.listen_move.opaque;
+  kout->data.status.status = -1;
+  MEM_BARRIER();
+  kout->type = KERNEL_APPIN_STATUS_LISTEN_MOVE;
+  appif_ctx_kick(ctx);
+  return 1;
+}
+
+
 
 static int kin_conn_move(struct application *app, struct app_context *ctx,
     volatile struct kernel_appout *kin, volatile struct kernel_appin *kout)
@@ -545,6 +620,25 @@ error:
   kout->type = KERNEL_APPIN_ACCEPTED_CONN;
   appif_ctx_kick(ctx);
   return 1;
+}
+
+static int kin_fork(struct application *app, struct app_context *ctx,
+  volatile struct kernel_appout *kin, volatile struct kernel_appin *kout)
+{
+  struct forked_context *f_ctx;
+
+  f_ctx = malloc(sizeof(struct forked_context));
+  if (f_ctx == NULL)
+  {
+    fprintf(stderr, "kin_fork: failed to malloc forked_context structure\n");
+    return 0;
+  }
+
+  f_ctx->ctx = ctx;
+  f_ctx->next = app->forked_ctxs;
+  app->forked_ctxs = f_ctx;
+
+  return 0;
 }
 
 extern int flexnic_scale_to(uint32_t cores);
