@@ -262,9 +262,6 @@ void appif_accept_conn(struct connection *c, int status)
       kout->data.accept_connection.remote_port = c->remote_port;
       kout->data.accept_connection.flow_id = c->flow_id;
       kout->data.accept_connection.fn_core = c->fn_core;
-
-      c->app_next = app->conns;
-      app->conns = c;
     } else {
       tcp_destroy(c);
     }
