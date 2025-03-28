@@ -204,33 +204,6 @@ static inline void ev_listen_open(struct flextcp_context *ctx,
 static inline void ev_listen_newconn(struct flextcp_context *ctx,
     struct flextcp_event *ev)
 {
-  struct flextcp_connection *c;
-  struct socket *s, *sl;
-
-  c = ev->ev.listen_newconn.conn;
-  s = (struct socket *)
-    ((uint8_t *) c - offsetof(struct socket, data.connection.c));
-
-  if (s->type != SOCK_CONNECTION)
-    return;
-
-  sl = s->data.connection.listener;
-  assert(sl != NULL);
-
-
-  socket_lock(sl);
-  socket_lock(s);
-
-  /** Return so we don't duplicate move */
-  if (s->data.connection.accepted == 1)
-  {
-    socket_unlock(s);
-    socket_unlock(sl);
-    return;
-  }
-
-  socket_unlock(s);
-  socket_unlock(sl);
 }
 
 static inline void ev_listen_accept(struct flextcp_context *ctx,
