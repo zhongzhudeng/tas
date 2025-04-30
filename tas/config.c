@@ -39,6 +39,9 @@ enum cfg_params {
   CP_DATA_MEM_OFF,
   CP_NIC_RX_LEN,
   CP_NIC_TX_LEN,
+  CP_NIC_RX_QUEUE_NODE,
+  CP_NIC_TX_QUEUE_NODE,
+  CP_NIC_MBUFS_NODE,
   CP_APP_KIN_LEN,
   CP_APP_KOUT_LEN,
   CP_ARP_TO,
@@ -103,6 +106,15 @@ static struct option opts[] = {
     { .name = "nic-tx-len",
       .has_arg = required_argument,
       .val = CP_NIC_TX_LEN },
+    { .name = "nic-rx-queue-node",
+      .has_arg = required_argument,
+      .val = CP_NIC_RX_QUEUE_NODE },
+    { .name = "nic-tx-queue-node",
+      .has_arg = required_argument,
+      .val = CP_NIC_TX_QUEUE_NODE },
+    { .name = "nic-mbufs-node",
+      .has_arg = required_argument,
+      .val = CP_NIC_MBUFS_NODE },
     { .name = "app-kin-len",
       .has_arg = required_argument,
       .val = CP_APP_KIN_LEN },
@@ -275,7 +287,7 @@ int config_parse(struct configuration *c, int argc, char *argv[])
     ret = getopt_long(argc, argv, "", opts, NULL);
     switch (ret) {
       case CP_VM_SHM_LEN:
-        if (parse_int64(optarg, &c->vm_shm_len) != 0) { 
+        if (parse_int64(optarg, &c->vm_shm_len) != 0) {
           fprintf(stderr, "group shm len parsing failed\n");
           goto failed;
         }
@@ -295,6 +307,24 @@ int config_parse(struct configuration *c, int argc, char *argv[])
       case CP_NIC_TX_LEN:
         if (parse_int64(optarg, &c->nic_tx_len) != 0) {
           fprintf(stderr, "nic tx len parsing failed\n");
+          goto failed;
+        }
+        break;
+      case CP_NIC_RX_QUEUE_NODE:
+        if (parse_int64(optarg, &c->nic_rx_queue_node) != 0) {
+          fprintf(stderr, "nic rx queue node parsing failed\n");
+          goto failed;
+        }
+        break;
+      case CP_NIC_TX_QUEUE_NODE:
+        if (parse_int64(optarg, &c->nic_tx_queue_node) != 0) {
+          fprintf(stderr, "nic tx queue node parsing failed\n");
+          goto failed;
+        }
+        break;
+      case CP_NIC_MBUFS_NODE:
+        if (parse_int64(optarg, &c->nic_mbufs_node) != 0) {
+          fprintf(stderr, "nic mbufs node parsing failed\n");
           goto failed;
         }
         break;
@@ -615,6 +645,9 @@ static int config_defaults(struct configuration *c, char *progname)
   c->data_mem_off = 0x4000;
   c->nic_rx_len = 16 * 1024;
   c->nic_tx_len = 16 * 1024;
+  c->nic_rx_queue_node = UINT64_MAX;
+  c->nic_tx_queue_node = UINT64_MAX;
+  c->nic_mbufs_node = UINT64_MAX;
   c->app_kin_len = 1024 * 1024;
   c->app_kout_len = 1024 * 1024;
   c->arp_to = 500;
@@ -685,12 +718,20 @@ static void print_usage(struct configuration *c, char *progname)
       "  --app-kout-len=LEN          Kernel->App queue len "
           "[default: %"PRIu64"]\n"
       "\n"
-      "VMs : \n"
+      "Memory Locality:\n"
+      "  --nic-rx-queue-node=NODE   Socket to hold rx descriptor memory"
+          "[default: %"PRIu64"]\n"
+      "  --nic-tx-queue-node=NODE   Socket to hold tx descriptor memory"
+          "[default: %"PRIu64"]\n"
+      "  --nic-mbufs-node=NODE   Socket to hold memory pool for mbufs"
+          "[default: %"PRIu64"]\n"
+      "\n"
+          "VMs : \n"
       "  --vm-shm-len=LEN           Shared memory len for one vm"
           "[default: %"PRIu64"]\n"
       "  --vm-shm-off=LEN           Shared memory offset for vm"
           "[default: %"PRIu64"]\n"
-      "\n" 
+      "\n"
       "TCP protocol parameters:\n"
       "  --tcp-rtt-init=RTT          Initial rtt for CC (us) "
           "[default: %"PRIu32"]\n"
@@ -791,6 +832,7 @@ static void print_usage(struct configuration *c, char *progname)
       "\n",
       progname,
       c->nic_rx_len, c->nic_tx_len, c->app_kin_len, c->app_kout_len,
+      c->nic_rx_queue_node, c->nic_tx_queue_node, c->nic_mbufs_node,
       c->vm_shm_len, c->data_mem_off,
       c->tcp_rtt_init, c->tcp_link_bw, c->tcp_rxbuf_len, c->tcp_txbuf_len,
       c->tcp_handshake_to, c->tcp_handshake_retries,

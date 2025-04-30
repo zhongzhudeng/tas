@@ -50,6 +50,12 @@ struct configuration {
   uint64_t nic_rx_len;
   /** Kernel nic transmit queue length. */
   uint64_t nic_tx_len;
+  /** Kernel nic socket to hold receive descriptor queue */
+  uint64_t nic_rx_queue_node;
+  /** Kernel nic socket to hold transmit descriptor queue */
+  uint64_t nic_tx_queue_node;
+  /** Kernel nic socket to hold memory pool for mbufs */
+  uint64_t nic_mbufs_node;
   /** OvS -> TAS queue length */
   uint64_t ovs_tas_len;
   /** TAS -> OvS queue length */

@@ -229,6 +229,7 @@ void network_dump_stats(void)
 
 int network_thread_init(struct dataplane_context *ctx)
 {
+  unsigned int rx_socket_id, tx_socket_id;
   static volatile uint32_t tx_init_done = 0;
   static volatile uint32_t rx_init_done = 0;
   static volatile uint32_t start_done = 0;
@@ -244,8 +245,12 @@ int network_thread_init(struct dataplane_context *ctx)
   /* initialize tx queue */
   t->queue_id = ctx->id;
   rte_spinlock_lock(&initlock);
-  ret = rte_eth_tx_queue_setup(net_port_id, t->queue_id, TX_DESCRIPTORS, 
-          rte_socket_id(), &eth_devinfo.default_txconf);
+  if (config.nic_tx_queue_node == UINT64_MAX)
+    tx_socket_id = rte_socket_id();
+  else
+    tx_socket_id = config.nic_tx_queue_node;
+  ret = rte_eth_tx_queue_setup(net_port_id, t->queue_id, TX_DESCRIPTORS,
+          tx_socket_id, &eth_devinfo.default_txconf);
   rte_spinlock_unlock(&initlock);
   if (ret != 0) {
     fprintf(stderr, "network_thread_init: rte_eth_tx_queue_setup failed\n");
@@ -259,10 +264,14 @@ int network_thread_init(struct dataplane_context *ctx)
   /* initialize rx queue */
   t->queue_id = ctx->id;
   rte_spinlock_lock(&initlock);
-    ret = rte_eth_rx_queue_setup(net_port_id, t->queue_id, RX_DESCRIPTORS, 
-            rte_socket_id(), &eth_devinfo.default_rxconf, t->pool);
+  if (config.nic_rx_queue_node == UINT64_MAX)
+    rx_socket_id = rte_socket_id();
+  else
+    rx_socket_id = config.nic_rx_queue_node;
+  ret = rte_eth_rx_queue_setup(net_port_id, t->queue_id, RX_DESCRIPTORS,
+          rx_socket_id, &eth_devinfo.default_rxconf, t->pool);
   rte_spinlock_unlock(&initlock);
-  
+
   if (ret != 0) {
     fprintf(stderr, "network_thread_init: rte_eth_rx_queue_setup failed\n");
     goto error_rx_queue;
@@ -314,9 +323,9 @@ int network_thread_init(struct dataplane_context *ctx)
     rte_spinlock_lock(&initlock);
     ret = rte_eth_dev_rx_intr_ctl_q(net_port_id, t->queue_id,
             RTE_EPOLL_PER_THREAD, RTE_INTR_EVENT_ADD, NULL);
-    
+
     rte_spinlock_unlock(&initlock);
-    if (ret != 0) 
+    if (ret != 0)
     {
         fprintf(stderr, "network_thread_init: rte_eth_dev_rx_intr_ctl_q failed "
             "(%d)\n", rte_errno);
@@ -349,13 +358,21 @@ int network_rx_interrupt_ctl(struct network_thread *t, int turnon)
 static struct rte_mempool *mempool_alloc(void)
 {
   static unsigned pool_id = 0;
+  unsigned int socket_id;
   unsigned n;
   char name[32];
+
   n = __sync_fetch_and_add(&pool_id, 1);
   snprintf(name, 32, "mbuf_pool_%u\n", n);
+
+  if (config.nic_mbufs_node == UINT64_MAX)
+    socket_id = rte_socket_id();
+  else
+    socket_id = config.nic_mbufs_node;
+
   return rte_mempool_create(name, PERTHREAD_MBUFS, MBUF_SIZE, 32,
-          sizeof(struct rte_pktmbuf_pool_private), rte_pktmbuf_pool_init, NULL,
-          rte_pktmbuf_init, NULL, rte_socket_id(), 0);
+        sizeof(struct rte_pktmbuf_pool_private), rte_pktmbuf_pool_init, NULL,
+        rte_pktmbuf_init, NULL, socket_id, 0);
 
 }
 
@@ -619,7 +636,7 @@ static struct rte_flow * add_rss_inbound_flow_rule(int n_threads)
   {
     flow = rte_flow_create(net_port_id, &attr, pattern, actions, &error);
     return flow;
-  } else 
+  } else
   {
     fprintf(stderr, "add_rss_inbound_flow_rule: %s\n", error.message);
     return NULL;
