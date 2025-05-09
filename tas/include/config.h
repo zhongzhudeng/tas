@@ -46,6 +46,8 @@ struct configuration {
   uint64_t vm_shm_len;
   /** data memory reserved offset for vms */
   uint64_t data_mem_off;
+  /** GRE network virtualization enabled */
+  uint32_t vm_gre;
   /** Kernel nic receive queue length. */
   uint64_t nic_rx_len;
   /** Kernel nic transmit queue length. */

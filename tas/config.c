@@ -36,6 +36,7 @@
 
 enum cfg_params {
   CP_VM_SHM_LEN,
+  CP_VM_NO_GRE,
   CP_DATA_MEM_OFF,
   CP_NIC_RX_LEN,
   CP_NIC_TX_LEN,
@@ -98,9 +99,12 @@ static struct option opts[] = {
     { .name = "vm-shm-len",
       .has_arg = required_argument,
       .val = CP_VM_SHM_LEN },
-    { .name = "vm_shm-off",
+    { .name = "vm-shm-off",
       .has_arg = required_argument,
       .val = CP_DATA_MEM_OFF },
+    { .name = "vm-no-gre",
+      .has_arg = no_argument,
+      .val = CP_VM_NO_GRE },
     { .name = "nic-rx-len",
       .has_arg = required_argument,
       .val = CP_NIC_RX_LEN },
@@ -301,6 +305,9 @@ int config_parse(struct configuration *c, int argc, char *argv[])
           fprintf(stderr, "group shm offset parsing failed\n");
           goto failed;
         }
+        break;
+      case CP_VM_NO_GRE:
+        c->vm_gre = 0;
         break;
       case CP_NIC_RX_LEN:
         if (parse_int64(optarg, &c->nic_rx_len) != 0) {
@@ -653,6 +660,7 @@ static int config_defaults(struct configuration *c, char *progname)
   c->vm_shm_len = 1 * 1024 * 1024 * 1024;
   /* Set the data mem off to the end of the channel used by the proxy */
   c->data_mem_off = 0x4000;
+  c->vm_gre = 1;
   c->nic_rx_len = 16 * 1024;
   c->nic_tx_len = 16 * 1024;
   c->nic_rx_queue_node = UINT64_MAX;
@@ -744,6 +752,8 @@ static void print_usage(struct configuration *c, char *progname)
           "[default: %"PRIu64"]\n"
       "  --vm-shm-off=LEN           Shared memory offset for vm"
           "[default: %"PRIu64"]\n"
+      "  --vm-no-gre                Disables GRE network virtualization"
+          "[default: enabled]\n"
       "\n"
       "TCP protocol parameters:\n"
       "  --tcp-rtt-init=RTT          Initial rtt for CC (us) "

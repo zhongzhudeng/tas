@@ -29,7 +29,6 @@
 
 #include <tas_memif.h>
 #include <utils_sync.h>
-#include <virtuoso.h>
 
 #include "internal.h"
 #include "fastemu.h"
@@ -74,18 +73,14 @@ static void flow_rx_write(struct flextcp_pl_flowst *fs, uint32_t pos,
 static void flow_rx_seq_write(struct flextcp_pl_flowst *fs, uint32_t seq,
     uint16_t len, const void *src);
 #endif
-#if VIRTUOSO_GRE == 0
 static void flow_tx_segment(struct dataplane_context *ctx,
     struct network_buf_handle *nbh, struct flextcp_pl_flowst *fs,
     uint32_t seq, uint32_t ack, uint32_t rxwnd, uint16_t payload,
     uint32_t payload_pos, uint32_t ts_echo, uint32_t ts_my, uint8_t fin);
-#endif
-#if VIRTUOSO_GRE
 static void flow_tx_segment_gre(struct dataplane_context *ctx,
     struct network_buf_handle *nbh, struct flextcp_pl_flowst *fs,
     uint32_t seq, uint32_t ack, uint32_t rxwnd, uint16_t payload,
     uint32_t payload_pos, uint32_t ts_echo, uint32_t ts_my, uint8_t fin);
-#endif
 static void flow_tx_ack(struct dataplane_context *ctx, uint32_t seq,
     uint32_t ack, uint32_t rxwnd, uint32_t echots, uint32_t myts,
     struct network_buf_handle *nbh, struct tcp_timestamp_opt *ts_opt,
@@ -224,14 +219,12 @@ int fast_flows_qman(struct dataplane_context *ctx, uint32_t vm_id, uint32_t queu
   }
 
   /* send out segment */
-  #if VIRTUOSO_GRE
+  if (config.vm_gre)
     flow_tx_segment_gre(ctx, nbh, fs, tx_seq, ack, rx_wnd, len, tx_pos,
         fs->tx_next_ts, ts, fin);
-
-  #else
+  else
     flow_tx_segment(ctx, nbh, fs, tx_seq, ack, rx_wnd, len, tx_pos,
           fs->tx_next_ts, ts, fin);
-  #endif
 
 unlock:
   fs_unlock(fs);
@@ -1223,13 +1216,12 @@ int fast_flows_bump(struct dataplane_context *ctx, uint32_t flow_id,
   /* receive buffer freed up from empty, need to send out a window update, if
    * we're not sending anyways. */
   if (new_avail == 0 && rx_avail_prev == 0 && fs->rx_avail != 0) {
-    #if VIRTUOSO_GRE
+    if (config.vm_gre)
       flow_tx_segment_gre(ctx, nbh, fs, fs->tx_next_seq, fs->rx_next_seq,
           fs->rx_avail, 0, 0, fs->tx_next_ts, ts, 0);
-    #else
+    else
       flow_tx_segment(ctx, nbh, fs, fs->tx_next_seq, fs->rx_next_seq,
           fs->rx_avail, 0, 0, fs->tx_next_ts, ts, 0);
-    #endif
     ret = 0;
   }
 
@@ -1247,13 +1239,13 @@ void fast_flows_winretransmit(struct dataplane_context *ctx, uint32_t flow_id,
   fs_lock(fs);
   ctx->counters_total += 1;
   ctx->vm_counters[fs->vm_id] += 1;
-  #if VIRTUOSO_GRE
+
+  if (config.vm_gre)
     flow_tx_segment_gre(ctx, nbh, fs, fs->tx_next_seq, fs->rx_next_seq,
         fs->rx_avail, 0, 0, fs->tx_next_ts, ts, 0);
-  #else
+  else
     flow_tx_segment(ctx, nbh, fs, fs->tx_next_seq, fs->rx_next_seq,
         fs->rx_avail, 0, 0, fs->tx_next_ts, ts, 0);
-  #endif
 
   fs_unlock(fs);
 }
@@ -1367,7 +1359,6 @@ static void flow_rx_seq_write(struct flextcp_pl_flowst *fs, uint32_t seq,
 }
 #endif
 
-#if VIRTUOSO_GRE == 0
 static void flow_tx_segment(struct dataplane_context *ctx,
     struct network_buf_handle *nbh, struct flextcp_pl_flowst *fs,
     uint32_t seq, uint32_t ack, uint32_t rxwnd, uint16_t payload,
@@ -1448,9 +1439,7 @@ static void flow_tx_segment(struct dataplane_context *ctx,
 
   tx_send(ctx, nbh, 0, hdrs_len + payload);
 }
-#endif
 
-#if VIRTUOSO_GRE
 static void flow_tx_segment_gre(struct dataplane_context *ctx,
     struct network_buf_handle *nbh, struct flextcp_pl_flowst *fs,
     uint32_t seq, uint32_t ack, uint32_t rxwnd, uint16_t payload,
@@ -1549,7 +1538,6 @@ static void flow_tx_segment_gre(struct dataplane_context *ctx,
 
   tx_send(ctx, nbh, 0, hdrs_len + payload);
 }
-#endif
 
 static void flow_tx_ack(struct dataplane_context *ctx, uint32_t seq,
     uint32_t ack, uint32_t rxwnd, uint32_t echots, uint32_t myts,

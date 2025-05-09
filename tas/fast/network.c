@@ -40,7 +40,6 @@
 #include <utils.h>
 #include <utils_rng.h>
 #include <tas_memif.h>
-#include <virtuoso.h>
 #include "internal.h"
 
 #define MAX_PATTERN_IN_FLOW 10
@@ -94,11 +93,9 @@ static int reta_setup(void);
 static int reta_mlx5_resize(void);
 static rte_spinlock_t initlock = RTE_SPINLOCK_INITIALIZER;
 
-#if VIRTUOSO_GRE
 static int add_rss_flow_rule(int n_threads);
 static struct rte_flow * add_rss_inbound_flow_rule();
 static void create_queue_idxs(int num_threads, uint16_t *idxs);
-#endif
 
 int network_init(unsigned n_threads)
 {
@@ -289,13 +286,14 @@ int network_thread_init(struct dataplane_context *ctx)
     }
 
     /* Configure inner header RSS */
-    #if VIRTUOSO_GRE
+    if (config.vm_gre)
+    {
       if (config.fp_rss) {
         if (add_rss_flow_rule(num_threads) < 0) {
           fprintf(stderr, "RSS disabled\n");
         }
       }
-    #endif
+    }
 
     /* enable vlan stripping if configured */
     if (config.fp_vlan_strip) {
@@ -554,7 +552,6 @@ static int reta_mlx5_resize(void)
   return 0;
 }
 
-#if VIRTUOSO_GRE
 int add_rss_flow_rule(int n_threads)
 {
   struct rte_flow *in_flow;
@@ -570,9 +567,7 @@ int add_rss_flow_rule(int n_threads)
   return 0;
 
 }
-#endif
 
-#if VIRTUOSO_GRE
 static struct rte_flow * add_rss_inbound_flow_rule(int n_threads)
 {
   struct rte_flow_attr attr = { .ingress = 1 };
@@ -643,9 +638,7 @@ static struct rte_flow * add_rss_inbound_flow_rule(int n_threads)
   }
 
 }
-#endif
 
-#if VIRTUOSO_GRE
 static void create_queue_idxs(int num_threads, uint16_t *idxs)
 {
   int i;
@@ -655,4 +648,3 @@ static void create_queue_idxs(int num_threads, uint16_t *idxs)
     idxs[i] = i;
   }
 }
-#endif
