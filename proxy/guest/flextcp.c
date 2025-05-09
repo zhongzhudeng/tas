@@ -277,7 +277,7 @@ int vflextcp_serve_tasinfo(uint8_t *info, ssize_t size)
 
   /* create shm for tas_info */
   pxy_tas_info = util_create_shmsiszed(FLEXNIC_NAME_INFO, FLEXNIC_INFO_BYTES,
-      NULL, NULL);
+      NULL, NULL, UINT64_MAX);
 
   if (pxy_tas_info == NULL)
   {

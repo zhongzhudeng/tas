@@ -42,6 +42,7 @@ enum cfg_params {
   CP_NIC_RX_QUEUE_NODE,
   CP_NIC_TX_QUEUE_NODE,
   CP_NIC_MBUFS_NODE,
+  CP_VM_SHM_NODE,
   CP_APP_KIN_LEN,
   CP_APP_KOUT_LEN,
   CP_ARP_TO,
@@ -115,6 +116,9 @@ static struct option opts[] = {
     { .name = "nic-mbufs-node",
       .has_arg = required_argument,
       .val = CP_NIC_MBUFS_NODE },
+    { .name = "vm-shm-node",
+      .has_arg = required_argument,
+      .val = CP_VM_SHM_NODE },
     { .name = "app-kin-len",
       .has_arg = required_argument,
       .val = CP_APP_KIN_LEN },
@@ -325,6 +329,12 @@ int config_parse(struct configuration *c, int argc, char *argv[])
       case CP_NIC_MBUFS_NODE:
         if (parse_int64(optarg, &c->nic_mbufs_node) != 0) {
           fprintf(stderr, "nic mbufs node parsing failed\n");
+          goto failed;
+        }
+        break;
+      case CP_VM_SHM_NODE:
+        if (parse_int64(optarg, &c->vm_shm_node) != 0) {
+          fprintf(stderr, "vm shm node parsing failed\n");
           goto failed;
         }
         break;
@@ -648,6 +658,7 @@ static int config_defaults(struct configuration *c, char *progname)
   c->nic_rx_queue_node = UINT64_MAX;
   c->nic_tx_queue_node = UINT64_MAX;
   c->nic_mbufs_node = UINT64_MAX;
+  c->vm_shm_node = UINT64_MAX;
   c->app_kin_len = 1024 * 1024;
   c->app_kout_len = 1024 * 1024;
   c->arp_to = 500;
@@ -723,7 +734,9 @@ static void print_usage(struct configuration *c, char *progname)
           "[default: %"PRIu64"]\n"
       "  --nic-tx-queue-node=NODE   Socket to hold tx descriptor memory"
           "[default: %"PRIu64"]\n"
-      "  --nic-mbufs-node=NODE   Socket to hold memory pool for mbufs"
+      "  --nic-mbufs-node=NODE      Socket to hold memory pool for mbufs"
+          "[default: %"PRIu64"]\n"
+      "  --vm-shm-node=NODE         Socket to hold shared memory region"
           "[default: %"PRIu64"]\n"
       "\n"
           "VMs : \n"
@@ -832,7 +845,7 @@ static void print_usage(struct configuration *c, char *progname)
       "\n",
       progname,
       c->nic_rx_len, c->nic_tx_len, c->app_kin_len, c->app_kout_len,
-      c->nic_rx_queue_node, c->nic_tx_queue_node, c->nic_mbufs_node,
+      c->nic_rx_queue_node, c->nic_tx_queue_node, c->nic_mbufs_node, c->vm_shm_node,
       c->vm_shm_len, c->data_mem_off,
       c->tcp_rtt_init, c->tcp_link_bw, c->tcp_rxbuf_len, c->tcp_txbuf_len,
       c->tcp_handshake_to, c->tcp_handshake_retries,

@@ -73,10 +73,10 @@ int shm_preinit(void)
 
     if (config.fp_hugepages) {
       vm_shm[i] = util_create_shmsiszed_huge(name, config.vm_shm_len, 
-          NULL, &vm_shm_fd[i], FLEXNIC_HUGE_PREFIX);
+          NULL, &vm_shm_fd[i], FLEXNIC_HUGE_PREFIX, config.vm_shm_node);
     } else {
       vm_shm[i] = util_create_shmsiszed(name, config.vm_shm_len, 
-          NULL, &vm_shm_fd[i]);
+          NULL, &vm_shm_fd[i], config.vm_shm_node);
     }
 
     if (vm_shm[i] == NULL) {
@@ -88,10 +88,10 @@ int shm_preinit(void)
   /* create shm for internal memory */
   if (config.fp_hugepages) {
     fp_state = util_create_shmsiszed_huge(FLEXNIC_NAME_INTERNAL_MEM,
-        FLEXNIC_INTERNAL_MEM_SIZE, NULL, NULL, FLEXNIC_HUGE_PREFIX);
+        FLEXNIC_INTERNAL_MEM_SIZE, NULL, NULL, FLEXNIC_HUGE_PREFIX, UINT64_MAX);
   } else {
     fp_state = util_create_shmsiszed(FLEXNIC_NAME_INTERNAL_MEM,
-        FLEXNIC_INTERNAL_MEM_SIZE, NULL, NULL);
+        FLEXNIC_INTERNAL_MEM_SIZE, NULL, NULL, UINT64_MAX);
   }
   if (fp_state == NULL) {
     fprintf(stderr, "mapping flexnic internal memory failed\n");
@@ -108,7 +108,7 @@ int shm_init(unsigned num)
 
   /* create shm for tas_info */
   tas_info = util_create_shmsiszed(FLEXNIC_NAME_INFO, FLEXNIC_INFO_BYTES,
-      NULL, NULL);
+      NULL, NULL, UINT64_MAX);
   if (tas_info == NULL) {
     fprintf(stderr, "mapping flexnic tas_info failed\n");
     shm_cleanup();

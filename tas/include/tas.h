@@ -58,7 +58,7 @@ void network_cleanup(void);
 
 /* used by trace and shm */
 void *util_create_shmsiszed(const char *name, size_t size, 
-    void *addr, int *pfd);
+    void *addr, int *pfd, uint64_t node);
 
 struct notify_blockstate {
   uint64_t last_active_ts;

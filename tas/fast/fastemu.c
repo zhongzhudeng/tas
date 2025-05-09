@@ -861,6 +861,7 @@ static void spend_budget(struct dataplane_context *ctx, uint64_t cycles)
     assert(ratio >= 0 && ratio <= 1);
     vm_cycles = cycles * ratio;
     __sync_fetch_and_sub(&ctx->budgets[vmid].budget, vm_cycles);
+    // ctx->budgets[vmid].budget -= vm_cycles;
     ctx->vm_counters[vmid] = 0;
   }
 

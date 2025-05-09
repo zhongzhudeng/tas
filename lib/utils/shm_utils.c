@@ -7,11 +7,17 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <numaif.h>
+#include <stdint.h>
 
-void *util_create_shmsiszed(const char *name, size_t size, void *addr, int *pfd)
+#define MAX_NODES 32
+
+void *util_create_shmsiszed(const char *name, size_t size, void *addr, 
+    int *pfd, uint64_t node)
 {
   int fd;
   void *p;
+  unsigned long nmask[MAX_NODES];
 
   if ((fd = shm_open(name, O_CREAT | O_RDWR, 0666)) == -1) {
     perror("shm_open failed");
@@ -31,6 +37,17 @@ void *util_create_shmsiszed(const char *name, size_t size, void *addr, int *pfd)
   }
 
   memset(p, 0, size);
+
+  if (node != UINT64_MAX)
+  {
+    nmask[0] = 1UL << node;
+    if (mbind(p, size, MPOL_BIND, nmask, 
+        MAX_NODES, MPOL_MF_MOVE_ALL | MPOL_MF_STRICT) < 0)
+    {
+      perror("util_create_shmsiszed: mbind failed");
+      goto error_remove;
+    }
+  }
 
   if (pfd != NULL)
     *pfd = fd;
@@ -55,11 +72,12 @@ void util_destroy_shm(const char *name, size_t size, void *addr)
 }
 
 void *util_create_shmsiszed_huge(const char *name, size_t size,
-    void *addr, int *pfd, char *flexnic_huge_prefix)
+    void *addr, int *pfd, char *flexnic_huge_prefix, uint64_t node)
 {
   int fd;
   void *p;
   char path[128];
+  unsigned long nmask[MAX_NODES];
 
   snprintf(path, sizeof(path), "%s/%s", flexnic_huge_prefix, name);
 
@@ -81,8 +99,19 @@ void *util_create_shmsiszed_huge(const char *name, size_t size,
   }
 
   memset(p, 0, size);
-
-  if (pfd != NULL)
+  
+  if (node != UINT64_MAX)
+  {
+    nmask[0] = 1UL << node;
+    if (mbind(p, size, MPOL_BIND, nmask, 
+        MAX_NODES, MPOL_MF_MOVE_ALL | MPOL_MF_STRICT) < 0)
+    {
+      perror("util_create_shmsiszed: mbind failed");
+      goto error_remove;
+    }
+  } 
+  
+    if (pfd != NULL)
     *pfd = fd;
   else
     close(fd);

@@ -117,7 +117,7 @@ struct dataplane_context {
   uint32_t poll_next_vm;
   uint32_t act_head;
   uint32_t act_tail;
-  struct polled_vm polled_vms[FLEXNIC_PL_VMST_NUM];  
+  struct polled_vm polled_vms[FLEXNIC_PL_VMST_NUM];
 
    /********************************************************/
   /* group resource budget */
