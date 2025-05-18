@@ -39,6 +39,9 @@ static void slowpath_block(uint32_t cur_ts);
 static void timeout_trigger(struct timeout *to, uint8_t type, void *opaque);
 static void signal_tas_ready(void);
 void flexnic_loadmon(uint32_t cur_ts);
+#ifdef BATCH_STATS
+static void read_batch_kstats();
+#endif
 
 static void init_vm_weights(double *vm_weights);
 static void update_budget(int threads_launched);
@@ -141,7 +144,7 @@ int slowpath_main(int threads_launched)
   while (exited == 0)
   {
     unsigned n = 0;
-    
+
     cur_ts = util_timeout_time_us();
     n += nicif_poll();
     if (config.vm_gre)
@@ -170,10 +173,17 @@ int slowpath_main(int threads_launched)
       if (!config.quiet)
       {
         printf("stats: drops=%" PRIu64 " k_rexmit=%" PRIu64 " ecn=%" PRIu64 " acks=%" PRIu64"\n",
-               kstats.drops, kstats.kernel_rexmit, kstats.ecn_marked, kstats.acks);
+          kstats.drops, kstats.kernel_rexmit, kstats.ecn_marked, kstats.acks);
+
+        #ifdef BATCH_STATS
+        read_batch_kstats();
+        printf("rx_50b=%ld rx_75b=%ld rx_90b=%ld tx_50b=%ld tx_75b=%ld tx_90b=%ld\n",
+          kstats.rx_50b, kstats.rx_75b, kstats.rx_90b, kstats.tx_50b, kstats.tx_75b, kstats.tx_90b);
+        #endif
+
         fflush(stdout);
       }
-      
+
       last_print = cur_ts;
     }
 
@@ -211,7 +221,7 @@ static void update_budget(int threads_launched)
 
   cur_ts = util_rdtsc();
   total_budget = config.bu_boost * (cur_ts - last_bu_update_ts);
-  
+
   /* Update budget */
   for (vmid = 0; vmid < FLEXNIC_PL_VMST_NUM; vmid++)
   {
@@ -231,7 +241,7 @@ static void update_budget(int threads_launched)
       } else {
         delta_weight = deltas[ctxid] / deltas_sum;
       }
-  
+
       weighted_incr = incr * delta_weight;
       assert(weighted_incr >= 0);
       assert(delta_weight >= 0 && delta_weight <= 1);
@@ -339,3 +349,73 @@ static void signal_tas_ready(void)
     /* proceeed */
   }
 }
+
+#ifdef BATCH_STATS
+static void read_batch_kstats()
+{
+  int i;
+  uint64_t rx_total = 0, tx_total = 0, rx_sum = 0, tx_sum = 0;
+  double fracs_rx[3] = { 0.5, 0.75, 0.9 }, fracs_tx[3] = { 0.5, 0.75, 0.9 };
+  uint64_t goals_rx[3], goals_tx[3];
+  uint8_t found_rx_50p = 0, found_rx_75p = 0, found_rx_90p = 0;
+  uint8_t found_tx_50p = 0, found_tx_75p = 0, found_tx_90p = 0;
+
+
+  for (i = 0; i < BATCH_SIZE + 1; i++)
+  {
+    rx_total += fp_state->rx_batch_hist[i];
+    tx_total += fp_state->tx_batch_hist[i];
+  }
+
+  if (rx_total == 0 || tx_total == 0)
+    return;
+
+  for (i = 0; i < 3; i++)
+  {
+    goals_rx[i] = fracs_rx[i] * rx_total;
+    goals_tx[i] = fracs_tx[i] * tx_total;
+  }
+
+  for (i = 0; i < BATCH_SIZE + 1; i++)
+  {
+    rx_sum += fp_state->rx_batch_hist[i];
+    tx_sum += fp_state->tx_batch_hist[i];
+
+    if (rx_sum > goals_rx[0] && found_rx_50p == 0)
+    {
+      kstats.rx_50b = i;
+      found_rx_50p = 1;
+    }
+
+    if (rx_sum > goals_rx[1] && found_rx_75p == 0)
+    {
+      kstats.rx_75b = i;
+      found_rx_75p = 1;
+    }
+
+    if (rx_sum > goals_rx[2] && found_rx_90p == 0)
+    {
+      kstats.rx_90b = i;
+      found_rx_90p = 1;
+    }
+
+    if (tx_sum > goals_tx[0] && found_tx_50p == 0)
+    {
+      kstats.tx_50b = i;
+      found_tx_50p = 1;
+    }
+
+    if (tx_sum > goals_tx[1] && found_tx_75p == 0)
+    {
+      kstats.tx_75b = i;
+      found_tx_75p = 1;
+    }
+
+    if (tx_sum > goals_tx[2] && found_tx_90p == 0)
+    {
+      kstats.tx_90b = i;
+      found_tx_90p = 1;
+    }
+  }
+}
+#endif

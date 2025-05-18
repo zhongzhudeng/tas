@@ -36,6 +36,9 @@
  * @ingroup tas
  * @{ */
 
+#define BATCH_SIZE 16
+#define BATCH_STATS
+
 #define FLEXNIC_HUGE_PREFIX "/dev/hugepages"
 
 /** Name for the info shared memory region. */
@@ -254,9 +257,9 @@ STATIC_ASSERT(sizeof(struct flextcp_pl_atx) == 16, atx_size);
 
 #define FLEXNIC_PL_VMST_NUM         6
 #define FLEXNIC_PL_APPST_NUM        8
-#define FLEXNIC_PL_APPST_CTX_NUM   62
-#define FLEXNIC_PL_APPST_CTX_MCS   32
-#define FLEXNIC_PL_APPCTX_NUM      32
+#define FLEXNIC_PL_APPST_CTX_NUM   31
+#define FLEXNIC_PL_APPST_CTX_MCS   16
+#define FLEXNIC_PL_APPCTX_NUM      16
 #define FLEXNIC_PL_FLOWST_NUM     (128 * 1024)
 #define FLEXNIC_PL_FLOWHT_ENTRIES (FLEXNIC_PL_FLOWST_NUM * 2)
 #define FLEXNIC_PL_FLOWHT_NBSZ      4
@@ -470,6 +473,12 @@ struct flextcp_pl_mem {
 
   /* register for ovs to tas queue */
   struct flextcp_pl_ovsctx ovstas;
+
+  /* histogram for rx batch sizes */
+  uint64_t rx_batch_hist[BATCH_SIZE + 1];
+
+  /* histogram for tx batch sizes */
+  uint64_t tx_batch_hist[BATCH_SIZE + 1];
 
   uint8_t flow_group_steering[FLEXNIC_PL_MAX_FLOWGROUPS];
 } __attribute__((packed));

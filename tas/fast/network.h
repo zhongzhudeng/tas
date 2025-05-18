@@ -102,6 +102,10 @@ static inline int network_poll(struct network_thread *t, unsigned num,
   }
 #endif
 
+  #ifdef BATCH_STATS
+    __sync_fetch_and_add(&fp_state->rx_batch_hist[num], 1);
+  #endif
+
   return num;
 }
 
@@ -118,7 +122,13 @@ static inline int network_send(struct network_thread *t, unsigned num,
   }
 #endif
 
-  return rte_eth_tx_burst(net_port_id, t->queue_id, mbs, num);
+  num = rte_eth_tx_burst(net_port_id, t->queue_id, mbs, num);
+
+  #ifdef BATCH_STATS
+    __sync_fetch_and_add(&fp_state->tx_batch_hist[num], 1);
+  #endif
+
+  return num;
 }
 
 

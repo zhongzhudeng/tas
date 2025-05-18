@@ -72,10 +72,10 @@ int shm_preinit(void)
     snprintf(name, sizeof(name), "%s_vm%d", FLEXNIC_NAME_DMA_MEM, i);
 
     if (config.fp_hugepages) {
-      vm_shm[i] = util_create_shmsiszed_huge(name, config.vm_shm_len, 
+      vm_shm[i] = util_create_shmsiszed_huge(name, config.vm_shm_len,
           NULL, &vm_shm_fd[i], FLEXNIC_HUGE_PREFIX, config.vm_shm_node);
     } else {
-      vm_shm[i] = util_create_shmsiszed(name, config.vm_shm_len, 
+      vm_shm[i] = util_create_shmsiszed(name, config.vm_shm_len,
           NULL, &vm_shm_fd[i], config.vm_shm_node);
     }
 
@@ -97,6 +97,13 @@ int shm_preinit(void)
     fprintf(stderr, "mapping flexnic internal memory failed\n");
     shm_cleanup();
     return -1;
+  }
+
+  /* Initialize histograms in fp_state to 0 */
+  for (i = 0; i < BATCH_SIZE + 1; i ++)
+  {
+    fp_state->rx_batch_hist[i] = 0;
+    fp_state->tx_batch_hist[i] = 0;
   }
 
   return 0;

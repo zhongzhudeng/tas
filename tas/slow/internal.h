@@ -65,6 +65,18 @@ struct kernel_statistics {
   uint64_t ecn_marked;
   /** total number of ACKs */
   uint64_t acks;
+  /* 50 percentile rx batch size */
+  uint64_t rx_50b;
+  /* 75 percentile rx batch size */
+  uint64_t rx_75b;
+  /* 75 percentile rx batch size */
+  uint64_t rx_90b;
+  /* 50 percentile tx batch size */
+  uint64_t tx_50b;
+  /* 75 percentile tx batch size */
+  uint64_t tx_75b;
+  /* 90 percentile tx batch size */
+  uint64_t tx_90b;
 };
 
 struct budget_statistics {
