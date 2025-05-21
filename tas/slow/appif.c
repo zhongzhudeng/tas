@@ -716,8 +716,6 @@ static void uxsocket_receive(struct application *app)
   app->resp->flexnic_db_id = ctx->doorbell->id;
   app->resp->flexnic_qs_num = tas_info->cores_num;
   app->resp->status = 0;
-  fprintf(stderr, "Creating new context: db_id=%d\n", ctx->doorbell->id);
-
 
   if ((aev = malloc(sizeof(struct appif_event))) == NULL)
   {
