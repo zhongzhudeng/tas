@@ -90,8 +90,7 @@ static inline void tx_flush(struct dataplane_context *ctx);
 static inline void tx_send(struct dataplane_context *ctx,
                            struct network_buf_handle *nbh, uint16_t off, uint16_t len);
 
-static void spend_budget(struct dataplane_context *ctx, 
-    uint64_t cycles);
+static void spend_budget(struct dataplane_context *ctx, uint64_t cycles);
 
 static void arx_cache_flush(struct dataplane_context *ctx, uint64_t tsc) __attribute__((noinline));
 
@@ -272,6 +271,9 @@ void dataplane_loop(struct dataplane_context *ctx)
     /* flush transmit buffer */
     tx_flush(ctx);
 
+    /* prefetch the first four completion queue elements */
+    network_pf_cq(&ctx->net);
+
     if (ctx->id == 0)
       poll_scale(ctx);
 
@@ -354,107 +356,92 @@ void dataplane_dump_stats(void)
 }
 #endif
 
-static unsigned poll_rx(struct dataplane_context *ctx, uint32_t ts,
-                        uint64_t tsc)
+static unsigned poll_rx(struct dataplane_context *ctx, uint32_t ts, uint64_t tsc)
 {
-  int ret;
-  unsigned i, n;
-  uint8_t freebuf[BATCH_SIZE] = {0};
-  void *fss[BATCH_SIZE];
-  struct tcp_opts tcpopts[BATCH_SIZE];
-  struct network_buf_handle *bhs[BATCH_SIZE];
+    int ret;
+    bool is_last;
+    unsigned i, n;
+    uint8_t freebuf[BATCH_SIZE] = {0};
+    void *fss[BATCH_SIZE];
+    struct tcp_opts tcpopts[BATCH_SIZE];
+    struct network_buf_handle *bhs[BATCH_SIZE];
 
-  n = BATCH_SIZE;
-  if (TXBUF_SIZE - ctx->tx_num < n)
-    n = TXBUF_SIZE - ctx->tx_num;
+    n = BATCH_SIZE;
+    if (TXBUF_SIZE - ctx->tx_num < n)
+      n = TXBUF_SIZE - ctx->tx_num;
 
-  STATS_ADD(ctx, rx_poll, 1);
+    STATS_ADD(ctx, rx_poll, 1);
 
-  /* receive packets */
-  ret = network_poll(&ctx->net, n, bhs);
-  if (ret <= 0)
-  {
-    STATS_ADD(ctx, rx_empty, 1);
-    return 0;
-  }
+    /* receive packets */
+    ret = network_poll(&ctx->net, n, bhs);
 
-  STATS_ADD(ctx, rx_total, n);
-  n = ret;
-
-  /* prefetch packet contents (1st cache line) */
-  for (i = 0; i < n; i++)
-  {
-    rte_prefetch0(network_buf_bufoff(bhs[i]));
-  }
-
-  /* look up flow states */
-  if (config.vm_gre)
-    fast_flows_packet_fss_gre(ctx, bhs, fss, n);
-  else
-    fast_flows_packet_fss(ctx, bhs, fss, n);
-
-  /* prefetch packet contents (2nd cache line, TS opt overlaps) */
-  for (i = 0; i < n; i++)
-  {
-    rte_prefetch0(network_buf_bufoff(bhs[i]) + 64);
-  }
-
-  /* parse packets */
-  if (config.vm_gre)
-    fast_flows_packet_parse_gre(ctx, bhs, fss, tcpopts, n);
-  else
-    fast_flows_packet_parse(ctx, bhs, fss, tcpopts, n);
-
-  for (i = 0; i < n; i++)
-  {
-    /* run fast-path for flows with flow state */
-    if (fss[i] != NULL)
+    if (ret <= 0)
     {
-      if (config.vm_gre)
+      STATS_ADD(ctx, rx_empty, 1);
+      return 0;
+    }
+    
+    /* We don't the first mbuf here because I added a call
+       in the DPDK rx function to prefetch it during processing
+       so the prefetch has time to go through */
+    // rte_prefetch0(network_buf_bufoff(bhs[0]));
+    // rte_prefetch0(network_buf_bufoff(bhs[0]) + 64);
+
+    STATS_ADD(ctx, rx_total, n);
+    n = ret;
+
+    for (i = 0; i < n; i++)
+    {
+      is_last = i < n - 1;
+
+      /* Prefetch first two cache lines for next mbuf */
+      if (is_last)
+      {
+        rte_prefetch0(network_buf_bufoff(bhs[i + 1]));
+        rte_prefetch0(network_buf_bufoff(bhs[i + 1]) + 64);
+      }
+      
+      /* Perform hash table lookup */
+      fast_flows_packet_fss_gre(ctx, bhs[i], &fss[i]);
+
+      fast_flows_packet_parse_gre(ctx, bhs[i], &fss[i], &tcpopts[i]);
+
+      if (fss[i] != NULL)
         ret = fast_flows_packet_gre(ctx, bhs[i], fss[i], &tcpopts[i], ts);
       else
-        ret = fast_flows_packet(ctx, bhs[i], fss[i], &tcpopts[i], ts);
-    }
-    else
-    {
-      ret = -1;
+        ret = -1;
+
+      if (ret > 0)
+      {
+        freebuf[i] = 1;
+      }
+      else if (ret < 0)
+      {
+        fast_kernel_packet(ctx, bhs[i], fss[i]);
+      }
+        
+      if (freebuf[i] == 0)
+        bufcache_free(ctx, bhs[i]);
     }
 
-    if (ret > 0)
-    {
-      freebuf[i] = 1;
-    }
-    else if (ret < 0)
-    {
-      fast_kernel_packet(ctx, bhs[i], fss[i]);
-    }
-  }
+    arx_cache_flush(ctx, tsc);
 
-  arx_cache_flush(ctx, tsc);
-
-  /* free received buffers */
-  for (i = 0; i < n; i++)
-  {
-    if (freebuf[i] == 0)
-      bufcache_free(ctx, bhs[i]);
-  }
-
-  return n;
+    return n;
 }
 
 static unsigned poll_queues(struct dataplane_context *ctx, uint32_t ts)
 {
   unsigned total;
 
-  if (ctx->poll_rounds % MAX_POLL_ROUNDS == 0 || ctx->act_head == IDXLIST_INVAL)
-  {
+  // if (ctx->poll_rounds % MAX_POLL_ROUNDS == 0 || ctx->act_head == IDXLIST_INVAL)
+  // {
     total = poll_all_queues(ctx, ts);
-  }
-  else
-  {
-    total = poll_active_queues(ctx, ts);
-  }
-  ctx->poll_rounds = (ctx->poll_rounds + 1) % MAX_POLL_ROUNDS;
+  // }
+  // else
+  // {
+  //   total = poll_active_queues(ctx, ts);
+  // }
+  // ctx->poll_rounds = (ctx->poll_rounds + 1) % MAX_POLL_ROUNDS;
 
   return total;
 }
@@ -816,10 +803,7 @@ static void arx_cache_flush(struct dataplane_context *ctx, uint64_t tsc)
       fprintf(stderr, "arx_cache_flush: no space in app rx queue\n");
       abort();
     }
-  }
 
-  for (i = 0; i < ctx->arx_num; i++)
-  {
     rte_prefetch0(parx[i]);
   }
 
@@ -857,7 +841,6 @@ static void spend_budget(struct dataplane_context *ctx, uint64_t cycles)
     assert(ratio >= 0 && ratio <= 1);
     vm_cycles = cycles * ratio;
     __sync_fetch_and_sub(&ctx->budgets[vmid].budget, vm_cycles);
-    // ctx->budgets[vmid].budget -= vm_cycles;
     ctx->vm_counters[vmid] = 0;
   }
 

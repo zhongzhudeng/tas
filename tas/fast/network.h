@@ -109,6 +109,11 @@ static inline int network_poll(struct network_thread *t, unsigned num,
   return num;
 }
 
+static inline void network_pf_cq(struct network_thread *t)
+{
+  rte_eth_rx_burst(net_port_id, t->queue_id, NULL, 0);
+}
+
 static inline int network_send(struct network_thread *t, unsigned num,
     struct network_buf_handle **bhs)
 {

@@ -79,13 +79,12 @@ int fast_flows_packet_gre(struct dataplane_context *ctx,
 void fast_flows_packet_fss(struct dataplane_context *ctx,
     struct network_buf_handle **nbhs, void **fss, uint16_t n);
 void fast_flows_packet_fss_gre(struct dataplane_context *ctx,
-    struct network_buf_handle **nbhs, void **fss, uint16_t n);
+    struct network_buf_handle *nbh, void **fsh);
 void fast_flows_packet_parse(struct dataplane_context *ctx,
     struct network_buf_handle **nbhs, void **fss, struct tcp_opts *tos,
     uint16_t n);
 void fast_flows_packet_parse_gre(struct dataplane_context *ctx,
-    struct network_buf_handle **nbhs, void **fss, struct tcp_opts *tos,
-    uint16_t n);
+    struct network_buf_handle *nbh, void **fsh, struct tcp_opts *to);
 void fast_flows_packet_pfbufs(struct dataplane_context *ctx,
     void **fss, uint16_t n);
 void fast_flows_kernelxsums(struct network_buf_handle *nbh,

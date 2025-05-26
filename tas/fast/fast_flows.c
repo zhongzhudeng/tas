@@ -287,37 +287,34 @@ void fast_flows_packet_parse(struct dataplane_context *ctx,
 }
 
 void fast_flows_packet_parse_gre(struct dataplane_context *ctx,
-    struct network_buf_handle **nbhs, void **fss, struct tcp_opts *tos,
-    uint16_t n)
+    struct network_buf_handle *nbh, void **fsh, struct tcp_opts *to)
 {
   struct pkt_gre *p;
-  uint16_t i, len;
+  uint16_t len;
 
-  for (i = 0; i < n; i++) {
-    if (fss[i] == NULL)
-      continue;
+  if (*fsh == NULL)
+    return;
 
-    p = network_buf_bufoff(nbhs[i]);
-    len = network_buf_len(nbhs[i]);
+  p = network_buf_bufoff(nbh);
+  len = network_buf_len(nbh);
 
-    int cond =
-        (len < sizeof(*p)) |
-        (f_beui16(p->eth.type) != ETH_TYPE_IP) |
-        (p->out_ip.proto != IP_PROTO_GRE) |
-        (p->in_ip.proto != IP_PROTO_TCP) |
-        (f_beui16(p->gre.proto) != GRE_PROTO_IP) |
-        (IPH_V(&p->out_ip) != 4) |
-        (IPH_HL(&p->out_ip) != 5) |
-        (IPH_V(&p->in_ip) != 4) |
-        (IPH_HL(&p->in_ip) != 5) |
-        (TCPH_HDRLEN(&p->tcp) < 5) |
-        (len < f_beui16(p->out_ip.len) + sizeof(p->eth)) |
-        (tcp_parse_options_gre(p, len, &tos[i]) != 0) |
-        (tos[i].ts == NULL);
+  int cond =
+      (len < sizeof(*p)) |
+      (f_beui16(p->eth.type) != ETH_TYPE_IP) |
+      (p->out_ip.proto != IP_PROTO_GRE) |
+      (p->in_ip.proto != IP_PROTO_TCP) |
+      (f_beui16(p->gre.proto) != GRE_PROTO_IP) |
+      (IPH_V(&p->out_ip) != 4) |
+      (IPH_HL(&p->out_ip) != 5) |
+      (IPH_V(&p->in_ip) != 4) |
+      (IPH_HL(&p->in_ip) != 5) |
+      (TCPH_HDRLEN(&p->tcp) < 5) |
+      (len < f_beui16(p->out_ip.len) + sizeof(p->eth)) |
+      (tcp_parse_options_gre(p, len, to) != 0) |
+      (to->ts == NULL);
 
-    if (cond)
-      fss[i] = NULL;
-  }
+  if (cond)
+    *fsh = NULL;
 }
 
 void fast_flows_packet_pfbufs(struct dataplane_context *ctx,
@@ -1864,37 +1861,26 @@ void fast_flows_packet_fss(struct dataplane_context *ctx,
 }
 
 void fast_flows_packet_fss_gre(struct dataplane_context *ctx,
-    struct network_buf_handle **nbhs, void **fss, uint16_t n)
+    struct network_buf_handle *nbh, void **fsh)
 {
-  uint32_t hashes[n];
-  uint32_t h, k, j, eh, fid, ffid;
-  uint16_t i;
+  uint32_t hash;
+  uint32_t k, j, eh, fid, ffid;
   struct pkt_gre *p;
   struct flow_key_gre key;
   struct flextcp_pl_flowhte *e;
   struct flextcp_pl_flowst *fs;
 
-  /* calculate hashes and prefetch hash table buckets */
-  for (i = 0; i < n; i++) {
-    p = network_buf_bufoff(nbhs[i]);
-
-    key.tunnel_id = p->gre.key;
-    key.local_port = p->tcp.dest;
-    key.remote_port = p->tcp.src;
-    h = flow_hash_gre(&key);
-
-    rte_prefetch0(&fp_state->flowht[h % FLEXNIC_PL_FLOWHT_ENTRIES]);
-    rte_prefetch0(&fp_state->flowht[(h + 3) % FLEXNIC_PL_FLOWHT_ENTRIES]);
-    hashes[i] = h;
-  }
+  /* calculate hashes */
+  p = network_buf_bufoff(nbh);
+  key.tunnel_id = p->gre.key;
+  key.local_port = p->tcp.dest;
+  key.remote_port = p->tcp.src;
+  hash = flow_hash_gre(&key);
 
   /* prefetch flow state for buckets with matching hashes
    * (usually 1 per packet, except in case of collisions) */
-  for (i = 0; i < n; i++) {
-    h = hashes[i];
-
-    for (j = 0; j < FLEXNIC_PL_FLOWHT_NBSZ; j++) {
-      k = (h + j) % FLEXNIC_PL_FLOWHT_ENTRIES;
+  for (j = 0; j < FLEXNIC_PL_FLOWHT_NBSZ; j++) {
+      k = (hash + j) % FLEXNIC_PL_FLOWHT_ENTRIES;
       e = &fp_state->flowht[k];
 
       ffid = e->flow_id;
@@ -1902,47 +1888,39 @@ void fast_flows_packet_fss_gre(struct dataplane_context *ctx,
       eh = e->flow_hash;
 
       fid = ffid & ((1 << FLEXNIC_PL_FLOWHTE_POSSHIFT) - 1);
-      if ((ffid & FLEXNIC_PL_FLOWHTE_VALID) == 0 || eh != h) {
+      if ((ffid & FLEXNIC_PL_FLOWHTE_VALID) == 0 || eh != hash) {
         continue;
       }
-
-      rte_prefetch0(&fp_state->flowst[fid]);
-    }
   }
 
   /* finish hash table lookup by checking 5-tuple in flow state */
-  for (i = 0; i < n; i++) {
-    p = network_buf_bufoff(nbhs[i]);
-    fss[i] = NULL;
-    h = hashes[i];
+  *fsh = NULL;
 
-    for (j = 0; j < FLEXNIC_PL_FLOWHT_NBSZ; j++) {
-      k = (h + j) % FLEXNIC_PL_FLOWHT_ENTRIES;
-      e = &fp_state->flowht[k];
+  for (j = 0; j < FLEXNIC_PL_FLOWHT_NBSZ; j++) {
+    k = (hash + j) % FLEXNIC_PL_FLOWHT_ENTRIES;
+    e = &fp_state->flowht[k];
 
-      ffid = e->flow_id;
-      MEM_BARRIER();
-      eh = e->flow_hash;
+    ffid = e->flow_id;
+    MEM_BARRIER();
+    eh = e->flow_hash;
 
-      fid = ffid & ((1 << FLEXNIC_PL_FLOWHTE_POSSHIFT) - 1);
-      if ((ffid & FLEXNIC_PL_FLOWHTE_VALID) == 0 || eh != h) {
-        continue;
-      }
+    fid = ffid & ((1 << FLEXNIC_PL_FLOWHTE_POSSHIFT) - 1);
+    if ((ffid & FLEXNIC_PL_FLOWHTE_VALID) == 0 || eh != hash) {
+      continue;
+    }
 
-      MEM_BARRIER();
-      fs = &fp_state->flowst[fid];
-      if ((fs->out_local_ip.x == p->out_ip.dest.x) &
-          (fs->out_remote_ip.x == p->out_ip.src.x) &
-          (fs->in_local_ip.x == p->in_ip.dest.x) &
-          (fs->in_remote_ip.x == p->in_ip.src.x) &
-          (fs->tunnel_id.x == p->gre.key.x) &
-          (fs->local_port.x == p->tcp.dest.x) &
-          (fs->remote_port.x == p->tcp.src.x))
-      {
-        rte_prefetch0((uint8_t *) fs + 64);
-        fss[i] = &fp_state->flowst[fid];
-        break;
-      }
+    MEM_BARRIER();
+    fs = &fp_state->flowst[fid];
+    if ((fs->out_local_ip.x == p->out_ip.dest.x) &
+        (fs->out_remote_ip.x == p->out_ip.src.x) &
+        (fs->in_local_ip.x == p->in_ip.dest.x) &
+        (fs->in_remote_ip.x == p->in_ip.src.x) &
+        (fs->tunnel_id.x == p->gre.key.x) &
+        (fs->local_port.x == p->tcp.dest.x) &
+        (fs->remote_port.x == p->tcp.src.x))
+    {
+      *fsh = &fp_state->flowst[fid];
+      break;
     }
   }
 }
