@@ -814,8 +814,6 @@ static int adminq_init_ovs()
     packetmem_free(pm_tasovs_tx, SP_MEM_ID);
     packetmem_free(pm_ovstas_rx, SP_MEM_ID);
     free(tasovs_rx_bufs);
-    free(ovstas_rx_bufs);
-    free(tasovs_rx_bufs);
     free(tasovs_tx_bufs);
     free(ovstas_rx_bufs);
     free(ovstas_tx_bufs);

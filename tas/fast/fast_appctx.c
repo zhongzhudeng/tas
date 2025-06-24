@@ -181,7 +181,8 @@ int fast_appctx_poll_fetch_active(struct dataplane_context *ctx, uint16_t max,
   uint32_t vmid;
   struct polled_vm *act_vm;
 
-  int oob_i = 0, oob_n;
+  int i;
+  int oob_i = 0;
   int oob_vms[FLEXNIC_PL_VMST_NUM];
   
   vmid = ctx->act_head;
@@ -201,11 +202,10 @@ int fast_appctx_poll_fetch_active(struct dataplane_context *ctx, uint16_t max,
     vmid = ctx->polled_vms[vmid].next; 
   } while (vmid != ctx->act_head && k < max);
 
-  oob_n = oob_i;
   temp_k = k;
-  for (oob_i = 0; oob_i < oob_n && temp_k == 0; oob_i++)
+  for (i = 0; i < oob_i && temp_k == 0; i++)
   {
-    vmid = oob_vms[oob_i];
+    vmid = oob_vms[i];
     act_vm = &ctx->polled_vms[vmid];
     if (k < max)
     {
