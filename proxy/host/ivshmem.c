@@ -19,8 +19,8 @@
 static int notify_guest(int fd);
 
 static int uxsocket_init();
-static int uxsocket_poll();
-static int uxsocket_accept();
+static int uxsocket_poll(struct host_proxy *pxy);
+static int uxsocket_accept(struct host_proxy *pxy);
 static int uxsocket_handle_notif();
 static int uxsocket_handle_error();
 static int uxsocket_send_int(int fd, int64_t i);
@@ -28,7 +28,7 @@ static int uxsocket_sendfd(int uxfd, int fd, int64_t i);
 
 static int app_ctxs_poll(struct host_proxy *pxy);
 
-static int channel_poll();
+static int channel_poll(struct host_proxy *pxy);
 static int channel_poll_vm(struct host_proxy *pxy,
                            struct v_machine *vm);
 static int channel_handle_tasinforeq_msg(struct v_machine *vm);

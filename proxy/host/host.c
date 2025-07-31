@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     }
 
     /* Connect to tas and get shmfd, kernel_evfd and core_evfds */
-    if (flextcp_proxy_init(pxy) != 0)
+    if (flextcp_proxy_init() != 0)
     {
         fprintf(stderr, "main: flextcp_init failed.\n");
         return -1;

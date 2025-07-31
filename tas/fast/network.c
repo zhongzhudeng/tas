@@ -96,7 +96,7 @@ static rte_spinlock_t initlock = RTE_SPINLOCK_INITIALIZER;
 
 #if VIRTUOSO_GRE
 static int add_rss_flow_rule(int n_threads);
-static struct rte_flow * add_rss_inbound_flow_rule();
+static struct rte_flow * add_rss_inbound_flow_rule(int n_threads);
 static void create_queue_idxs(int num_threads, uint16_t *idxs);
 #endif
 
