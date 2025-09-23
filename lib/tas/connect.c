@@ -75,6 +75,7 @@ int flexnic_driver_connect_mult(struct flexnic_info **p_info, void **p_mem_start
 int flexnic_driver_connect(struct flexnic_info **p_info, void **p_mem_start,
     int shmfd)
 {
+  printf("flexnic_driver_connect\n");
   void *m;
   volatile struct flexnic_info *fi;
   int err_ret = -1;

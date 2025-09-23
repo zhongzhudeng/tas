@@ -54,6 +54,7 @@ void flextcp_kernel_kick(void)
 
 int flextcp_kernel_connect(int *shmfd, int groupid)
 {
+  printf("flextcp_kernel_connect\n");
   int fd, *pfd;
   uint8_t b;
   ssize_t r;
@@ -148,6 +149,7 @@ int flextcp_kernel_connect(int *shmfd, int groupid)
 int flextcp_kernel_newctx(struct flextcp_context *ctx,
     uint8_t *presp, ssize_t *presp_sz)
 {
+  printf("flextcp_kernel_newctx\n");
   ssize_t sz, off, total_sz;
   struct kernel_uxsock_response *resp;
   uint8_t resp_buf[sizeof(*resp) +
@@ -183,6 +185,7 @@ int flextcp_kernel_newctx(struct flextcp_context *ctx,
   int *myfd = (int *)CMSG_DATA(cmsg);
   *myfd = ctx->evfd;
   sz = sendmsg(ksock_fd, &msg, 0);
+  printf("sendmsg\n");
   assert(sz == sizeof(req));
 
   /* receive response on kernel socket */
@@ -198,6 +201,7 @@ int flextcp_kernel_newctx(struct flextcp_context *ctx,
     }
     off += sz;
   }
+  printf("receive response on kernel socket\n");
 
   if (resp->flexnic_qs_num > FLEXTCP_MAX_FTCPCORES) {
     fprintf(stderr, "flextcp_kernel_newctx: stack only supports up to %u "
@@ -214,6 +218,8 @@ int flextcp_kernel_newctx(struct flextcp_context *ctx,
     }
     off += sz;
   }
+
+  printf("receive queues in response\n");
 
   if (resp->status != 0) {
     fprintf(stderr, "flextcp_kernel_newctx: request failed\n");
@@ -312,6 +318,7 @@ int flextcp_kernel_reqscale(struct flextcp_context *ctx, uint32_t cores)
 int flextcp_kernel_get_notifyfd(int cfd, uint32_t *num_fds,
     int *k_evfd)
 {
+  printf("flextcp_kernel_get_notifyfd\n");
   ssize_t r;
   struct cmsghdr *cmsg;
   int *pfd;
@@ -358,6 +365,7 @@ int flextcp_kernel_get_notifyfd(int cfd, uint32_t *num_fds,
 
 int flextcp_kernel_get_shmfd(int cfd, int *shmfd)
 {
+  printf("flextcp_kernel_get_shmfd\n");
   uint8_t b;
   ssize_t r;
   struct cmsghdr *cmsg;

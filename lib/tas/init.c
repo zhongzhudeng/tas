@@ -77,6 +77,7 @@ static void txq_probe(struct flextcp_context *ctx, unsigned n) __attribute__((no
 
 int flextcp_init(int groupid)
 {
+  printf("flextcp_init\n");
   if ((flextcp_kernel_connect(&flexnic_shmfd, groupid)) < 0)
   {
     fprintf(stderr, "flextcp_init: connecting to kernel failed\n");
@@ -97,6 +98,7 @@ int flextcp_init(int groupid)
 int flextcp_context_create(struct flextcp_context *ctx,
     uint8_t *presp, ssize_t *presp_sz)
 {
+  printf("flextcp_context_create\n");
   static uint16_t ctx_id = 0;
 
   memset(ctx, 0, sizeof(*ctx));

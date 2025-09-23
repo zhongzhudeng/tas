@@ -414,6 +414,7 @@ static void *uxsocket_thread(void *arg)
 
 static void uxsocket_accept_vm()
 {
+  printf("uxsocket_accept_vm\n");
   int cfd, vmid;
   struct virtual_machine *vm;
   struct epoll_event ev;
@@ -468,6 +469,7 @@ static void uxsocket_accept_vm()
 
 static void uxsocket_accept_app(int vm_id)
 {
+  printf("uxsocket_accept_app\n");
   int cfd;
   struct application *app;
   struct epoll_event ev;
@@ -515,6 +517,7 @@ static void uxsocket_accept_app(int vm_id)
 
   /* add to epoll */
   app->fd = cfd;
+  app->req_rx = 0;
   app->contexts = NULL;
   app->forked_ctxs = NULL;
   app->need_reg_ctx = NULL;
@@ -523,6 +526,8 @@ static void uxsocket_accept_app(int vm_id)
   app->listeners = NULL;
   app->id = app_id_next++;
   app->vm_id = vm_id;
+
+  app->comp.status = 0;
 
   aev->type = EP_APP;
   aev->ptr = app;
@@ -542,6 +547,7 @@ static void uxsocket_accept_app(int vm_id)
 
 static void uxsocket_notify(void)
 {
+  printf("uxsocket_notify\n");
   uint8_t *p;
   struct application *app;
   uint64_t x;
@@ -578,6 +584,7 @@ static void uxsocket_error(struct application *app)
 
 static void uxsocket_receive(struct application *app)
 {
+  printf("usocket_receive\n");
   ssize_t rx;
   struct forked_context *f_ctx;
   struct app_context *ctx;
@@ -590,9 +597,11 @@ static void uxsocket_receive(struct application *app)
   int evfd = 0;
 
   /* receive data to hopefully complete request */
+  printf("app->req_rx = %zu\n", app->req_rx);
+
   struct iovec iov = {
     .iov_base = &app->req,
-    .iov_len = sizeof(app->req) - app->req_rx,
+    .iov_len = sizeof(app->req)
   };
   union {
     char buf[CMSG_SPACE(sizeof(int))];
@@ -615,6 +624,8 @@ static void uxsocket_receive(struct application *app)
     int* data = (int*) CMSG_DATA(cmsg);
     evfd = *data;
   }
+
+  printf("rx = %zd\n", rx);
 
   if (rx < 0) {
     perror("uxsocket_receive: recv failed");

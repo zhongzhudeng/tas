@@ -39,3 +39,4 @@ Makefile.local
 virt-manager
 out/
 *.dat
+build/
