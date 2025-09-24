@@ -474,16 +474,19 @@ int tcp_packet(const void *pkt, uint16_t len, uint32_t fn_core,
   }
 
   if ((c = conn_lookup(p)) != NULL) {
+    printf("tcp_packet: conn_packet\n");
     conn_packet(c, p, &opts, fn_core, flow_group);
   } else if ((l = listener_lookup(p)) != NULL) {
+    printf("tcp_packet: listener_packet\n");
     listener_packet(l, p, &opts, fn_core, flow_group);
   } else {
     ret = -1;
 
     /* send reset if the packet received wasn't a reset */
-    if (!(TCPH_FLAGS(&p->tcp) & TAS_TCP_RST) &&
-        config.kni_name == NULL)
+    if (!(TCPH_FLAGS(&p->tcp) & TAS_TCP_RST) && config.kni_name == NULL) {
+      printf("tcp_packet: send_reset\n");
       send_reset(p, &opts);
+    }
   }
 
   return ret;
