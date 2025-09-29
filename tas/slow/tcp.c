@@ -631,8 +631,10 @@ static void conn_packet(struct connection *c, const struct pkt_tcp *p,
       conn_failed(c, ret);
     }
   } else if (c->status == CONN_OPEN &&
-      (TCPH_FLAGS(&p->tcp) & ~ecn_flags) == TAS_TCP_SYN)
-  {
+             (TCPH_FLAGS(&p->tcp) & TAS_TCP_ACK) == TAS_TCP_ACK) {
+    /* silently ignore a ACK */
+  } else if (c->status == CONN_OPEN &&
+             (TCPH_FLAGS(&p->tcp) & ~ecn_flags) == TAS_TCP_SYN) {
     /* handle re-transmitted SYN for dropped SYN-ACK */
     /* TODO: should only do this if we're still waiting for initial ACK,
      * otherwise we should send a challenge ACK */
@@ -651,14 +653,12 @@ static void conn_packet(struct connection *c, const struct pkt_tcp *p,
     send_control(c, TAS_TCP_SYN | TAS_TCP_ACK | ecn_flags, 1,
         f_beui32(opts->ts->ts_val), TCP_MSS);
   } else if (c->status == CONN_OPEN &&
-      (TCPH_FLAGS(&p->tcp) & TAS_TCP_SYN) == TAS_TCP_SYN)
-  {
+             (TCPH_FLAGS(&p->tcp) & TAS_TCP_SYN) == TAS_TCP_SYN) {
     /* silently ignore a re-transmited SYN_ACK */
   } else if (c->status == CONN_CLOSED &&
-      (TCPH_FLAGS(&p->tcp) & TAS_TCP_FIN) == TAS_TCP_FIN)
-  {
-   /* silently ignore a FIN for an already closed connection: TODO figure out
-    * why necessary*/
+             (TCPH_FLAGS(&p->tcp) & TAS_TCP_FIN) == TAS_TCP_FIN) {
+    /* silently ignore a FIN for an already closed connection: TODO figure out
+     * why necessary*/
     send_control(c, TAS_TCP_ACK, 1, 0, 0);
   } else {
     fprintf(stderr, "tcp_packet: unexpected connection state %u\n", c->status);
