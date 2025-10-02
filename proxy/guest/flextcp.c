@@ -460,7 +460,7 @@ static int vflextcp_uxsocket_receive(struct guest_proxy *pxy,
 
   struct iovec iov = {
     .iov_base = &ctx_req->req,
-    .iov_len = sizeof(ctx_req->req) - app->req_rx,
+    .iov_len = sizeof(ctx_req->req),
   };
 
   union {
