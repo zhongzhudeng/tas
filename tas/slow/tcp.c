@@ -630,10 +630,11 @@ static void conn_packet(struct connection *c, const struct pkt_tcp *p,
     if ((ret = conn_syn_sent_packet(c, p, opts)) != 0) {
       conn_failed(c, ret);
     }
-  } else if (c->status == CONN_OPEN &&
+  } /*else if (c->status == CONN_OPEN &&
              (TCPH_FLAGS(&p->tcp) & TAS_TCP_ACK) == TAS_TCP_ACK) {
-    /* silently ignore a ACK */
-  } else if (c->status == CONN_OPEN &&
+    silently ignore a ACK 
+  }*/ 
+  else if (c->status == CONN_OPEN &&
              (TCPH_FLAGS(&p->tcp) & ~ecn_flags) == TAS_TCP_SYN) {
     /* handle re-transmitted SYN for dropped SYN-ACK */
     /* TODO: should only do this if we're still waiting for initial ACK,

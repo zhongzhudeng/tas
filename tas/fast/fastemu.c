@@ -404,13 +404,21 @@ static unsigned poll_rx(struct dataplane_context *ctx, uint32_t ts, uint64_t tsc
       }
       
       /* Perform hash table lookup */
-      fast_flows_packet_fss_gre(ctx, bhs[i], &fss[i]);
+      if (config.vm_gre) {
+        fast_flows_packet_fss_gre(ctx, bhs[i], &fss[i]);
+        fast_flows_packet_parse_gre(ctx, bhs[i], &fss[i], &tcpopts[i]);
+      } else {
+        fast_flows_packet_fss(ctx, bhs[i], &fss[i]);
+        fast_flows_packet_parse(ctx, bhs[i], &fss[i], &tcpopts[i]);
+      }
 
-      fast_flows_packet_parse_gre(ctx, bhs[i], &fss[i], &tcpopts[i]);
-
-      if (fss[i] != NULL)
-        ret = fast_flows_packet_gre(ctx, bhs[i], fss[i], &tcpopts[i], ts);
-      else
+      if (fss[i] != NULL) {
+        if (config.vm_gre) {
+          ret = fast_flows_packet_gre(ctx, bhs[i], fss[i], &tcpopts[i], ts);
+        } else {
+          ret = fast_flows_packet(ctx, bhs[i], fss[i], &tcpopts[i], ts);
+        }
+      } else
         ret = -1;
 
       if (ret > 0)
