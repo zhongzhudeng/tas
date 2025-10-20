@@ -89,6 +89,7 @@ int flextcp_listen_open(struct flextcp_context *ctx,
 int flextcp_listen_accept(struct flextcp_context *ctx,
     struct flextcp_listener *lst, struct flextcp_connection *conn)
 {
+  printf("flextcp_listen_accept\n");
   uint32_t pos = ctx->kin_head;
   struct kernel_appout *kin = ctx->kin_base;
 
@@ -161,6 +162,7 @@ int flextcp_connection_open(struct flextcp_context *ctx,
 int flextcp_connection_close(struct flextcp_context *ctx,
     struct flextcp_connection *conn)
 {
+  printf("flextcp_connection_close\n");
   uint32_t pos = ctx->kin_head, f = 0;
   struct kernel_appout *kin = ctx->kin_base;
   struct flextcp_connection *p_c;
@@ -226,6 +228,7 @@ int flextcp_connection_close(struct flextcp_context *ctx,
 int flextcp_connection_rx_done(struct flextcp_context *ctx,
     struct flextcp_connection *conn, size_t len)
 {
+  printf("flextcp_connection_rx_done\n");
   if (conn->rxb_used < len) {
     return -1;
   }
@@ -280,6 +283,7 @@ ssize_t flextcp_connection_tx_alloc(struct flextcp_connection *conn, size_t len,
 ssize_t flextcp_connection_tx_alloc2(struct flextcp_connection *conn, size_t len,
     void **buf_1, size_t *len_1, void **buf_2)
 {
+  printf("flextcp_connection_tx_alloc2\n");
   uint32_t avail, head;
 
   /* if outgoing connection has already been closed, abort */
@@ -340,6 +344,7 @@ int flextcp_connection_tx_send(struct flextcp_context *ctx,
 int flextcp_connection_tx_close(struct flextcp_context *ctx,
         struct flextcp_connection *conn)
 {
+  printf("flextcp_connection_tx_close\n");
   /* if app hasn't sent all data yet, abort */
   if (conn_tx_sendbytes(conn) > 0) {
     fprintf(stderr, "flextcp_connection_tx_close: has unsent data\n");
