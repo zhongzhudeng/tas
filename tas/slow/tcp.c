@@ -54,10 +54,10 @@
 /* maximum number of listening sockets per port */
 #define LISTEN_MULTI_MAX 32
 
-// #define CONN_DEBUG(c, f, x...) do { } while (0)
-// #define CONN_DEBUG0(c, f) do { } while (0)
-#define CONN_DEBUG(c, f, x...) fprintf(stderr, "conn(%p): " f, c, x)
-#define CONN_DEBUG0(c, f, x...) fprintf(stderr, "conn(%p): " f, c)
+#define CONN_DEBUG(c, f, x...) do { } while (0)
+#define CONN_DEBUG0(c, f) do { } while (0)
+// #define CONN_DEBUG(c, f, x...) fprintf(stderr, "conn(%p): " f, c, x)
+// #define CONN_DEBUG0(c, f, x...) fprintf(stderr, "conn(%p): " f, c)
 
 struct listen_multi {
   size_t num;
@@ -474,19 +474,15 @@ int tcp_packet(const void *pkt, uint16_t len, uint32_t fn_core,
   }
 
   if ((c = conn_lookup(p)) != NULL) {
-    printf("tcp_packet: conn_packet\n");
     conn_packet(c, p, &opts, fn_core, flow_group);
   } else if ((l = listener_lookup(p)) != NULL) {
-    printf("tcp_packet: listener_packet\n");
     listener_packet(l, p, &opts, fn_core, flow_group);
   } else {
     ret = -1;
 
     /* send reset if the packet received wasn't a reset */
-    if (!(TCPH_FLAGS(&p->tcp) & TAS_TCP_RST) && config.kni_name == NULL) {
-      printf("tcp_packet: send_reset\n");
+    if (!(TCPH_FLAGS(&p->tcp) & TAS_TCP_RST) && config.kni_name == NULL)
       send_reset(p, &opts);
-    }
   }
 
   return ret;

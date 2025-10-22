@@ -381,8 +381,6 @@ static unsigned poll_rx(struct dataplane_context *ctx, uint32_t ts, uint64_t tsc
       return 0;
     }
     
-    printf("poll_rx: network_poll %d \n",ret);
-    
     /* We don't the first mbuf here because I added a call
        in the DPDK rx function to prefetch it during processing
        so the prefetch has time to go through */
@@ -423,7 +421,6 @@ static unsigned poll_rx(struct dataplane_context *ctx, uint32_t ts, uint64_t tsc
 
       if (ret > 0)
       {
-        printf("fast_flow_packet/gre: len %d\n", ret);
         freebuf[i] = 1;
       }
       else if (ret < 0)

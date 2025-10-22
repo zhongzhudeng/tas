@@ -147,8 +147,6 @@ unsigned nicif_poll(void)
   unsigned i, ret = 0; /*, nonsuc = 0*/
   int x;
   
-  printf("nicif_poll\n");
-
   for (i = 0; i < 512; i++)
   {
     x = rxq_poll();
@@ -1109,7 +1107,6 @@ int ovs_tx_upcall(struct pkt_gre *p, uint16_t vmid,
 static inline void process_packet(const void *buf, uint16_t len,
     uint32_t fn_core, uint16_t flow_group)
 {
-  printf("process_packet\n");
   const struct eth_hdr *eth = buf;
   const struct ip_hdr *ip = (struct ip_hdr *) (eth + 1);
   const struct tcp_hdr *tcp = (struct tcp_hdr *) (ip + 1);
@@ -1146,7 +1143,6 @@ static inline void process_packet(const void *buf, uint16_t len,
 static inline void process_packet_gre(const void *buf,
     volatile struct flextcp_pl_krx *krx)
 {
-  printf("process_packet_gre\n");
   uint16_t len = krx->msg.packet.len;
   uint32_t fn_core = krx->msg.packet.fn_core;
   uint16_t flow_group = krx->msg.packet.flow_group;
