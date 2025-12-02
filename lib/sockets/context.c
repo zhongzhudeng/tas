@@ -258,7 +258,9 @@ s = (struct socket *)
   ((uint8_t *) l - offsetof(struct socket, data.listener.l));
 
 socket_lock(s);
-
+if (s->type != SOCK_LISTENER) {
+  printf("s->type = %d\n", s->type);
+}
 assert(s->type == SOCK_LISTENER);
 assert(s->data.listener.status == SOL_OPEN);
 
