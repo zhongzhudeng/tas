@@ -252,6 +252,7 @@ static inline void ev_listen_moved(struct flextcp_context *ctx,
 {
 struct flextcp_listener *l;
 struct socket *s;
+printf("ev_listen_moved\n");
 
 l = ev->ev.listen_moved.l;
 s = (struct socket *)

@@ -694,6 +694,7 @@ static inline void event_kappin_st_listen_move(
   struct kernel_appin_status *inev, struct flextcp_event *outev)
 {
   struct flextcp_listener *l;
+  printf("event_kappin_st_listen_move\n");
 
   l = OPAQUE_PTR(inev->opaque);
 

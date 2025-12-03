@@ -407,6 +407,7 @@ static int kin_listen_move(struct application *app, struct app_context *ctx,
 {
   struct listener *l;
   struct app_context *new_ctx;
+  printf("kin_listen_move\n");
 
   for (l = app->listeners; l != NULL; l = l->app_next) {
     if (l->port == kin->data.listen_move.local_port &&
