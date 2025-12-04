@@ -153,6 +153,7 @@ static int kernel_poll(struct flextcp_context *ctx, int num,
     } else if (type == KERNEL_APPIN_STATUS_CONN_MOVE) {
       event_kappin_st_conn_move(&kout->data.status, &events[i]);
     } else if (KERNEL_APPIN_STATUS_LISTEN_MOVE) {
+      printf("pos = %d kout_len = %d\n", pos, ctx->kout_len);
       event_kappin_st_listen_move(&kout->data.status, &events[i]);
     } else if (type == KERNEL_APPIN_STATUS_CONN_CLOSE) {
       event_kappin_st_conn_closed(&kout->data.status, &events[i]);
