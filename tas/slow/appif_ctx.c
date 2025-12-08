@@ -352,6 +352,7 @@ unsigned appif_ctx_poll(struct application *app, struct app_context *ctx)
       fprintf(stderr, "kin_poll: unsupported request type %u\n", kin->type);
       break;
   }
+  printf("kout_pos = %d type = %d\n", kout_pos, type);
 
   MEM_BARRIER();
   kin->type = 0;
