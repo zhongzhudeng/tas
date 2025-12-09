@@ -161,7 +161,7 @@ static int kernel_poll(struct flextcp_context *ctx, int num,
           type, pos, ctx->kout_len);
       abort();
     }
-    printf("pos = %d type = %d j = %d\n", pos, type, j);
+    printf("i = %d j = %d pos = %d type = %d\n", i, j, pos, type);
     ctx->flags |= CTX_FLAG_POLL_EVENTS;
 
     if (j == -1) {
