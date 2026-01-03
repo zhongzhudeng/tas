@@ -435,7 +435,7 @@ int flextcp_connection_move(struct flextcp_context *ctx,
 int flextcp_listen_move(struct flextcp_context *ctx,
   struct flextcp_listener *l)
 {
-  printf("flextcp_listen_move\n");
+  fprintf(stderr, "flextcp_listen_move\n");
   uint32_t pos = ctx->kin_head;
   struct kernel_appout *kin = ctx->kin_base;
 

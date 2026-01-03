@@ -252,7 +252,7 @@ static inline void ev_listen_moved(struct flextcp_context *ctx,
 {
 struct flextcp_listener *l;
 struct socket *s;
-printf("ev_listen_moved\n");
+fprintf(stderr, "ev_listen_moved\n");
 
 l = ev->ev.listen_moved.l;
 s = (struct socket *)
@@ -260,7 +260,7 @@ s = (struct socket *)
 
 socket_lock(s);
 if (s->type != SOCK_LISTENER) {
-  printf("s = %p s->type = %d\n",s, s->type);
+  fprintf(stderr, "s = %p s->type = %d\n", s, s->type);
 }
 assert(s->type == SOCK_LISTENER);
 assert(s->data.listener.status == SOL_OPEN);
@@ -317,7 +317,7 @@ static inline void ev_conn_received(struct flextcp_context *ctx,
 
   assert(s->type == SOCK_CONNECTION);
   if (s->data.connection.status != SOC_CONNECTED)
-    printf("status = %d\n", s->data.connection.status);
+    fprintf(stderr, "status = %d\n", s->data.connection.status);
   assert(s->data.connection.status == SOC_CONNECTED);
 
   buf = ev->ev.conn_received.buf;

@@ -173,7 +173,7 @@ int tas_epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)
     /* Move this fd to the context that added it */
     if (s->type == SOCK_LISTENER)
     {
-      printf("%d flextcp_listen_move\n", fd);
+      fprintf(stderr, "%d flextcp_listen_move\n", fd);
       flextcp_listen_move(ctx, &s->data.listener.l);
     }
 

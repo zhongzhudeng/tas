@@ -161,7 +161,7 @@ static int kernel_poll(struct flextcp_context *ctx, int num,
           type, pos, ctx->kout_len);
       abort();
     }
-    printf("i = %d j = %d pos = %d type = %d\n", i, j, pos, type);
+    fprintf(stderr, "i = %d j = %d pos = %d type = %d\n", i, j, pos, type);
     ctx->flags |= CTX_FLAG_POLL_EVENTS;
 
     if (j == -1) {
@@ -583,7 +583,7 @@ static inline int event_kappin_conn_opened(
   if (conn->rxb_used > 0) {
     conn->seq_rx += conn->rxb_used;
 
-    printf("event_kappin_conn_opened\n");
+    fprintf(stderr, "event_kappin_conn_opened\n");
     outev[j].event_type = FLEXTCP_EV_CONN_RECEIVED;
     outev[j].ev.conn_received.conn = conn;
     outev[j].ev.conn_received.buf = conn->rxb_base;
@@ -663,7 +663,7 @@ static inline int event_kappin_accept_conn(
   if (conn->rxb_used > 0) {
     conn->seq_rx += conn->rxb_used;
     
-    printf("event_kappin_accept_conn\n");
+    fprintf(stderr, "event_kappin_accept_conn\n");
 
     outev[j].event_type = FLEXTCP_EV_CONN_RECEIVED;
     outev[j].ev.conn_received.conn = conn;
@@ -698,7 +698,7 @@ static inline void event_kappin_st_listen_move(
   struct kernel_appin_status *inev, struct flextcp_event *outev)
 {
   struct flextcp_listener *l;
-  printf("event_kappin_st_listen_move\n");
+  fprintf(stderr, "event_kappin_st_listen_move\n");
 
   l = OPAQUE_PTR(inev->opaque);
 
@@ -805,7 +805,7 @@ static inline int event_arx_connupdate(struct flextcp_context *ctx,
 
   /* generate rx events */
   if (rx_bump > 0) {
-    printf("event_arx_connupdate 1\n");
+    fprintf(stderr, "event_arx_connupdate 1\n");
     outevs[i].event_type = FLEXTCP_EV_CONN_RECEIVED;
     outevs[i].ev.conn_received.conn = conn;
     outevs[i].ev.conn_received.buf = conn->rxb_base + conn->rxb_head;
@@ -816,7 +816,7 @@ static inline int event_arx_connupdate(struct flextcp_context *ctx,
       outevs[i].ev.conn_received.len = rx_len;
 
       i++;
-      printf("event_arx_connupdate 2\n");
+      fprintf(stderr, "event_arx_connupdate 2\n");
       outevs[i].event_type = FLEXTCP_EV_CONN_RECEIVED;
       outevs[i].ev.conn_received.conn = conn;
       outevs[i].ev.conn_received.buf = conn->rxb_base;

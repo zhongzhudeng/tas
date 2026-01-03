@@ -352,7 +352,7 @@ unsigned appif_ctx_poll(struct application *app, struct app_context *ctx)
       fprintf(stderr, "kin_poll: unsupported request type %u\n", kin->type);
       break;
   }
-  printf("kout_pos = %d type = %d\n", kout_pos, type);
+  fprintf(stderr, "kout_pos = %d type = %d\n", kout_pos, type);
 
   MEM_BARRIER();
   kin->type = 0;
@@ -408,7 +408,7 @@ static int kin_listen_move(struct application *app, struct app_context *ctx,
 {
   struct listener *l;
   struct app_context *new_ctx;
-  printf("kin_listen_move\n");
+  fprintf(stderr, "kin_listen_move\n");
 
   for (l = app->listeners; l != NULL; l = l->app_next) {
     if (l->port == kin->data.listen_move.local_port &&
