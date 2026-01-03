@@ -189,7 +189,6 @@ static int channel_handle_tasinfo_res(struct guest_proxy *pxy, struct tasinfo_re
   }
 
   /* Init epfd used to listen to core_evfds and kernel notify fd */
-  pxy->epfd = epoll_create1(0);
   if ((pxy->epfd = epoll_create1(0)) < 0)
   {
     fprintf(stderr,

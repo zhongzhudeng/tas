@@ -46,7 +46,6 @@ struct guest_proxy {
     struct channel *chan;
     
     /* Flextcp */
-    int flextcp_nfd;
     int flextcp_epfd;
     int flextcp_uxfd;
     

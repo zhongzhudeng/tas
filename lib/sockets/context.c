@@ -260,7 +260,7 @@ s = (struct socket *)
 
 socket_lock(s);
 if (s->type != SOCK_LISTENER) {
-  printf("s->type = %d\n", s->type);
+  printf("s = %p s->type = %d\n",s, s->type);
 }
 assert(s->type == SOCK_LISTENER);
 assert(s->data.listener.status == SOL_OPEN);

@@ -51,15 +51,10 @@ int vflextcp_init(struct guest_proxy *pxy)
     return -1;
   }
 
-  if ((pxy->flextcp_nfd = eventfd(0, EFD_NONBLOCK)) == -1) 
-  {
-    fprintf(stderr, "vflextcp_init: eventfd failed."); 
-  }
-
   if ((pxy->flextcp_epfd = epoll_create1(0)) == -1) 
   {
-    fprintf(stderr, "vflextcp_init: epoll_create1 failed."); 
-    goto error_close_nfd;
+    fprintf(stderr, "vflextcp_init: epoll_create1 failed.");
+    goto error_close_flextcp_uxfd;
   }
 
   if ((pxy->epfd = epoll_create1(0)) < 0)
@@ -67,7 +62,6 @@ int vflextcp_init(struct guest_proxy *pxy)
     fprintf(stderr,
         "vflextcp_init: failed to create fd for vepfd.\n");
     goto error_close_epfd;
-    return -1;
   }
 
   ev.events = EPOLLIN;
@@ -91,8 +85,8 @@ error_close_vepfd:
   close(pxy->epfd);
 error_close_epfd:
   close(pxy->flextcp_epfd);
-error_close_nfd:
-  close(pxy->flextcp_nfd);
+error_close_flextcp_uxfd:
+  close(pxy->flextcp_uxfd);
 
   return -1;
 }

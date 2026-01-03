@@ -32,7 +32,6 @@ struct guest_proxy *guest_init_proxy()
   
   pxy->chan = NULL;
   
-  pxy->flextcp_nfd = -1;
   pxy->flextcp_epfd = -1;
   pxy->flextcp_uxfd = -1;
   
