@@ -316,6 +316,8 @@ static inline void ev_conn_received(struct flextcp_context *ctx,
   }
 
   assert(s->type == SOCK_CONNECTION);
+  if (s->data.connection.status != SOC_CONNECTED)
+    printf("status = %d\n", s->data.connection.status);
   assert(s->data.connection.status == SOC_CONNECTED);
 
   buf = ev->ev.conn_received.buf;
