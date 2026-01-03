@@ -226,6 +226,7 @@ static inline void ev_listen_accept(struct flextcp_context *ctx,
   /** Return so we don't duplicate connection acceptance */
   if (s->data.connection.accepted == 1)
   {
+    fprintf(stderr, "s->data.connection.accepted == 1\n");
     socket_unlock(s);
     socket_unlock(sl);
     return;
@@ -260,7 +261,7 @@ s = (struct socket *)
 
 socket_lock(s);
 if (s->type != SOCK_LISTENER) {
-  fprintf(stderr, "s = %p s->type = %d\n", s, s->type);
+  fprintf(stderr, "s = %p s->type = %d l = %p\n", s, s->type, l);
 }
 assert(s->type == SOCK_LISTENER);
 assert(s->data.listener.status == SOL_OPEN);
@@ -316,8 +317,10 @@ static inline void ev_conn_received(struct flextcp_context *ctx,
   }
 
   assert(s->type == SOCK_CONNECTION);
-  if (s->data.connection.status != SOC_CONNECTED)
-    fprintf(stderr, "status = %d\n", s->data.connection.status);
+  if (s->data.connection.status != SOC_CONNECTED){
+    fprintf(stderr, "s = %p status = %d c = %p\n", s, s->data.connection.status,
+            c);
+  }
   assert(s->data.connection.status == SOC_CONNECTED);
 
   buf = ev->ev.conn_received.buf;
